@@ -1,0 +1,38 @@
+# Codecov configuration for ROSA operator repositories
+# Enforces >=50% patch coverage on all PRs
+codecov:
+  notify:
+    require_ci_to_pass: no
+
+coverage:
+  precision: 2
+  round: down
+  range: "20...100"
+
+  status:
+    project:
+      default:
+        target: 35%
+        threshold: 1%
+    patch:
+      default:
+        target: 50%
+        threshold: 1%
+    changes: no
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: no
+
+ignore:
+  - "**/mocks"
+  - "**/zz_generated*.go"

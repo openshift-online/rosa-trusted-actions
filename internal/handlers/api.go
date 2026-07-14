@@ -272,4 +272,3 @@ func (h *APIHandler) respondError(w http.ResponseWriter, r *http.Request, status
 	w.WriteHeader(status)
 	render.JSON(w, r, errorResp)
 }
-

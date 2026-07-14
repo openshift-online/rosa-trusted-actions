@@ -41,7 +41,7 @@ In addition, Redocly recommends placing path parameters within `{}` curly braces
 
 You may also place each operation in a separate file.  
 
-In this case, if you want all paths at the top-level, you can concatenate the http method to the path name.  Similar to the above option, you can 
+In this case, if you want all paths at the top-level, you can concatenate the http method to the path name.  Similar to the above option, you can
 
 ### Files at top-level of `paths`
 
@@ -98,7 +98,7 @@ file: /paths/customers/{id}/timeline/{messageId}/get.yaml
 
 # excerpt of file
     headers:
-      Rate-Limit-Remaining: 
+      Rate-Limit-Remaining:
         $ref: ../../../../../components/headers/Rate-Limit-Remaining.yaml
 
 ```
