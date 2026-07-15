@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	github.com/ajg/form v1.5.1 // indirect
+	github.com/ajg/form v1.7.2 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/getkin/kin-openapi v0.127.0 // indirect
