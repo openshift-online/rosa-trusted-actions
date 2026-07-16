@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	sdk "github.com/openshift-online/ocm-sdk-go"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -142,10 +144,39 @@ func runServer(cmd *cobra.Command, args []string) error {
 		}))
 	})
 
+	// Wrap the router with OCM JWT validation when auth is enabled.
+	// This matches the rh-trex pattern (api_server.go:53-74): the OCM SDK handler
+	// validates JWT signatures against JWKS, stores the verified token in context,
+	// then the auth.Middleware extracts claims from that token.
+	var mainHandler http.Handler = router
+	if cfg.EnableAuth {
+		authnLogger, err := sdk.NewStdLoggerBuilder().
+			Debug(logger.Level >= logrus.DebugLevel).
+			Build()
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to create OCM authentication logger")
+		}
+
+		builder := authentication.NewHandler().
+			Logger(authnLogger).
+			KeysURL(cfg.JWKCertURL).
+			Public("^/health$").
+			Next(mainHandler)
+
+		if cfg.JWKCertFile != "" {
+			builder = builder.KeysFile(cfg.JWKCertFile)
+		}
+
+		mainHandler, err = builder.Build()
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to build OCM authentication handler")
+		}
+	}
+
 	// Create server
 	srv := &http.Server{
 		Addr:    cfg.ListenAddr,
-		Handler: router,
+		Handler: mainHandler,
 		// Security settings
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   30 * time.Second,

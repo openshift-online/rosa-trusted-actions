@@ -27,6 +27,8 @@ type Config struct {
 	EnableAuth      bool
 	AllowedAccounts []string
 	RolesConfigPath string
+	JWKCertFile     string
+	JWKCertURL      string
 
 	// OCM Client Configuration (environment variables)
 	OCMBaseURL      string
@@ -72,6 +74,8 @@ func Load() *Config {
 		EnableAuth:      getBoolEnv("ROSA_TA_ENABLE_AUTH", true),
 		AllowedAccounts: getStringSliceEnv("ROSA_TA_ALLOWED_ACCOUNTS", nil),
 		RolesConfigPath: getEnv("ROSA_TA_ROLES_CONFIG", "configs/roles.yml"),
+		JWKCertFile:     getEnv("ROSA_TA_JWK_CERT_FILE", ""),
+		JWKCertURL:      getEnv("ROSA_TA_JWK_CERT_URL", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"),
 
 		// OCM Client Configuration
 		OCMBaseURL:      getEnv("ROSA_TA_OCM_BASE_URL", "https://api.openshift.com"),
