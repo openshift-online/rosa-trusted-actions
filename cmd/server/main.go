@@ -102,7 +102,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	} else {
 		authnMiddleware = auth.NewMockAuthMiddleware(logger)
 		authzMiddleware = auth.NewAuthzMiddlewareMock(logger)
-		logger.Warn("Auth disabled: using mock authentication (X-Mock-Username header)")
+		logger.Warn("Auth disabled: using mock authentication (X-Mock-Username + X-Mock-Role headers required)")
 	}
 
 	actionAuthz := auth.NewActionAuthzMiddleware(apiHandler.ActionCatalog, logger)
@@ -121,7 +121,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Amz-Date", "X-Amz-Security-Token", "X-Mock-Username", "X-Mock-Email", "X-Mock-ClientID"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Amz-Date", "X-Amz-Security-Token", "X-Mock-Username", "X-Mock-Email", "X-Mock-ClientID", "X-Mock-Role"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
@@ -138,10 +138,13 @@ func runServer(cmd *cobra.Command, args []string) error {
 	router.Route("/api/v0/trusted-actions", func(r chi.Router) {
 		r.Use(authnMiddleware.AuthenticateAccountJWT)
 		r.Use(authzMiddleware.AuthorizeAPI)
-		r.Mount("/", openapi.HandlerWithOptions(apiHandler, openapi.ChiServerOptions{
+		// HandlerWithOptions registers routes directly on r via BaseRouter,
+		// so the return value is not mounted — that would cause an infinite
+		// routing loop since r.Mount("/", r) re-enters the same router.
+		openapi.HandlerWithOptions(apiHandler, openapi.ChiServerOptions{
 			BaseRouter:  r,
 			Middlewares: []openapi.MiddlewareFunc{actionAuthz.CheckActionAccess},
-		}))
+		})
 	})
 
 	// Wrap the router with OCM JWT validation when auth is enabled.
