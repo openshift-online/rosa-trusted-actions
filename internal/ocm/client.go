@@ -18,9 +18,8 @@ type Config struct {
 	BaseURL      string
 	ClientID     string
 	ClientSecret string
-	SelfToken    string
-	TokenURL     string
-	Debug        bool
+	SelfToken string
+	Debug     bool
 }
 
 func NewClient(config Config) (*Client, error) {
@@ -40,14 +39,6 @@ func NewClient(config Config) (*Client, error) {
 		return nil, fmt.Errorf("unable to build OCM connection: %s", err.Error())
 	}
 	client.Authorization = &authorization{client: client}
-	return client, nil
-}
-
-func NewClientMock(config Config) (*Client, error) {
-	client := &Client{
-		config: &config,
-	}
-	client.Authorization = &authorizationMock{client: client}
 	return client, nil
 }
 

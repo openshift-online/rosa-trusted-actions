@@ -8,42 +8,12 @@ import (
 )
 
 type Authorization interface {
-	SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 	AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 }
 
 type authorization service
 
 var _ Authorization = &authorization{}
-
-func (a authorization) SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error) {
-	con := a.client.connection
-	selfAccessReview := con.Authorizations().V1().SelfAccessReview()
-
-	request, err := azv1.NewSelfAccessReviewRequest().
-		Action(action).
-		ResourceType(resourceType).
-		OrganizationID(organizationID).
-		ClusterID(clusterID).
-		SubscriptionID(subscriptionID).
-		Build()
-	if err != nil {
-		return false, err
-	}
-
-	postResp, err := selfAccessReview.Post().
-		Request(request).
-		SendContext(ctx)
-	if err != nil {
-		return false, err
-	}
-	response, ok := postResp.GetResponse()
-	if !ok {
-		return false, fmt.Errorf("empty response from authorization post request")
-	}
-
-	return response.Allowed(), nil
-}
 
 func (a authorization) AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error) {
 	con := a.client.connection
