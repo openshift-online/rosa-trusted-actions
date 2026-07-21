@@ -17,11 +17,11 @@ type ActionCatalog interface {
 type Action struct {
 	Name          string
 	Description   string
-	RequiredRoles []string
+	AllowedRoles []string
 }
 
 // ActionAuthzMiddleware checks that the caller's resolved role is in the
-// action's requiredRoles list. Enforced on any request with an {action} URL param.
+// action's allowedRoles list. Enforced on any request with an {action} URL param.
 type ActionAuthzMiddleware struct {
 	catalog ActionCatalog
 	logger  *logrus.Logger
@@ -56,7 +56,7 @@ func (m *ActionAuthzMiddleware) CheckActionAccess(next http.Handler) http.Handle
 			return
 		}
 
-		if !slices.Contains(action.RequiredRoles, role) {
+		if !slices.Contains(action.AllowedRoles, role) {
 			m.logger.WithFields(logrus.Fields{
 				"action": actionName,
 				"role":   role,

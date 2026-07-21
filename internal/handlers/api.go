@@ -32,12 +32,12 @@ func newCatalog() *catalog {
 		"cluster-info": {
 			Name:          "cluster-info",
 			Description:   "Get cluster information and status",
-			RequiredRoles: []string{"SREP", "ConfigurationAnomalyDetection", "ROSAAiAgent"},
+			AllowedRoles: []string{"SREP", "ConfigurationAnomalyDetection", "ROSAAiAgent"},
 		},
 		"pod-restart": {
 			Name:          "pod-restart",
 			Description:   "Restart pods in a specific namespace",
-			RequiredRoles: []string{"SREP"},
+			AllowedRoles: []string{"SREP"},
 		},
 	}}
 }

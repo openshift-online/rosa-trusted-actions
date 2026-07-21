@@ -4,13 +4,13 @@ import (
 	"net/http"
 )
 
-// MiddlewareMock passes all requests through with a default test identity.
+// MockAuthnMiddleware passes all requests through with a default test identity.
 // Adapted from rh-trex/pkg/auth/auth_middleware_mock.go.
-type MiddlewareMock struct{}
+type MockAuthnMiddleware struct{}
 
-var _ JWTMiddleware = &MiddlewareMock{}
+var _ JWTMiddleware = &MockAuthnMiddleware{}
 
-func (a *MiddlewareMock) AuthenticateAccountJWT(next http.Handler) http.Handler {
+func (a *MockAuthnMiddleware) AuthenticateAccountJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := SetCallerIdentityContext(r.Context(), &CallerIdentity{
 			Username: "test-user",

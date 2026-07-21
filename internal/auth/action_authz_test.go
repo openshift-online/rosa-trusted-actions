@@ -23,11 +23,11 @@ func newTestCatalog() *mockCatalog {
 		actions: map[string]*Action{
 			"cluster-info": {
 				Name:          "cluster-info",
-				RequiredRoles: []string{"SREP", "ConfigurationAnomalyDetection", "ROSAAiAgent"},
+				AllowedRoles: []string{"SREP", "ConfigurationAnomalyDetection", "ROSAAiAgent"},
 			},
 			"pod-restart": {
 				Name:          "pod-restart",
-				RequiredRoles: []string{"SREP"},
+				AllowedRoles: []string{"SREP"},
 			},
 		},
 	}

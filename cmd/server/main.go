@@ -101,7 +101,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 		logger.Info("Auth enabled: JWT validation + AMS role resolution")
 	} else {
 		authnMiddleware = auth.NewMockAuthMiddleware(logger)
-		authzMiddleware = auth.NewAuthzMiddlewareMock(logger)
+		authzMiddleware = auth.NewMockAuthzMiddleware(logger)
 		logger.Warn("Auth disabled: using mock authentication (X-Mock-Username + X-Mock-Role headers required)")
 	}
 

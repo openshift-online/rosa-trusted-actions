@@ -53,8 +53,8 @@ func TestMockMiddleware_MissingUsername_Returns401(t *testing.T) {
 	}
 }
 
-func TestMiddlewareMock_SetsDefaultIdentity(t *testing.T) {
-	mock := &MiddlewareMock{}
+func TestMockAuthnMiddleware_SetsDefaultIdentity(t *testing.T) {
+	mock := &MockAuthnMiddleware{}
 
 	var capturedIdentity *CallerIdentity
 	handler := mock.AuthenticateAccountJWT(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
