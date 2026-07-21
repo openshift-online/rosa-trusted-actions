@@ -39,6 +39,10 @@ func setupActionAuthzTest(t *testing.T, catalog ActionCatalog) *chi.Mux {
 	actionAuthz := NewActionAuthzMiddleware(catalog, logger)
 
 	r := chi.NewRouter()
+	r.Get("/", actionAuthz.CheckActionAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("catalog"))
+	})).ServeHTTP)
 	r.Post("/{action}/run", actionAuthz.CheckActionAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
 	})).ServeHTTP)
@@ -108,15 +112,45 @@ func TestActionAuthz_UnknownAction_Returns404(t *testing.T) {
 	}
 }
 
-func TestActionAuthz_GETPassesThrough(t *testing.T) {
+func TestActionAuthz_GETActionChecksRole(t *testing.T) {
+	r := setupActionAuthzTest(t, newTestCatalog())
+
+	req := httptest.NewRequest(http.MethodGet, "/pod-restart", nil)
+	ctx := SetRoleInContext(req.Context(), "ConfigurationAnomalyDetection")
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for GET on action without required role, got %d; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestActionAuthz_GETActionAllowedWithRole(t *testing.T) {
 	r := setupActionAuthzTest(t, newTestCatalog())
 
 	req := httptest.NewRequest(http.MethodGet, "/cluster-info", nil)
+	ctx := SetRoleInContext(req.Context(), "ConfigurationAnomalyDetection")
+	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("expected 200 for GET (no action authz enforcement), got %d", rr.Code)
+		t.Fatalf("expected 200 for GET on action with required role, got %d; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestActionAuthz_NonActionEndpointPassesThrough(t *testing.T) {
+	r := setupActionAuthzTest(t, newTestCatalog())
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rr := httptest.NewRecorder()
+
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200 for non-action endpoint, got %d; body: %s", rr.Code, rr.Body.String())
 	}
 }

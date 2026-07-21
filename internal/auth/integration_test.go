@@ -44,6 +44,11 @@ func setupIntegrationRouter(t *testing.T) *chi.Mux {
 		w.Write([]byte("catalog"))
 	})).ServeHTTP)
 
+	r.Get("/{action}", actionAuthz.CheckActionAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("describe"))
+	})).ServeHTTP)
+
 	r.Post("/{action}/run", actionAuthz.CheckActionAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identity := GetCallerIdentityFromContext(r.Context())
 		role := GetRoleFromContext(r.Context())
@@ -137,5 +142,33 @@ func TestIntegration_SREPCanAccessCatalog(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestIntegration_CADCanDescribeClusterInfo(t *testing.T) {
+	r := setupIntegrationRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/cluster-info", nil)
+	req.Header.Set("X-Mock-Username", "cad-user")
+	rr := httptest.NewRecorder()
+
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestIntegration_CADCannotDescribePodRestart(t *testing.T) {
+	r := setupIntegrationRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/pod-restart", nil)
+	req.Header.Set("X-Mock-Username", "cad-user")
+	rr := httptest.NewRecorder()
+
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d; body: %s", rr.Code, rr.Body.String())
 	}
 }
