@@ -29,6 +29,18 @@ type Config struct {
 
 	// Database Configuration (environment variables, for future use)
 	DatabaseURL string
+
+	// Backplane Configuration
+	BackplaneURL          string
+	BackplaneClientID     string
+	BackplaneClientSecret string
+
+	// Kubernetes Configuration (local testing only)
+	Kubeconfig string
+
+	// Authorization Configuration
+	AllowedNamespaces []string
+	AllowedSecrets    []string
 }
 
 // Load loads configuration from environment variables with defaults
@@ -55,6 +67,18 @@ func Load() *Config {
 
 		// Database Configuration
 		DatabaseURL: getEnv("DATABASE_URL", ""),
+
+		// Backplane Configuration
+		BackplaneURL:          getEnv("ROSA_TA_BACKPLANE_URL", ""),
+		BackplaneClientID:     getEnv("ROSA_TA_BACKPLANE_CLIENT_ID", ""),
+		BackplaneClientSecret: getEnv("ROSA_TA_BACKPLANE_CLIENT_SECRET", ""),
+
+		// Kubernetes Configuration (local testing only)
+		Kubeconfig: getEnv("ROSA_TA_KUBECONFIG", ""),
+
+		// Authorization Configuration
+		AllowedNamespaces: getStringSliceEnv("ROSA_TA_ALLOWED_NAMESPACES", nil),
+		AllowedSecrets:    getStringSliceEnv("ROSA_TA_ALLOWED_SECRETS", nil),
 	}
 }
 
@@ -78,8 +102,16 @@ func getBoolEnv(key string, defaultValue bool) bool {
 
 // getStringSliceEnv gets a comma-separated string as a slice with a default value
 func getStringSliceEnv(key string, defaultValue []string) []string {
-	if value := os.Getenv(key); value != "" {
-		return strings.Split(value, ",")
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
 	}
-	return defaultValue
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
