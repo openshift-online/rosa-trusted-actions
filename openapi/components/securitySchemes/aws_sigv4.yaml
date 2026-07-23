@@ -1,7 +1,0 @@
-type: apiKey
-in: header
-name: Authorization
-description: >-
-  AWS Signature Version 4 authentication via API Gateway.
-  Caller identity is extracted from the SigV4 signature and
-  recorded with every operation.

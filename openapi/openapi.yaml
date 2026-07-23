@@ -54,7 +54,7 @@ paths:
     $ref: paths/audit.yaml
 components:
   securitySchemes:
-    aws_sigv4:
-      $ref: components/securitySchemes/aws_sigv4.yaml
+    ocm_jwt:
+      $ref: components/securitySchemes/ocm_jwt.yaml
 security:
-  - aws_sigv4: []
+  - ocm_jwt: []

@@ -12,18 +12,10 @@ properties:
     format: uuid
     description: Execution ID
     example: fa65418c-f4eb-4f5c-8314-baaeb695ba7d
-  account_id:
+  username:
     type: string
-    description: AWS account ID of caller
-    example: '123456789012'
-  caller_arn:
-    type: string
-    description: Full ARN of STS caller
-    example: 'arn:aws:sts::123456789012:assumed-role/DevAccess/slopezma'
-  operator:
-    type: string
-    description: Extracted operator name
-    example: slopezma
+    description: OCM username of caller
+    example: 'srep-user'
   action:
     type: string
     description: Trusted Action name

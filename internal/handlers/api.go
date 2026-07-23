@@ -30,13 +30,13 @@ func (c *catalog) GetAction(name string) (*auth.Action, bool) {
 func newCatalog() *catalog {
 	return &catalog{actions: map[string]*auth.Action{
 		"cluster-info": {
-			Name:          "cluster-info",
-			Description:   "Get cluster information and status",
+			Name:         "cluster-info",
+			Description:  "Get cluster information and status",
 			AllowedRoles: []string{"SREP", "ConfigurationAnomalyDetection", "ROSAAiAgent"},
 		},
 		"pod-restart": {
-			Name:          "pod-restart",
-			Description:   "Restart pods in a specific namespace",
+			Name:         "pod-restart",
+			Description:  "Restart pods in a specific namespace",
 			AllowedRoles: []string{"SREP"},
 		},
 	}}
@@ -137,7 +137,7 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 		Action:        action,
 		Status:        openapi.ExecutionStatusPending,
 		ApprovalState: &approval,
-		CallerArn:     &callerUsername,
+		Username:      &callerUsername,
 		TargetCluster: req.TargetCluster,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
@@ -170,16 +170,14 @@ func (h *APIHandler) ListAuditEntries(w http.ResponseWriter, r *http.Request, pa
 		Total: 1,
 		Items: []openapi.AuditEntry{
 			{
-				Id:            types.UUID(auditID),
-				Timestamp:     time.Now().Add(-10 * time.Minute),
-				Method:        openapi.AuditEntryMethodPOST,
-				Path:          "/api/v0/trusted-actions/cluster-info/run",
-				AccountId:     auditUsername,
-				CallerArn:     auditUsername,
-				Operator:      auditUsername,
-				StatusCode:    202,
-				ExecutionId:   &executionID,
-				Jira:          &jira,
+				Id:          types.UUID(auditID),
+				Timestamp:   time.Now().Add(-10 * time.Minute),
+				Method:      openapi.AuditEntryMethodPOST,
+				Path:        "/api/v0/trusted-actions/cluster-info/run",
+				Username:    auditUsername,
+				StatusCode:  202,
+				ExecutionId: &executionID,
+				Jira:        &jira,
 			},
 		},
 	}
@@ -216,7 +214,7 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 				Action:        "cluster-info",
 				Status:        openapi.ExecutionStatusSucceeded,
 				ApprovalState: &approval1,
-				CallerArn:     &listUsername,
+				Username:      &listUsername,
 				TargetCluster: "test-cluster",
 				CreatedAt:     time.Now().Add(-1 * time.Hour),
 				UpdatedAt:     time.Now().Add(-30 * time.Minute),
@@ -227,7 +225,7 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 				Action:        "pod-restart",
 				Status:        openapi.ExecutionStatusRunning,
 				ApprovalState: &approval2,
-				CallerArn:     &listUsername,
+				Username:      &listUsername,
 				TargetCluster: "test-cluster",
 				CreatedAt:     time.Now().Add(-30 * time.Minute),
 				UpdatedAt:     time.Now().Add(-5 * time.Minute),
@@ -257,19 +255,19 @@ func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id typ
 	outputStatus := openapi.Uploaded
 
 	execution := openapi.Execution{
-		Id:              id,
-		Action:          "cluster-info",
-		Status:          openapi.ExecutionStatusSucceeded,
-		ApprovalState:   &approval,
-		CallerArn:       &getUsername,
-		TargetCluster:   "test-cluster",
-		CreatedAt:       time.Now().Add(-1 * time.Hour),
-		UpdatedAt:       time.Now().Add(-30 * time.Minute),
-		CompletedAt:     &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
-		RunnerSeconds:   &[]int{45}[0],
-		UploadSeconds:   &[]int{2}[0],
-		OutputPath:      &outputPath,
-		OutputStatus:    &outputStatus,
+		Id:            id,
+		Action:        "cluster-info",
+		Status:        openapi.ExecutionStatusSucceeded,
+		ApprovalState: &approval,
+		Username:      &getUsername,
+		TargetCluster: "test-cluster",
+		CreatedAt:     time.Now().Add(-1 * time.Hour),
+		UpdatedAt:     time.Now().Add(-30 * time.Minute),
+		CompletedAt:   &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
+		RunnerSeconds: &[]int{45}[0],
+		UploadSeconds: &[]int{2}[0],
+		OutputPath:    &outputPath,
+		OutputStatus:  &outputStatus,
 	}
 
 	// TODO Add output if requested
