@@ -11,7 +11,7 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions-server/internal/ocm"
 )
 
-func setupIntegrationRouter(t *testing.T) *chi.Mux {
+func setupRouter(t *testing.T, username string) *chi.Mux {
 	t.Helper()
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
@@ -31,12 +31,11 @@ func setupIntegrationRouter(t *testing.T) *chi.Mux {
 
 	catalog := newTestCatalog()
 
-	authn := NewMockAuthMiddleware(logger)
 	authz := NewRoleAuthzMiddleware(roles, mockAuthz, logger)
 	actionAuthz := NewActionAuthzMiddleware(catalog, logger)
 
 	r := chi.NewRouter()
-	r.Use(authn.AuthenticateAccountJWT)
+	r.Use(testAuthn(username))
 	r.Use(authz.AuthorizeAPI)
 
 	r.Get("/", actionAuthz.CheckActionAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,10 +59,9 @@ func setupIntegrationRouter(t *testing.T) *chi.Mux {
 }
 
 func TestIntegration_SREPCanExecutePodRestart(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "srep-user")
 
 	req := httptest.NewRequest(http.MethodPost, "/pod-restart/run", nil)
-	req.Header.Set("X-Mock-Username", "srep-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -77,10 +75,9 @@ func TestIntegration_SREPCanExecutePodRestart(t *testing.T) {
 }
 
 func TestIntegration_CADCannotExecutePodRestart(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "cad-user")
 
 	req := httptest.NewRequest(http.MethodPost, "/pod-restart/run", nil)
-	req.Header.Set("X-Mock-Username", "cad-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -91,10 +88,9 @@ func TestIntegration_CADCannotExecutePodRestart(t *testing.T) {
 }
 
 func TestIntegration_CADCanExecuteClusterInfo(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "cad-user")
 
 	req := httptest.NewRequest(http.MethodPost, "/cluster-info/run", nil)
-	req.Header.Set("X-Mock-Username", "cad-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -105,7 +101,7 @@ func TestIntegration_CADCanExecuteClusterInfo(t *testing.T) {
 }
 
 func TestIntegration_NoAuthHeader_Returns401(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
@@ -118,10 +114,9 @@ func TestIntegration_NoAuthHeader_Returns401(t *testing.T) {
 }
 
 func TestIntegration_UnauthorizedUser_Returns403(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "random-user")
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Mock-Username", "random-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -132,10 +127,9 @@ func TestIntegration_UnauthorizedUser_Returns403(t *testing.T) {
 }
 
 func TestIntegration_SREPCanAccessCatalog(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "srep-user")
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Mock-Username", "srep-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -146,10 +140,9 @@ func TestIntegration_SREPCanAccessCatalog(t *testing.T) {
 }
 
 func TestIntegration_CADCanDescribeClusterInfo(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "cad-user")
 
 	req := httptest.NewRequest(http.MethodGet, "/cluster-info", nil)
-	req.Header.Set("X-Mock-Username", "cad-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -160,15 +153,29 @@ func TestIntegration_CADCanDescribeClusterInfo(t *testing.T) {
 }
 
 func TestIntegration_CADCannotDescribePodRestart(t *testing.T) {
-	r := setupIntegrationRouter(t)
+	r := setupRouter(t, "cad-user")
 
 	req := httptest.NewRequest(http.MethodGet, "/pod-restart", nil)
-	req.Header.Set("X-Mock-Username", "cad-user")
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("expected 403, got %d; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func testAuthn(username string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if username == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			ctx := SetCallerIdentityContext(r.Context(), &CallerIdentity{
+				Username: username,
+			})
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }

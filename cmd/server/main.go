@@ -78,32 +78,25 @@ func runServer(cmd *cobra.Command, args []string) error {
 	var authnMiddleware auth.JWTMiddleware
 	var authzMiddleware auth.AuthorizationMiddleware
 
-	if cfg.EnableAuth {
-		authnMiddleware = auth.NewAuthMiddleware(logger)
+	authnMiddleware = auth.NewAuthMiddleware(logger)
 
-		roles, err := auth.LoadRoles(cfg.RolesConfigPath)
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to load role configuration")
-		}
-
-		ocmClient, err := ocm.NewClient(ocm.Config{
-			BaseURL:      cfg.OCMBaseURL,
-			ClientID:     cfg.OCMClientID,
-			ClientSecret: cfg.OCMClientSecret,
-			SelfToken:    cfg.OCMToken,
-		})
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to create OCM client")
-		}
-		defer ocmClient.Close()
-
-		authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
-		logger.Info("Auth enabled: JWT validation + AMS role resolution")
-	} else {
-		authnMiddleware = auth.NewMockAuthMiddleware(logger)
-		authzMiddleware = auth.NewMockAuthzMiddleware(logger)
-		logger.Warn("Auth disabled: using mock authentication (X-Mock-Username + X-Mock-Role headers required)")
+	roles, err := auth.LoadRoles(cfg.RolesConfigPath)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to load role configuration")
 	}
+
+	ocmClient, err := ocm.NewClient(ocm.Config{
+		BaseURL:      cfg.OCMBaseURL,
+		ClientID:     cfg.OCMClientID,
+		ClientSecret: cfg.OCMClientSecret,
+		SelfToken:    cfg.OCMToken,
+	})
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create OCM client")
+	}
+	defer ocmClient.Close()
+
+	authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
 
 	actionAuthz := auth.NewActionAuthzMiddleware(apiHandler.ActionCatalog, logger)
 
@@ -121,7 +114,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Amz-Date", "X-Amz-Security-Token", "X-Mock-Username", "X-Mock-Email", "X-Mock-ClientID", "X-Mock-Role"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Amz-Date", "X-Amz-Security-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
@@ -147,33 +140,31 @@ func runServer(cmd *cobra.Command, args []string) error {
 		})
 	})
 
-	// Wrap the router with OCM JWT validation when auth is enabled.
+	// Wrap the router with OCM JWT validation.
 	// This matches the rh-trex pattern (api_server.go:53-74): the OCM SDK handler
 	// validates JWT signatures against JWKS, stores the verified token in context,
 	// then the auth.Middleware extracts claims from that token.
 	var mainHandler http.Handler = router
-	if cfg.EnableAuth {
-		authnLogger, err := sdk.NewStdLoggerBuilder().
-			Debug(logger.Level >= logrus.DebugLevel).
-			Build()
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to create OCM authentication logger")
-		}
+	authnLogger, err := sdk.NewStdLoggerBuilder().
+		Debug(logger.Level >= logrus.DebugLevel).
+		Build()
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create OCM authentication logger")
+	}
 
-		builder := authentication.NewHandler().
-			Logger(authnLogger).
-			KeysURL(cfg.JWKCertURL).
-			Public("^/health$").
-			Next(mainHandler)
+	builder := authentication.NewHandler().
+		Logger(authnLogger).
+		KeysURL(cfg.JWKCertURL).
+		Public("^/health$").
+		Next(mainHandler)
 
-		if cfg.JWKCertFile != "" {
-			builder = builder.KeysFile(cfg.JWKCertFile)
-		}
+	if cfg.JWKCertFile != "" {
+		builder = builder.KeysFile(cfg.JWKCertFile)
+	}
 
-		mainHandler, err = builder.Build()
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to build OCM authentication handler")
-		}
+	mainHandler, err = builder.Build()
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to build OCM authentication handler")
 	}
 
 	// Create server

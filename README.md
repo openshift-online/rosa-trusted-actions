@@ -71,7 +71,6 @@ export AWS_SECRET_ACCESS_KEY="your-secret"
 
 # Application Configuration
 export ROSA_TA_S3_BUCKET="trusted-actions-bucket"
-export ROSA_TA_ENABLE_AUTH="true"
 export ROSA_TA_ALLOWED_ACCOUNTS="123456789012,987654321098"
 ```
 

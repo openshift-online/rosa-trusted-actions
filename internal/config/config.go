@@ -24,7 +24,6 @@ type Config struct {
 	S3KeyPrefix string
 
 	// Security Configuration (environment variables)
-	EnableAuth      bool
 	AllowedAccounts []string
 	RolesConfigPath string
 	JWKCertFile     string
@@ -71,9 +70,8 @@ func Load() *Config {
 		S3KeyPrefix: getEnv("ROSA_TA_S3_KEY_PREFIX", "trusted-actions"),
 
 		// Security Configuration
-		EnableAuth:      getBoolEnv("ROSA_TA_ENABLE_AUTH", true),
 		AllowedAccounts: getStringSliceEnv("ROSA_TA_ALLOWED_ACCOUNTS", nil),
-		RolesConfigPath: getEnv("ROSA_TA_ROLES_CONFIG", "configs/roles.yml"),
+		RolesConfigPath: getEnv("ROSA_TA_ROLES_CONFIG", "configs/role_mapping.yaml"),
 		JWKCertFile:     getEnv("ROSA_TA_JWK_CERT_FILE", ""),
 		JWKCertURL:      getEnv("ROSA_TA_JWK_CERT_URL", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"),
 
