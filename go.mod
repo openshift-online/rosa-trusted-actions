@@ -11,20 +11,20 @@ require (
 	github.com/oapi-codegen/runtime v1.6.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
-	k8s.io/apimachinery v0.36.2
-	k8s.io/client-go v0.36.2
+	k8s.io/apimachinery v0.36.3
+	k8s.io/client-go v0.36.3
 )
 
 require (
-	github.com/ajg/form v1.8.0 // indirect
+	github.com/ajg/form v1.9.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dprotaso/go-yit v0.0.0-20260623150633-6f1ed93922d1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
-	github.com/getkin/kin-openapi v0.142.0 // indirect
+	github.com/getkin/kin-openapi v0.144.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
-	github.com/go-openapi/jsonreference v0.21.6 // indirect
+	github.com/go-openapi/jsonreference v1.0.0 // indirect
 	github.com/go-openapi/swag v0.27.3 // indirect
 	github.com/go-openapi/swag/cmdutils v0.27.3 // indirect
 	github.com/go-openapi/swag/conv v0.27.3 // indirect
@@ -68,7 +68,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
+	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
