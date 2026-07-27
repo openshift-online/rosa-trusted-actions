@@ -3,6 +3,8 @@ package auth
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -19,7 +21,31 @@ type rolesConfig struct {
 
 // LoadRoles reads role mappings from a YAML config file
 func LoadRoles(path string) ([]RoleMapping, error) {
-	data, err := os.ReadFile(path)
+	cleaned := filepath.Clean(path)
+	if filepath.IsAbs(cleaned) {
+		return nil, fmt.Errorf("configuration file provided via absolute path. Please provide a relative path instead")
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine working directory: %w", err)
+	}
+
+	realWd, err := filepath.EvalSymlinks(wd)
+	if err != nil {
+		return nil, fmt.Errorf("reading roles config %s: %w", path, err)
+	}
+	realPath, err := filepath.EvalSymlinks(filepath.Join(realWd, cleaned))
+	if err != nil {
+		return nil, fmt.Errorf("reading roles config %s: %w", path, err)
+	}
+
+	rel, err := filepath.Rel(realWd, realPath)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return nil, fmt.Errorf("roles config path escapes working directory: %s", path)
+	}
+
+	data, err := os.ReadFile(realPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading roles config %s: %w", path, err)
 	}
