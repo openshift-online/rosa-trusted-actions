@@ -94,7 +94,11 @@ func runServer(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to create OCM client")
 	}
-	defer ocmClient.Close()
+	defer func() {
+		if err := ocmClient.Close(); err != nil {
+			logger.WithError(err).Error("Failed to close OCM connection")
+		}
+	}()
 
 	authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
 

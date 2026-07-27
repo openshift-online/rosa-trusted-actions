@@ -18,8 +18,8 @@ type Config struct {
 	BaseURL      string
 	ClientID     string
 	ClientSecret string
-	SelfToken string
-	Debug     bool
+	SelfToken    string
+	Debug        bool
 }
 
 func NewClient(config Config) (*Client, error) {
@@ -64,10 +64,12 @@ func (c *Client) newConnection() error {
 	return nil
 }
 
-func (c *Client) Close() {
+func (c *Client) Close() error {
 	if c.connection != nil {
-		c.connection.Close()
+		return c.connection.Close()
 	}
+
+	return nil
 }
 
 type service struct {
