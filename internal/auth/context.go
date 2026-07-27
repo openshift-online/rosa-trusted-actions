@@ -77,14 +77,5 @@ func GetCallerIdentityFromJWT(r *http.Request) (*CallerIdentity, error) {
 		identity.Username, _ = claims["preferred_username"].(string)
 	}
 
-	// Fallback: extract username from name field
-	if identity.Username == "" {
-		name, _ := claims["name"].(string)
-		parts := strings.SplitN(name, " ", 2)
-		if len(parts) > 0 {
-			identity.Username = parts[0]
-		}
-	}
-
 	return identity, nil
 }
