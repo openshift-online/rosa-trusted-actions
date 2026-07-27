@@ -4,4 +4,4 @@ bearerFormat: JWT
 description: >-
   OCM JWT bearer token. The token is validated against the
   Red Hat SSO JWKS endpoint; caller identity is extracted
-  from the username JWT claim.
+  from the username JWT claim, with a fallback to preferred_username.
