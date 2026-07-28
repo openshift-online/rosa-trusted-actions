@@ -105,17 +105,19 @@ func (m *RoleAuthzMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
 			return
 		}
 
+		var hadErr bool
+
 		for _, role := range m.roles {
 			allowed, err := m.authz.AccessReview(
 				ctx, identity.Username, "*", role.AMSResource)
 			if err != nil {
+				hadErr = true
 				m.logger.WithError(err).WithFields(logrus.Fields{
 					"username": identity.Username,
 					"role":     role.ID,
 					"resource": role.AMSResource,
 				}).Error("AMS AccessReview failed")
-				respondError(w, http.StatusInternalServerError, "Authorization check failed")
-				return
+				continue
 			}
 
 			if allowed {
@@ -128,6 +130,12 @@ func (m *RoleAuthzMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
+
+		}
+
+		if hadErr {
+			respondError(w, http.StatusInternalServerError, "Authorization check failed")
+			return
 		}
 
 		m.logger.WithField("username", identity.Username).Warn("No matching role found")
