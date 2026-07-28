@@ -29,12 +29,13 @@ func (a *Middleware) AuthenticateAccountJWT(next http.Handler) http.Handler {
 		identity, err := GetCallerIdentityFromJWT(r)
 		if err != nil {
 			a.logger.WithError(err).Warn("JWT authentication failed")
-			respondError(w, http.StatusUnauthorized, "Authentication failed: "+err.Error())
+			respondError(w, http.StatusUnauthorized, "Authentication required.")
 			return
 		}
 
 		if identity.Username == "" {
-			respondError(w, http.StatusUnauthorized, "JWT token missing username claim")
+			a.logger.WithError(err).Warn("JWT token missing username claim")
+			respondError(w, http.StatusUnauthorized, "Authentication required.")
 			return
 		}
 

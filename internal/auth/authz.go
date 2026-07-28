@@ -100,7 +100,8 @@ func (m *RoleAuthzMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
 
 		identity := GetCallerIdentityFromContext(ctx)
 		if identity == nil || identity.Username == "" {
-			respondError(w, http.StatusUnauthorized, "Authentication details not present in context")
+			m.logger.Warn("Authentication details not present in context")
+			respondError(w, http.StatusUnauthorized, "Authentication required.")
 			return
 		}
 
@@ -130,6 +131,6 @@ func (m *RoleAuthzMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
 		}
 
 		m.logger.WithField("username", identity.Username).Warn("No matching role found")
-		respondError(w, http.StatusForbidden, "Access denied: no authorized role for this user")
+		respondError(w, http.StatusForbidden, "Access denied.")
 	})
 }
