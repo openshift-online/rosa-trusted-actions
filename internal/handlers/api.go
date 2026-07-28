@@ -252,7 +252,7 @@ func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id typ
 		getUsername = getIdentity.Username
 	}
 	outputPath := "s3://trusted-actions-bucket/outputs/exec-123/output.json"
-	outputStatus := openapi.Uploaded
+	outputStatus := openapi.OutputStatusUploaded
 
 	execution := openapi.Execution{
 		Id:            id,
