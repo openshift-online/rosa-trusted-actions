@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>openshift/boilerplate//.github/renovate.json"
+  ],
+  "packageRules": [
+    {
+      "description": "go-yit v0.0.0-20260623+ switched from gopkg.in/yaml.v3 to go.yaml.in/yaml/v4, breaking yaml-jsonpath",
+      "matchPackageNames": ["github.com/dprotaso/go-yit"],
+      "matchManagers": ["gomod"],
+      "enabled": false
+    }
   ]
 }
