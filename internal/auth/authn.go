@@ -2,8 +2,10 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,10 +47,14 @@ func (a *Middleware) AuthenticateAccountJWT(next http.Handler) http.Handler {
 }
 
 func respondError(w http.ResponseWriter, status int, message string) {
+	errorResp := openapi.Error{
+		Kind:   openapi.ErrorKindError,
+		Code:   fmt.Sprintf("HTTP_%d", status),
+		Reason: message,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
-		"kind":   "Error",
-		"reason": message,
-	})
+
+	json.NewEncoder(w).Encode(errorResp)
 }
