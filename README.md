@@ -72,6 +72,15 @@ export AWS_SECRET_ACCESS_KEY="your-secret"
 # Application Configuration
 export ROSA_TA_S3_BUCKET="trusted-actions-bucket"
 export ROSA_TA_ALLOWED_ACCOUNTS="123456789012,987654321098"
+
+# Authorization
+export ROSA_TA_ROLES_CONFIG="configs/role_mapping.yaml"
+export ROSA_TA_JWK_CERT_FILE=""  # optional
+export ROSA_TA_JWK_CERT_URL="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
+export ROSA_TA_OCM_BASE_URL="https://api.openshift.com"
+export ROSA_TA_OCM_CLIENT_ID="some-client-id"
+export ROSA_TA_OCM_CLIENT_SECRET="xxxxxxxxxxxxxxx"
+export ROSA_TA_OCM_TOKEN=""
 ```
 
 Copy `.env.example` to `.env` and customize.
