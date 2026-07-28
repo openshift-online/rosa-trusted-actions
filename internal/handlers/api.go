@@ -138,16 +138,16 @@ func (h *APIHandler) ListAuditEntries(w http.ResponseWriter, r *http.Request, pa
 		Total: 1,
 		Items: []openapi.AuditEntry{
 			{
-				Id:            types.UUID(auditID),
-				Timestamp:     time.Now().Add(-10 * time.Minute),
-				Method:        openapi.AuditEntryMethodPOST,
-				Path:          "/api/v0/trusted-actions/cluster-info/run",
-				AccountId:     "123456789012",
-				CallerArn:     "arn:aws:iam::123456789012:user/test-user",
-				Operator:      "test-user",
-				StatusCode:    202,
-				ExecutionId:   &executionID,
-				Jira:          &jira,
+				Id:          types.UUID(auditID),
+				Timestamp:   time.Now().Add(-10 * time.Minute),
+				Method:      openapi.AuditEntryMethodPOST,
+				Path:        "/api/v0/trusted-actions/cluster-info/run",
+				AccountId:   "123456789012",
+				CallerArn:   "arn:aws:iam::123456789012:user/test-user",
+				Operator:    "test-user",
+				StatusCode:  202,
+				ExecutionId: &executionID,
+				Jira:        &jira,
 			},
 		},
 	}
@@ -220,23 +220,23 @@ func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id typ
 	accountID := "123456789012"
 	callerArn := "arn:aws:iam::123456789012:user/test-user"
 	outputPath := "s3://trusted-actions-bucket/outputs/exec-123/output.json"
-	outputStatus := openapi.Uploaded
+	outputStatus := openapi.OutputStatusUploaded
 
 	execution := openapi.Execution{
-		Id:              id,
-		Action:          "cluster-info",
-		Status:          openapi.ExecutionStatusSucceeded,
-		ApprovalState:   &approval,
-		AccountId:       &accountID,
-		CallerArn:       &callerArn,
-		TargetCluster:   "test-cluster",
-		CreatedAt:       time.Now().Add(-1 * time.Hour),
-		UpdatedAt:       time.Now().Add(-30 * time.Minute),
-		CompletedAt:     &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
-		RunnerSeconds:   &[]int{45}[0],
-		UploadSeconds:   &[]int{2}[0],
-		OutputPath:      &outputPath,
-		OutputStatus:    &outputStatus,
+		Id:            id,
+		Action:        "cluster-info",
+		Status:        openapi.ExecutionStatusSucceeded,
+		ApprovalState: &approval,
+		AccountId:     &accountID,
+		CallerArn:     &callerArn,
+		TargetCluster: "test-cluster",
+		CreatedAt:     time.Now().Add(-1 * time.Hour),
+		UpdatedAt:     time.Now().Add(-30 * time.Minute),
+		CompletedAt:   &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
+		RunnerSeconds: &[]int{45}[0],
+		UploadSeconds: &[]int{2}[0],
+		OutputPath:    &outputPath,
+		OutputStatus:  &outputStatus,
 	}
 
 	// TODO Add output if requested

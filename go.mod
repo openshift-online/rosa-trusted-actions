@@ -19,7 +19,7 @@ require (
 	github.com/ajg/form v1.9.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/dprotaso/go-yit v0.0.0-20260623150633-6f1ed93922d1 // indirect
+	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
 	github.com/getkin/kin-openapi v0.144.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -53,7 +53,6 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	go.yaml.in/yaml/v4 v4.0.0-rc.6 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
