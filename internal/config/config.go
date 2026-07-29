@@ -26,6 +26,13 @@ type Config struct {
 	// Security Configuration (environment variables)
 	EnableAuth      bool
 	AllowedAccounts []string
+	RolesConfigPath string
+
+	// OCM Client Configuration (environment variables)
+	OCMBaseURL      string
+	OCMClientID     string
+	OCMClientSecret string
+	OCMToken        string
 
 	// Database Configuration (environment variables, for future use)
 	DatabaseURL string
@@ -64,6 +71,13 @@ func Load() *Config {
 		// Security Configuration
 		EnableAuth:      getBoolEnv("ROSA_TA_ENABLE_AUTH", true),
 		AllowedAccounts: getStringSliceEnv("ROSA_TA_ALLOWED_ACCOUNTS", nil),
+		RolesConfigPath: getEnv("ROSA_TA_ROLES_CONFIG", "configs/roles.yml"),
+
+		// OCM Client Configuration
+		OCMBaseURL:      getEnv("ROSA_TA_OCM_BASE_URL", "https://api.openshift.com"),
+		OCMClientID:     getEnv("ROSA_TA_OCM_CLIENT_ID", ""),
+		OCMClientSecret: getEnv("ROSA_TA_OCM_CLIENT_SECRET", ""),
+		OCMToken:        getEnv("ROSA_TA_OCM_TOKEN", ""),
 
 		// Database Configuration
 		DatabaseURL: getEnv("DATABASE_URL", ""),

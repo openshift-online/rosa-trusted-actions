@@ -11,21 +11,48 @@ import (
 	"github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift-online/rosa-trusted-actions-server/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
 )
 
+// Catalog of available trusted actions with their authorization requirements
+type catalog struct {
+	actions map[string]*auth.Action
+}
+
+var _ auth.ActionCatalog = &catalog{}
+
+func (c *catalog) GetAction(name string) (*auth.Action, bool) {
+	a, ok := c.actions[name]
+	return a, ok
+}
+
+func newCatalog() *catalog {
+	return &catalog{actions: map[string]*auth.Action{
+		"cluster-info": {
+			Name:          "cluster-info",
+			Description:   "Get cluster information and status",
+			RequiredRoles: []string{"SREP", "ConfigurationAnomalyDetection", "ROSAAiAgent"},
+		},
+		"pod-restart": {
+			Name:          "pod-restart",
+			Description:   "Restart pods in a specific namespace",
+			RequiredRoles: []string{"SREP"},
+		},
+	}}
+}
+
 // APIHandler implements the generated ServerInterface
 type APIHandler struct {
-	logger *logrus.Logger
-	// TODO: Add database/storage clients here
-	// db     *sql.DB
-	// s3     *s3.Client
+	logger        *logrus.Logger
+	ActionCatalog auth.ActionCatalog
 }
 
 // NewAPIHandler creates a new API handler
 func NewAPIHandler(logger *logrus.Logger) *APIHandler {
 	return &APIHandler{
-		logger: logger,
+		logger:        logger,
+		ActionCatalog: newCatalog(),
 	}
 }
 
@@ -98,18 +125,19 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 	// Generate execution ID
 	executionID := uuid.New()
 
-	// TODO Mock execution creation
 	approval := openapi.ApprovalStateNotRequired
-	accountID := "123456789012"
-	callerArn := "arn:aws:iam::123456789012:user/test-user"
+	identity := auth.GetCallerIdentityFromContext(r.Context())
+	callerUsername := ""
+	if identity != nil {
+		callerUsername = identity.Username
+	}
 
 	execution := openapi.Execution{
 		Id:            types.UUID(executionID),
 		Action:        action,
 		Status:        openapi.ExecutionStatusPending,
 		ApprovalState: &approval,
-		AccountId:     &accountID,
-		CallerArn:     &callerArn,
+		CallerArn:     &callerUsername,
 		TargetCluster: req.TargetCluster,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
@@ -128,26 +156,30 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 func (h *APIHandler) ListAuditEntries(w http.ResponseWriter, r *http.Request, params openapi.ListAuditEntriesParams) {
 	h.logger.Info("Listing audit entries")
 
-	// TODO Mock audit response
 	auditID := uuid.New()
 	executionID := "exec-123"
 	jira := "OHSS-12345"
+	auditIdentity := auth.GetCallerIdentityFromContext(r.Context())
+	auditUsername := ""
+	if auditIdentity != nil {
+		auditUsername = auditIdentity.Username
+	}
 
 	audit := openapi.AuditList{
 		Kind:  openapi.AuditListKindAuditList,
 		Total: 1,
 		Items: []openapi.AuditEntry{
 			{
-				Id:          types.UUID(auditID),
-				Timestamp:   time.Now().Add(-10 * time.Minute),
-				Method:      openapi.AuditEntryMethodPOST,
-				Path:        "/api/v0/trusted-actions/cluster-info/run",
-				AccountId:   "123456789012",
-				CallerArn:   "arn:aws:iam::123456789012:user/test-user",
-				Operator:    "test-user",
-				StatusCode:  202,
-				ExecutionId: &executionID,
-				Jira:        &jira,
+				Id:            types.UUID(auditID),
+				Timestamp:     time.Now().Add(-10 * time.Minute),
+				Method:        openapi.AuditEntryMethodPOST,
+				Path:          "/api/v0/trusted-actions/cluster-info/run",
+				AccountId:     auditUsername,
+				CallerArn:     auditUsername,
+				Operator:      auditUsername,
+				StatusCode:    202,
+				ExecutionId:   &executionID,
+				Jira:          &jira,
 			},
 		},
 	}
@@ -166,13 +198,15 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 		"limit":  params.Limit,
 	}).Debug("Execution list parameters")
 
-	// TODO
 	execID1 := uuid.New()
 	execID2 := uuid.New()
 	approval1 := openapi.ApprovalStateNotRequired
 	approval2 := openapi.ApprovalStateApproved
-	accountID := "123456789012"
-	callerArn := "arn:aws:iam::123456789012:user/test-user"
+	listIdentity := auth.GetCallerIdentityFromContext(r.Context())
+	listUsername := ""
+	if listIdentity != nil {
+		listUsername = listIdentity.Username
+	}
 
 	executions := openapi.ExecutionList{
 		HasMore: false,
@@ -182,8 +216,7 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 				Action:        "cluster-info",
 				Status:        openapi.ExecutionStatusSucceeded,
 				ApprovalState: &approval1,
-				AccountId:     &accountID,
-				CallerArn:     &callerArn,
+				CallerArn:     &listUsername,
 				TargetCluster: "test-cluster",
 				CreatedAt:     time.Now().Add(-1 * time.Hour),
 				UpdatedAt:     time.Now().Add(-30 * time.Minute),
@@ -194,8 +227,7 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 				Action:        "pod-restart",
 				Status:        openapi.ExecutionStatusRunning,
 				ApprovalState: &approval2,
-				AccountId:     &accountID,
-				CallerArn:     &callerArn,
+				CallerArn:     &listUsername,
 				TargetCluster: "test-cluster",
 				CreatedAt:     time.Now().Add(-30 * time.Minute),
 				UpdatedAt:     time.Now().Add(-5 * time.Minute),
@@ -215,28 +247,29 @@ func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id typ
 	includeOutput := params.Include != nil && (*params.Include == openapi.Output || *params.Include == openapi.Outputlogs)
 	includeLogs := params.Include != nil && (*params.Include == openapi.Logs || *params.Include == openapi.Outputlogs)
 
-	// TODO Mock execution
 	approval := openapi.ApprovalStateNotRequired
-	accountID := "123456789012"
-	callerArn := "arn:aws:iam::123456789012:user/test-user"
+	getIdentity := auth.GetCallerIdentityFromContext(r.Context())
+	getUsername := ""
+	if getIdentity != nil {
+		getUsername = getIdentity.Username
+	}
 	outputPath := "s3://trusted-actions-bucket/outputs/exec-123/output.json"
-	outputStatus := openapi.OutputStatusUploaded
+	outputStatus := openapi.Uploaded
 
 	execution := openapi.Execution{
-		Id:            id,
-		Action:        "cluster-info",
-		Status:        openapi.ExecutionStatusSucceeded,
-		ApprovalState: &approval,
-		AccountId:     &accountID,
-		CallerArn:     &callerArn,
-		TargetCluster: "test-cluster",
-		CreatedAt:     time.Now().Add(-1 * time.Hour),
-		UpdatedAt:     time.Now().Add(-30 * time.Minute),
-		CompletedAt:   &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
-		RunnerSeconds: &[]int{45}[0],
-		UploadSeconds: &[]int{2}[0],
-		OutputPath:    &outputPath,
-		OutputStatus:  &outputStatus,
+		Id:              id,
+		Action:          "cluster-info",
+		Status:          openapi.ExecutionStatusSucceeded,
+		ApprovalState:   &approval,
+		CallerArn:       &getUsername,
+		TargetCluster:   "test-cluster",
+		CreatedAt:       time.Now().Add(-1 * time.Hour),
+		UpdatedAt:       time.Now().Add(-30 * time.Minute),
+		CompletedAt:     &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
+		RunnerSeconds:   &[]int{45}[0],
+		UploadSeconds:   &[]int{2}[0],
+		OutputPath:      &outputPath,
+		OutputStatus:    &outputStatus,
 	}
 
 	// TODO Add output if requested

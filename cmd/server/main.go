@@ -15,10 +15,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions-server/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions-server/internal/config"
 	"github.com/openshift-online/rosa-trusted-actions-server/internal/handlers"
 	"github.com/openshift-online/rosa-trusted-actions-server/internal/middleware"
+	"github.com/openshift-online/rosa-trusted-actions-server/internal/ocm"
+	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
 )
 
 var (
@@ -70,6 +72,39 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Create handler implementation
 	apiHandler := handlers.NewAPIHandler(logger)
 
+	// Setup auth middleware
+	var authnMiddleware auth.JWTMiddleware
+	var authzMiddleware auth.AuthorizationMiddleware
+
+	if cfg.EnableAuth {
+		authnMiddleware = auth.NewAuthMiddleware(logger)
+
+		roles, err := auth.LoadRoles(cfg.RolesConfigPath)
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to load role configuration")
+		}
+
+		ocmClient, err := ocm.NewClient(ocm.Config{
+			BaseURL:      cfg.OCMBaseURL,
+			ClientID:     cfg.OCMClientID,
+			ClientSecret: cfg.OCMClientSecret,
+			SelfToken:    cfg.OCMToken,
+		})
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to create OCM client")
+		}
+		defer ocmClient.Close()
+
+		authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
+		logger.Info("Auth enabled: JWT validation + AMS role resolution")
+	} else {
+		authnMiddleware = auth.NewMockAuthMiddleware(logger)
+		authzMiddleware = auth.NewAuthzMiddlewareMock(logger)
+		logger.Warn("Auth disabled: using mock authentication (X-Mock-Username header)")
+	}
+
+	actionAuthz := auth.NewActionAuthzMiddleware(apiHandler.ActionCatalog, logger)
+
 	// Setup router
 	router := chi.NewRouter()
 
@@ -84,22 +119,27 @@ func runServer(cmd *cobra.Command, args []string) error {
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Amz-Date", "X-Amz-Security-Token"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Amz-Date", "X-Amz-Security-Token", "X-Mock-Username", "X-Mock-Email", "X-Mock-ClientID"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
-	// Health check endpoint
+	// Health check endpoint (no auth required)
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, `{"status":"healthy","version":"%s","build_date":"%s","git_commit":"%s"}`, version, buildDate, gitCommit)
 	})
 
-	// Add API routes with base path
+	// Add API routes with auth middleware
 	router.Route("/api/v0/trusted-actions", func(r chi.Router) {
-		r.Mount("/", openapi.HandlerFromMux(apiHandler, r))
+		r.Use(authnMiddleware.AuthenticateAccountJWT)
+		r.Use(authzMiddleware.AuthorizeAPI)
+		r.Mount("/", openapi.HandlerWithOptions(apiHandler, openapi.ChiServerOptions{
+			BaseRouter:  r,
+			Middlewares: []openapi.MiddlewareFunc{actionAuthz.CheckActionAccess},
+		}))
 	})
 
 	// Create server
