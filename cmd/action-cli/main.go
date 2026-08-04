@@ -37,6 +37,7 @@ func main() {
 		clusterVersion string
 		allowedNS      string
 		allowedSecrets string
+		clusterScoped  bool
 	)
 
 	runCmd := &cobra.Command{
@@ -48,7 +49,7 @@ func main() {
 			logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 
 			nsList := splitCSV(allowedNS)
-			if len(nsList) == 0 {
+			if len(nsList) == 0 && namespace != "" {
 				nsList = []string{namespace}
 			}
 			secList := splitCSV(allowedSecrets)
@@ -81,11 +82,12 @@ func main() {
 				ClusterVersion: clusterVersion,
 				Action:         act,
 				Target: actions.ResourceTarget{
-					Group:     group,
-					Version:   version,
-					Resource:  resource,
-					Namespace: namespace,
-					Name:      name,
+					Group:         group,
+					Version:       version,
+					Resource:      resource,
+					Namespace:     namespace,
+					Name:          name,
+					ClusterScoped: clusterScoped,
 				},
 				Params: params,
 			})
@@ -93,6 +95,10 @@ func main() {
 			fmt.Println()
 			fmt.Printf("Allowed:  %v\n", result.Allowed)
 			fmt.Printf("Reason:   %s\n", result.Reason)
+
+			if !result.Allowed {
+				return fmt.Errorf("denied: %s", result.Reason)
+			}
 
 			if result.Error != nil {
 				return fmt.Errorf("action failed: %w", result.Error)
@@ -130,9 +136,9 @@ func main() {
 	runCmd.Flags().StringVar(&clusterVersion, "cluster-version", "", "cluster OpenShift version")
 	runCmd.Flags().StringVar(&allowedNS, "allowed-namespaces", "", "comma-separated namespace allowlist (defaults to --namespace)")
 	runCmd.Flags().StringVar(&allowedSecrets, "allowed-secrets", "", "comma-separated secret allowlist (namespace/name)")
+	runCmd.Flags().BoolVar(&clusterScoped, "cluster-scoped", false, "target a cluster-scoped resource (e.g. nodes, namespaces, clusterroles)")
 
 	_ = runCmd.MarkFlagRequired("action")
-	_ = runCmd.MarkFlagRequired("namespace")
 	_ = runCmd.MarkFlagRequired("resource")
 
 	rootCmd.AddCommand(runCmd)

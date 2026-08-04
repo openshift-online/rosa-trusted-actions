@@ -49,15 +49,20 @@ func (p *PatchAction) Execute(ctx context.Context, client dynamic.Interface, req
 		Resource: req.Target.Resource,
 	}
 
-	obj, err := client.Resource(gvr).Namespace(req.Target.Namespace).Patch(
+	rc, err := resourceClient(client, gvr, req.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	obj, err := rc.Patch(
 		ctx, req.Target.Name, types.MergePatchType, []byte(patchData), metav1.PatchOptions{},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to patch %s/%s in %s: %w", req.Target.Resource, req.Target.Name, req.Target.Namespace, err)
+		return nil, fmt.Errorf("failed to patch %s/%s in %s: %w", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace), err)
 	}
 
 	return &ActionResult{
 		Resources: []unstructured.Unstructured{*obj},
-		Message:   fmt.Sprintf("patched %s/%s in %s", req.Target.Resource, req.Target.Name, req.Target.Namespace),
+		Message:   fmt.Sprintf("patched %s/%s in %s", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace)),
 	}, nil
 }

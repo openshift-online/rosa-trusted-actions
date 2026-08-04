@@ -61,9 +61,10 @@ func (e *Executor) Execute(ctx context.Context, req Request) (result *Result) {
 	defer func() { e.auditor.Log(rec) }()
 
 	authResult := e.authorizer.Authorize(authorization.Request{
-		Namespace:    req.Target.Namespace,
-		ResourceType: req.Target.Resource,
-		ResourceName: req.Target.Name,
+		Namespace:     req.Target.Namespace,
+		ResourceType:  req.Target.Resource,
+		ResourceName:  req.Target.Name,
+		ClusterScoped: req.Target.ClusterScoped,
 	})
 
 	if !authResult.Allowed {

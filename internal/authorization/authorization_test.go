@@ -41,17 +41,32 @@ func TestAuthorize_DeniedNamespace(t *testing.T) {
 	}
 }
 
-func TestAuthorize_EmptyNamespace(t *testing.T) {
+func TestAuthorize_ClusterScoped(t *testing.T) {
+	authz := newTestAuthorizer([]string{"openshift-monitoring"}, nil)
+
+	result := authz.Authorize(Request{
+		Namespace:     "",
+		ResourceType:  "namespaces",
+		ResourceName:  "kube-system",
+		ClusterScoped: true,
+	})
+
+	if !result.Allowed {
+		t.Errorf("expected cluster-scoped request to be allowed, got denied: %s", result.Reason)
+	}
+}
+
+func TestAuthorize_EmptyNamespace_NamespacedResource(t *testing.T) {
 	authz := newTestAuthorizer([]string{"openshift-monitoring"}, nil)
 
 	result := authz.Authorize(Request{
 		Namespace:    "",
-		ResourceType: "pods",
-		ResourceName: "my-pod",
+		ResourceType: "configmaps",
+		ResourceName: "cluster-config",
 	})
 
 	if result.Allowed {
-		t.Error("expected denied for empty namespace, got allowed")
+		t.Error("expected denied for namespaced resource with empty namespace, got allowed")
 	}
 }
 
@@ -128,6 +143,36 @@ func TestAuthorize_EmptyAllowlists(t *testing.T) {
 
 	if result.Allowed {
 		t.Error("expected denied with empty allowlists, got allowed")
+	}
+}
+
+func TestAuthorize_ClusterScoped_EmptyAllowlists(t *testing.T) {
+	authz := newTestAuthorizer(nil, nil)
+
+	result := authz.Authorize(Request{
+		Namespace:     "",
+		ResourceType:  "nodes",
+		ResourceName:  "node-1",
+		ClusterScoped: true,
+	})
+
+	if !result.Allowed {
+		t.Errorf("expected cluster-scoped request allowed even with empty allowlists, got denied: %s", result.Reason)
+	}
+}
+
+func TestAuthorize_ClusterScoped_SecretsBlocked(t *testing.T) {
+	authz := newTestAuthorizer([]string{"openshift-monitoring"}, []string{"openshift-monitoring/my-secret"})
+
+	result := authz.Authorize(Request{
+		Namespace:     "",
+		ResourceType:  "secrets",
+		ResourceName:  "my-secret",
+		ClusterScoped: true,
+	})
+
+	if result.Allowed {
+		t.Error("expected cluster-scoped secret request to be denied, got allowed")
 	}
 }
 

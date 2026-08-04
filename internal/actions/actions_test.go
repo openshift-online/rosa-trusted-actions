@@ -30,11 +30,30 @@ func newConfigMap(name string) *unstructured.Unstructured {
 	}
 }
 
+func newNode(name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Node",
+			"metadata": map[string]interface{}{
+				"name": name,
+			},
+		},
+	}
+}
+
 var configMapTarget = ResourceTarget{
 	Group:     "",
 	Version:   "v1",
 	Resource:  "configmaps",
 	Namespace: "openshift-monitoring",
+}
+
+var clusterScopedTarget = ResourceTarget{
+	Group:         "",
+	Version:       "v1",
+	Resource:      "nodes",
+	ClusterScoped: true,
 }
 
 // GET action tests
@@ -314,5 +333,117 @@ func TestGetAction_RequiredRBAC_ListOmitsResourceNames(t *testing.T) {
 	rules := action.RequiredRBAC(configMapTarget)
 	if len(rules[0].ResourceNames) != 0 {
 		t.Errorf("expected no resource names for list, got %v", rules[0].ResourceNames)
+	}
+}
+
+// Scope validation tests
+
+func TestGetAction_NamespacedResource_EmptyNamespace(t *testing.T) {
+	client := newFakeClient()
+	action := NewGetAction()
+
+	target := ResourceTarget{
+		Group:    "",
+		Version:  "v1",
+		Resource: "configmaps",
+	}
+
+	_, err := action.Execute(context.Background(), client, ActionRequest{Target: target})
+	if err == nil {
+		t.Fatal("expected error for namespaced resource with empty namespace, got nil")
+	}
+}
+
+func TestGetAction_ClusterScopedResource_WithNamespace(t *testing.T) {
+	client := newFakeClient()
+	action := NewGetAction()
+
+	target := ResourceTarget{
+		Group:         "",
+		Version:       "v1",
+		Resource:      "nodes",
+		Namespace:     "some-namespace",
+		ClusterScoped: true,
+	}
+
+	_, err := action.Execute(context.Background(), client, ActionRequest{Target: target})
+	if err == nil {
+		t.Fatal("expected error for cluster-scoped resource with namespace set, got nil")
+	}
+}
+
+// Cluster-scoped action tests
+
+func TestGetAction_ClusterScoped_List(t *testing.T) {
+	n1 := newNode("node-1")
+	n2 := newNode("node-2")
+	client := newFakeClient(n1, n2)
+	action := NewGetAction()
+
+	result, err := action.Execute(context.Background(), client, ActionRequest{Target: clusterScopedTarget})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Resources) != 2 {
+		t.Errorf("expected 2 resources, got %d", len(result.Resources))
+	}
+}
+
+func TestGetAction_ClusterScoped_SingleResource(t *testing.T) {
+	n := newNode("node-1")
+	client := newFakeClient(n)
+	action := NewGetAction()
+
+	target := clusterScopedTarget
+	target.Name = "node-1"
+
+	result, err := action.Execute(context.Background(), client, ActionRequest{Target: target})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Resources) != 1 {
+		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
+	}
+	if result.Resources[0].GetName() != "node-1" {
+		t.Errorf("expected name %q, got %q", "node-1", result.Resources[0].GetName())
+	}
+}
+
+func TestDeleteAction_ClusterScoped(t *testing.T) {
+	n := newNode("node-1")
+	client := newFakeClient(n)
+	action := NewDeleteAction()
+
+	target := clusterScopedTarget
+	target.Name = "node-1"
+
+	result, err := action.Execute(context.Background(), client, ActionRequest{Target: target})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Message == "" {
+		t.Error("expected non-empty message")
+	}
+}
+
+func TestPatchAction_ClusterScoped(t *testing.T) {
+	n := newNode("node-1")
+	client := newFakeClient(n)
+	action := NewPatchAction()
+
+	target := clusterScopedTarget
+	target.Name = "node-1"
+
+	result, err := action.Execute(context.Background(), client, ActionRequest{
+		Target: target,
+		Params: map[string]string{
+			"patch": `{"metadata":{"labels":{"test":"value"}}}`,
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Resources) != 1 {
+		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
 	}
 }

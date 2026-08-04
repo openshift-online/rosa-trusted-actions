@@ -19,7 +19,6 @@ action-cli run [flags]
 | Flag | Description |
 |------|-------------|
 | `--action` | Action to execute: `get`, `patch`, `delete` |
-| `--namespace` | Target Kubernetes namespace |
 | `--resource` | Resource type (plural, e.g. `configmaps`, `secrets`, `pods`) |
 
 ### Optional Flags
@@ -27,6 +26,8 @@ action-cli run [flags]
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--kubeconfig` | `$KUBECONFIG` | Path to kubeconfig file |
+| `--namespace` | *(empty)* | Target namespace (required for namespaced resources) |
+| `--cluster-scoped` | `false` | Target a cluster-scoped resource (e.g. nodes, namespaces) |
 | `--name` | *(empty)* | Resource name (omit to list all) |
 | `--group` | *(empty)* | API group (empty for core resources) |
 | `--version` | `v1` | API version |
@@ -83,6 +84,27 @@ action-cli run \
   --name my-configmap
 ```
 
+### List namespaces (cluster-scoped)
+
+```bash
+action-cli run \
+  --kubeconfig ~/.kube/config \
+  --action get \
+  --resource namespaces \
+  --cluster-scoped
+```
+
+### Get a specific node (cluster-scoped)
+
+```bash
+action-cli run \
+  --kubeconfig ~/.kube/config \
+  --action get \
+  --resource nodes \
+  --name ip-10-0-1-100.ec2.internal \
+  --cluster-scoped
+```
+
 ### Get an allowed secret
 
 Secrets are denied by default. Use `--allowed-secrets` to allowlist specific ones:
@@ -102,6 +124,7 @@ action-cli run \
 The CLI enforces the same authorization rules as the server:
 
 - **Namespace scoping**: Only namespaces in the allowlist are permitted. If `--allowed-namespaces` is not set, it defaults to the value of `--namespace`.
+- **Cluster-scoped resources**: Pass `--cluster-scoped` to target cluster-scoped resources (e.g. `namespaces`, `nodes`, `clusterroles`). Omitting both `--namespace` and `--cluster-scoped` is rejected.
 - **Secret deny-by-default**: Access to `secrets` is denied unless the specific `namespace/name` pair appears in `--allowed-secrets`.
 
 Denied requests are logged via the audit logger and the CLI exits with an error.
