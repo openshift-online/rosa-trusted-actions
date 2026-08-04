@@ -19,6 +19,120 @@ make run
 # The server starts on :8080 by default
 ```
 
+## Local Development (mock auth)
+
+The server normally requires live OCM credentials and a reachable JWKS endpoint.
+Set `ROSA_TA_ENABLE_AUTH=false` to bypass both — the server injects a hardcoded
+`dev-user` identity with the SREP role so every endpoint is reachable without a
+token.
+
+> **Warning:** never set `ROSA_TA_ENABLE_AUTH=false` outside a local or CI environment.
+
+### Get a kubeconfig (OpenShift managed clusters)
+
+For OSD / ROSA clusters, retrieve the admin kubeconfig via OCM using the
+cluster's internal ID:
+
+```bash
+INTERNAL_ID="<your-cluster-internal-id>"
+ocm get /api/clusters_mgmt/v1/clusters/${INTERNAL_ID}/credentials \
+  | jq -r .kubeconfig \
+  > /tmp/${INTERNAL_ID}.kubeconfig
+```
+
+The `sed` strip is required because the embedded CA bundle causes the dynamic
+client to reject the config when running outside the cluster network.
+
+### Start the server
+
+```bash
+export ROSA_TA_ENABLE_AUTH=false
+export ROSA_TA_KUBECONFIG=/tmp/<your-cluster-internal-id>.kubeconfig
+
+go run ./cmd/server/ --log-level debug
+```
+
+You should see:
+
+```
+WARN  Auth disabled — using mock identity 'dev-user' with SREP role. Do not use in production.
+INFO  Using kubeconfig provider for cluster access (local mode)
+INFO  Starting server  addr=:8080
+```
+
+### Verify the server is up
+
+```bash
+curl -s http://localhost:8080/health | jq .
+```
+
+```json
+{"status":"healthy","version":"dev","build_date":"unknown","git_commit":"unknown"}
+```
+
+### List the action catalog
+
+No `Authorization` header required — mock auth injects the identity automatically.
+
+```bash
+curl -s http://localhost:8080/api/v0/trusted-actions/ | jq .
+```
+
+### Execute a GET action against the cluster
+
+The request body accepts optional `params` to control which resource is fetched.
+Defaults to listing pods in the `default` namespace.
+
+```bash
+# List pods in the default namespace (default params)
+curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
+  -H 'Content-Type: application/json' \
+  -d '{"target_cluster": "local"}' | jq .
+
+# List all namespaces
+curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "target_cluster": "local",
+    "params": {"resource": "namespaces"}
+  }' | jq .
+
+# Get a specific pod
+curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "target_cluster": "local",
+    "params": {
+      "resource":  "pods",
+      "namespace": "kube-system",
+      "name":      "coredns-<id>"
+    }
+  }' | jq .
+```
+
+A successful response looks like:
+
+```json
+{
+  "id": "...",
+  "action": "cluster-info",
+  "status": "succeeded",
+  "target_cluster": "local",
+  "output": [ ... ],
+  "completed_at": "..."
+}
+```
+
+### Supported params
+
+| Param       | Default   | Description                                            |
+|-------------|-----------|--------------------------------------------------------|
+| `resource`  | `pods`    | Kubernetes resource type (e.g. `namespaces`, `nodes`)  |
+| `namespace` | `default` | Namespace to query (omit for cluster-scoped resources) |
+| `name`      | *(empty)* | Specific resource name — omit to list all              |
+| `version`   | `v1`      | API version                                            |
+| `group`     | *(empty)* | API group (empty = core group)                         |
+
 ## Development
 
 ### Code Generation
