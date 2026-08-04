@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift-online/rosa-trusted-actions-server/internal/backplane"
@@ -32,4 +33,18 @@ type Action interface {
 	Name() string
 	RequiredRBAC(target ResourceTarget) []backplane.RBACRule
 	Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error)
+}
+
+func resourceClient(client dynamic.Interface, gvr schema.GroupVersionResource, namespace string) dynamic.ResourceInterface {
+	if namespace == "" {
+		return client.Resource(gvr)
+	}
+	return client.Resource(gvr).Namespace(namespace)
+}
+
+func scopeLabel(namespace string) string {
+	if namespace == "" {
+		return "cluster scope"
+	}
+	return namespace
 }

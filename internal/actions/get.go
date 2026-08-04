@@ -41,23 +41,25 @@ func (g *GetAction) Execute(ctx context.Context, client dynamic.Interface, req A
 		Resource: req.Target.Resource,
 	}
 
+	rc := resourceClient(client, gvr, req.Target.Namespace)
+
 	if req.Target.Name == "" {
-		list, err := client.Resource(gvr).Namespace(req.Target.Namespace).List(ctx, metav1.ListOptions{})
+		list, err := rc.List(ctx, metav1.ListOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("failed to list %s in %s: %w", req.Target.Resource, req.Target.Namespace, err)
+			return nil, fmt.Errorf("failed to list %s in %s: %w", req.Target.Resource, scopeLabel(req.Target.Namespace), err)
 		}
 		return &ActionResult{
 			Resources: list.Items,
-			Message:   fmt.Sprintf("listed %d %s in %s", len(list.Items), req.Target.Resource, req.Target.Namespace),
+			Message:   fmt.Sprintf("listed %d %s in %s", len(list.Items), req.Target.Resource, scopeLabel(req.Target.Namespace)),
 		}, nil
 	}
 
-	obj, err := client.Resource(gvr).Namespace(req.Target.Namespace).Get(ctx, req.Target.Name, metav1.GetOptions{})
+	obj, err := rc.Get(ctx, req.Target.Name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get %s/%s in %s: %w", req.Target.Resource, req.Target.Name, req.Target.Namespace, err)
+		return nil, fmt.Errorf("failed to get %s/%s in %s: %w", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace), err)
 	}
 	return &ActionResult{
 		Resources: []unstructured.Unstructured{*obj},
-		Message:   fmt.Sprintf("got %s/%s in %s", req.Target.Resource, req.Target.Name, req.Target.Namespace),
+		Message:   fmt.Sprintf("got %s/%s in %s", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace)),
 	}, nil
 }

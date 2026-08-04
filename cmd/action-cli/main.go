@@ -48,7 +48,7 @@ func main() {
 			logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 
 			nsList := splitCSV(allowedNS)
-			if len(nsList) == 0 {
+			if len(nsList) == 0 && namespace != "" {
 				nsList = []string{namespace}
 			}
 			secList := splitCSV(allowedSecrets)
@@ -132,7 +132,6 @@ func main() {
 	runCmd.Flags().StringVar(&allowedSecrets, "allowed-secrets", "", "comma-separated secret allowlist (namespace/name)")
 
 	_ = runCmd.MarkFlagRequired("action")
-	_ = runCmd.MarkFlagRequired("namespace")
 	_ = runCmd.MarkFlagRequired("resource")
 
 	rootCmd.AddCommand(runCmd)

@@ -37,6 +37,7 @@ var configMapTarget = ResourceTarget{
 	Namespace: "openshift-monitoring",
 }
 
+
 // GET action tests
 
 func TestGetAction_Name(t *testing.T) {

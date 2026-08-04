@@ -41,17 +41,17 @@ func TestAuthorize_DeniedNamespace(t *testing.T) {
 	}
 }
 
-func TestAuthorize_EmptyNamespace(t *testing.T) {
+func TestAuthorize_ClusterScoped(t *testing.T) {
 	authz := newTestAuthorizer([]string{"openshift-monitoring"}, nil)
 
 	result := authz.Authorize(Request{
 		Namespace:    "",
-		ResourceType: "pods",
-		ResourceName: "my-pod",
+		ResourceType: "namespaces",
+		ResourceName: "kube-system",
 	})
 
-	if result.Allowed {
-		t.Error("expected denied for empty namespace, got allowed")
+	if !result.Allowed {
+		t.Errorf("expected cluster-scoped request to be allowed, got denied: %s", result.Reason)
 	}
 }
 

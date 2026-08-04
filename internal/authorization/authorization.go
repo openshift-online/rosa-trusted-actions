@@ -40,11 +40,7 @@ func New(logger *logrus.Logger, allowedNamespaces []string, allowedSecrets []str
 }
 
 func (a *authorizer) Authorize(req Request) Result {
-	if req.Namespace == "" {
-		return Result{Allowed: false, Reason: "namespace is required"}
-	}
-
-	if !a.allowedNamespaces[req.Namespace] {
+	if req.Namespace != "" && !a.allowedNamespaces[req.Namespace] {
 		a.logger.WithField("namespace", req.Namespace).Debug("namespace not in allowlist")
 		return Result{Allowed: false, Reason: "namespace not in allowlist: " + req.Namespace}
 	}

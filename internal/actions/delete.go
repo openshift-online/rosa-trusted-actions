@@ -42,12 +42,14 @@ func (d *DeleteAction) Execute(ctx context.Context, client dynamic.Interface, re
 		Resource: req.Target.Resource,
 	}
 
-	err := client.Resource(gvr).Namespace(req.Target.Namespace).Delete(ctx, req.Target.Name, metav1.DeleteOptions{})
+	rc := resourceClient(client, gvr, req.Target.Namespace)
+
+	err := rc.Delete(ctx, req.Target.Name, metav1.DeleteOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete %s/%s in %s: %w", req.Target.Resource, req.Target.Name, req.Target.Namespace, err)
+		return nil, fmt.Errorf("failed to delete %s/%s in %s: %w", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace), err)
 	}
 
 	return &ActionResult{
-		Message: fmt.Sprintf("deleted %s/%s in %s", req.Target.Resource, req.Target.Name, req.Target.Namespace),
+		Message: fmt.Sprintf("deleted %s/%s in %s", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace)),
 	}, nil
 }
