@@ -40,9 +40,6 @@ ocm get /api/clusters_mgmt/v1/clusters/${INTERNAL_ID}/credentials \
   > /tmp/${INTERNAL_ID}.kubeconfig
 ```
 
-The `sed` strip is required because the embedded CA bundle causes the dynamic
-client to reject the config when running outside the cluster network.
-
 ### Start the server
 
 ```bash
@@ -54,7 +51,7 @@ go run ./cmd/server/ --log-level debug
 
 You should see:
 
-```
+```text
 WARN  Auth disabled — using mock identity 'dev-user' with SREP role. Do not use in production.
 INFO  Using kubeconfig provider for cluster access (local mode)
 INFO  Starting server  addr=:8080

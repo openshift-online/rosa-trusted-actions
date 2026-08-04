@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +17,8 @@ func TestMockAuthMiddleware_InjectsHardcodedDevUser(t *testing.T) {
 	})
 
 	rr := httptest.NewRecorder()
-	m.AuthenticateAccountJWT(next).ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
+	m.AuthenticateAccountJWT(next).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rr.Code)
@@ -43,11 +45,10 @@ func TestMockAuthMiddleware_IgnoresAllRequestHeaders(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	req.Header.Set("X-Username", "attacker")
 	req.Header.Set("Authorization", "Bearer some-forged-token")
 
-	httptest.NewRecorder() // discard
 	rr := httptest.NewRecorder()
 	m.AuthenticateAccountJWT(next).ServeHTTP(rr, req)
 

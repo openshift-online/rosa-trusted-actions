@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +19,7 @@ func TestMockAuthzMiddleware_GrantsSREPRole(t *testing.T) {
 	})
 
 	// Authn middleware must run before authz; inject a dev identity manually.
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	ctx := SetCallerIdentityContext(req.Context(), &CallerIdentity{
 		Username: "dev-user",
 		Email:    "dev-user@redhat.com",
@@ -52,7 +53,8 @@ func TestMockAuthzMiddleware_MockPlusMockAuthn(t *testing.T) {
 
 	chain := authn.AuthenticateAccountJWT(authz.AuthorizeAPI(leaf))
 	rr := httptest.NewRecorder()
-	chain.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
+	chain.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rr.Code)

@@ -124,6 +124,15 @@ func runServer(cmd *cobra.Command, args []string) error {
 		authzMiddleware = auth.NewMockAuthzMiddleware(logger)
 	}
 
+	// Safety guard: mock auth + real backplane is a dangerous misconfiguration.
+	// An unauthenticated request would receive the hardcoded SREP role and reach
+	// production cluster infrastructure via the backplane provider. Require an
+	// explicit kubeconfig so the real backplane is never reached without auth.
+	if !cfg.EnableAuth && cfg.Kubeconfig == "" {
+		logger.Fatal("ROSA_TA_ENABLE_AUTH=false requires ROSA_TA_KUBECONFIG to be set; " +
+			"running mock auth against the real backplane is not permitted")
+	}
+
 	// -------------------------------------------------------------------------
 	// Cluster access provider — kubeconfig for local dev, backplane for production.
 	// -------------------------------------------------------------------------
