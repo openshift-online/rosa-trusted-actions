@@ -49,6 +49,12 @@ type Config struct {
 	// Authorization Configuration
 	AllowedNamespaces []string
 	AllowedSecrets    []string
+
+	// Development / local-testing flags
+	// EnableAuth controls whether OCM JWT validation and AMS role checks are
+	// enforced. Defaults to true. Set ROSA_TA_ENABLE_AUTH=false to use the
+	// hardcoded mock identity ("dev-user" / SREP role) — never use in production.
+	EnableAuth bool
 }
 
 // Load loads configuration from environment variables with defaults
@@ -95,6 +101,9 @@ func Load() *Config {
 		// Authorization Configuration
 		AllowedNamespaces: getStringSliceEnv("ROSA_TA_ALLOWED_NAMESPACES", nil),
 		AllowedSecrets:    getStringSliceEnv("ROSA_TA_ALLOWED_SECRETS", nil),
+
+		// Development flags
+		EnableAuth: getBoolEnv("ROSA_TA_ENABLE_AUTH", true),
 	}
 }
 

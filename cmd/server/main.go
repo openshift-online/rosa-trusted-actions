@@ -17,9 +17,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/config"
+	"github.com/openshift-online/rosa-trusted-actions/internal/executor"
 	"github.com/openshift-online/rosa-trusted-actions/internal/handlers"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
@@ -92,36 +94,63 @@ func runServer(cmd *cobra.Command, args []string) error {
 	var authnMiddleware auth.JWTMiddleware
 	var authzMiddleware auth.AuthorizationMiddleware
 
-	authnMiddleware = auth.NewAuthMiddleware(logger)
+	if cfg.EnableAuth {
+		authnMiddleware = auth.NewAuthMiddleware(logger)
 
-	roles, err := auth.LoadRoles(cfg.RolesConfigPath)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to load role configuration")
-	}
-
-	ocmClient, err := ocm.NewClient(ocm.Config{
-		BaseURL:      cfg.OCMBaseURL,
-		ClientID:     cfg.OCMClientID,
-		ClientSecret: cfg.OCMClientSecret,
-		SelfToken:    cfg.OCMToken,
-	})
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to create OCM client")
-	}
-	defer func() {
-		if err := ocmClient.Close(); err != nil {
-			logger.WithError(err).Error("Failed to close OCM connection")
+		roles, err := auth.LoadRoles(cfg.RolesConfigPath)
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to load role configuration")
 		}
-	}()
 
-	authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
+		ocmClient, err := ocm.NewClient(ocm.Config{
+			BaseURL:      cfg.OCMBaseURL,
+			ClientID:     cfg.OCMClientID,
+			ClientSecret: cfg.OCMClientSecret,
+			SelfToken:    cfg.OCMToken,
+		})
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to create OCM client")
+		}
+		defer func() {
+			if err := ocmClient.Close(); err != nil {
+				logger.WithError(err).Error("Failed to close OCM connection")
+			}
+		}()
 
+		authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
+	} else {
+		logger.Warn("Auth disabled — using mock identity 'dev-user' with SREP role. Do not use in production.")
+		authnMiddleware = auth.NewMockAuthMiddleware()
+		authzMiddleware = auth.NewMockAuthzMiddleware(logger)
+	}
+
+	// -------------------------------------------------------------------------
+	// Cluster access provider — kubeconfig for local dev, backplane for production.
+	// -------------------------------------------------------------------------
+	var bp backplane.ClientProvider
+	if cfg.Kubeconfig != "" {
+		logger.WithField("kubeconfig", cfg.Kubeconfig).Info("Using kubeconfig provider for cluster access (local mode)")
+		bp = backplane.NewKubeconfigProvider(logger, cfg.Kubeconfig)
+	} else {
+		bp = backplane.NewBackplaneProvider(logger, cfg.BackplaneURL, cfg.BackplaneClientID, cfg.BackplaneClientSecret)
+	}
+
+	// -------------------------------------------------------------------------
+	// Executor — orchestrates action dispatch, authorization, and audit logging.
+	// -------------------------------------------------------------------------
+	authzr := authorization.New(logger, cfg.AllowedNamespaces, cfg.AllowedSecrets)
+	auditor := audit.NewMockLogger(logger) // TODO: replace with persistent audit backend
+	exec := executor.New(logger, authzr, auditor, bp)
+
+	// -------------------------------------------------------------------------
+	// Handler and router
+	// -------------------------------------------------------------------------
+	apiHandler := handlers.NewAPIHandler(logger, exec)
 	actionAuthz := auth.NewActionAuthzMiddleware(apiHandler.ActionCatalog, logger)
 
-	// Setup router
 	router := chi.NewRouter()
 
-	// Add middleware
+	// Global middleware
 	router.Use(middleware.NewLogger(logger))
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
@@ -145,48 +174,54 @@ func runServer(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(w, `{"status":"healthy","version":"%s","build_date":"%s","git_commit":"%s"}`, version, buildDate, gitCommit)
 	})
 
-	// Add API routes with auth middleware
+	// API routes — authn and authz applied as chi middleware so the entire
+	// sub-tree is protected. HandlerWithOptions registers directly on r via
+	// BaseRouter to avoid an infinite routing loop from r.Mount("/", r).
 	router.Route("/api/v0/trusted-actions", func(r chi.Router) {
 		r.Use(authnMiddleware.AuthenticateAccountJWT)
 		r.Use(middleware.NewAuditLogger(dataStore, logger))
 		r.Use(authzMiddleware.AuthorizeAPI)
-		// HandlerWithOptions registers routes directly on r via BaseRouter,
-		// so the return value is not mounted — that would cause an infinite
-		// routing loop since r.Mount("/", r) re-enters the same router.
 		openapi.HandlerWithOptions(apiHandler, openapi.ChiServerOptions{
 			BaseRouter:  r,
 			Middlewares: []openapi.MiddlewareFunc{actionAuthz.CheckActionAccess},
 		})
 	})
 
-	// Wrap the router with OCM JWT validation.
-	// This matches the rh-trex pattern (api_server.go:53-74): the OCM SDK handler
-	// validates JWT signatures against JWKS, stores the verified token in context,
-	// then the auth.Middleware extracts claims from that token.
+	// -------------------------------------------------------------------------
+	// JWKS wrapper — only applied when real auth is enabled.
+	// The OCM SDK handler validates JWT signatures against the JWKS endpoint and
+	// stores the verified token in context; auth.Middleware then extracts claims.
+	// Skipping this in mock mode avoids a network call and a Fatal at startup.
+	// -------------------------------------------------------------------------
 	var mainHandler http.Handler = router
-	authnLogger, err := sdk.NewStdLoggerBuilder().
-		Debug(logger.Level >= logrus.DebugLevel).
-		Build()
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to create OCM authentication logger")
+
+	if cfg.EnableAuth {
+		authnLogger, err := sdk.NewStdLoggerBuilder().
+			Debug(logger.Level >= logrus.DebugLevel).
+			Build()
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to create OCM authentication logger")
+		}
+
+		builder := authentication.NewHandler().
+			Logger(authnLogger).
+			KeysURL(cfg.JWKCertURL).
+			Public("^/health$").
+			Next(mainHandler)
+
+		if cfg.JWKCertFile != "" {
+			builder = builder.KeysFile(cfg.JWKCertFile)
+		}
+
+		mainHandler, err = builder.Build()
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to build OCM authentication handler")
+		}
 	}
 
-	builder := authentication.NewHandler().
-		Logger(authnLogger).
-		KeysURL(cfg.JWKCertURL).
-		Public("^/health$").
-		Next(mainHandler)
-
-	if cfg.JWKCertFile != "" {
-		builder = builder.KeysFile(cfg.JWKCertFile)
-	}
-
-	mainHandler, err = builder.Build()
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to build OCM authentication handler")
-	}
-
-	// Create server
+	// -------------------------------------------------------------------------
+	// HTTP server
+	// -------------------------------------------------------------------------
 	srv := &http.Server{
 		Addr:    cfg.ListenAddr,
 		Handler: mainHandler,
@@ -197,7 +232,6 @@ func runServer(cmd *cobra.Command, args []string) error {
 		MaxHeaderBytes: 1 << 20, // 1 MB
 	}
 
-	// Start server in goroutine
 	go func() {
 		logger.WithField("addr", cfg.ListenAddr).Info("Starting server")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -205,14 +239,12 @@ func runServer(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	logger.Info("Shutting down server...")
 
-	// Graceful shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

@@ -41,6 +41,18 @@ func New(logger *logrus.Logger, allowedNamespaces []string, allowedSecrets []str
 }
 
 func (a *authorizer) Authorize(req Request) Result {
+	// Permissive mode: when no namespace allowlist is configured (e.g. local dev),
+	// allow all requests so that cluster-scoped and unconfigured environments work.
+	// In production ROSA_TA_ALLOWED_NAMESPACES must be set to enforce restrictions.
+	if len(a.allowedNamespaces) == 0 {
+		a.logger.Debug("no namespace allowlist configured — operating in permissive mode")
+		return Result{Allowed: true, Reason: "permissive (no namespace allowlist configured)"}
+	}
+
+	if req.Namespace == "" {
+		return Result{Allowed: false, Reason: "namespace is required"}
+	}
+
 	if req.Namespace == "" && !req.ClusterScoped {
 		return Result{Allowed: false, Reason: "namespace is required for namespaced resources"}
 	}

@@ -132,6 +132,11 @@ func TestAuthorize_ListSecretsDenied(t *testing.T) {
 	}
 }
 
+// TestAuthorize_EmptyAllowlists verifies the permissive-mode contract:
+// when ROSA_TA_ALLOWED_NAMESPACES is not configured (empty slice) the
+// authorizer allows all requests so that local-dev / CI environments work
+// without a namespace allowlist. Production deployments MUST set the env var
+// to enforce access restrictions.
 func TestAuthorize_EmptyAllowlists(t *testing.T) {
 	authz := newTestAuthorizer(nil, nil)
 
@@ -141,8 +146,11 @@ func TestAuthorize_EmptyAllowlists(t *testing.T) {
 		ResourceName: "my-pod",
 	})
 
-	if result.Allowed {
-		t.Error("expected denied with empty allowlists, got allowed")
+	if !result.Allowed {
+		t.Errorf("expected permissive allow with empty allowlists, got denied: %s", result.Reason)
+	}
+	if result.Reason == "" {
+		t.Error("expected a reason string even in permissive mode")
 	}
 }
 

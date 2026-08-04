@@ -13,6 +13,7 @@ import (
 	"github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
@@ -74,7 +75,12 @@ func (h *APIHandler) Describe(w http.ResponseWriter, r *http.Request, action str
 }
 
 // CreateExecution implements POST /{action}/run
-// Execute a Trusted Action
+// Execute a Trusted Action against a target cluster.
+// When an executor is wired (kubeconfig or backplane provider), the action runs
+// synchronously and the response contains real cluster data. Without an executor
+// the server returns a stub Pending response.
+//
+// TODO: Replace this with a database write in the future that will be dequeued.
 func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, action string) {
 	h.logger.WithField("action", action).Info("Creating execution for trusted action")
 
