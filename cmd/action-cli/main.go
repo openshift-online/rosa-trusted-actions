@@ -67,8 +67,16 @@ func main() {
 				act = actions.NewPatchAction()
 			case "delete":
 				act = actions.NewDeleteAction()
+			case "describe-nodes":
+				act = actions.NewDescribeNodesAction()
+				clusterScoped = true
+				resource = "nodes"
 			default:
-				return fmt.Errorf("unknown action %q, must be one of: get, patch, delete", action)
+				return fmt.Errorf("unknown action %q, must be one of: get, patch, delete, describe-nodes", action)
+			}
+
+			if resource == "" {
+				return fmt.Errorf("--resource is required for action %q", action)
 			}
 
 			params := make(map[string]string)
@@ -139,7 +147,6 @@ func main() {
 	runCmd.Flags().BoolVar(&clusterScoped, "cluster-scoped", false, "target a cluster-scoped resource (e.g. nodes, namespaces, clusterroles)")
 
 	_ = runCmd.MarkFlagRequired("action")
-	_ = runCmd.MarkFlagRequired("resource")
 
 	rootCmd.AddCommand(runCmd)
 
