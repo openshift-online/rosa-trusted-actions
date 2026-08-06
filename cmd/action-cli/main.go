@@ -10,11 +10,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/actions"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/audit"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/authorization"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/backplane"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/executor"
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
+	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
+	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
+	"github.com/openshift-online/rosa-trusted-actions/internal/executor"
 )
 
 func main() {

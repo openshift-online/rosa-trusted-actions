@@ -7,10 +7,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/actions"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/audit"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/authorization"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/backplane"
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
+	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
+	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
 type Request struct {

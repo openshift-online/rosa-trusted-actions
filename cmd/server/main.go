@@ -17,12 +17,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/auth"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/config"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/handlers"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/middleware"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/ocm"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
+	"github.com/openshift-online/rosa-trusted-actions/internal/config"
+	"github.com/openshift-online/rosa-trusted-actions/internal/handlers"
+	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
+	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
+	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 )
 
 var (

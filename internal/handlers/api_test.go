@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 )
 
 func TestAPIHandler_Catalog(t *testing.T) {

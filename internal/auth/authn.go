@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 	"github.com/sirupsen/logrus"
 )
 

@@ -1,4 +1,4 @@
-module github.com/openshift-online/rosa-trusted-actions-server
+module github.com/openshift-online/rosa-trusted-actions
 
 go 1.26.0
 

@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/ocm"
+	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 )
 
 func setupRouter(t *testing.T, username string) *chi.Mux {

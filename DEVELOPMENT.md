@@ -17,8 +17,8 @@ This document explains how to set up a local development environment for the ROS
 
 ```bash
 # Clone the repository
-git clone https://github.com/openshift-online/rosa-trusted-actions-server.git
-cd rosa-trusted-actions-server
+git clone https://github.com/openshift-online/rosa-trusted-actions.git
+cd rosa-trusted-actions
 
 # Install all dependencies
 make deps
@@ -125,7 +125,7 @@ Recommended extensions:
 ### GoLand / IntelliJ
 
 - Enable the Go plugin
-- Set `goimports` as the formatter with local prefix: `github.com/openshift-online/rosa-trusted-actions-server`
+- Set `goimports` as the formatter with local prefix: `github.com/openshift-online/rosa-trusted-actions`
 
 ## Troubleshooting
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/actions"
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 )
 
 func TestMockLogger_LogAllowed(t *testing.T) {

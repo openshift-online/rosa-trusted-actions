@@ -17,7 +17,7 @@ The ROSA Trusted Actions Server is a Chi-based HTTP API server implementing the 
 
 **Key Details:**
 - **Language**: Go 1.24
-- **Module**: `github.com/openshift-online/rosa-trusted-actions-server`
+- **Module**: `github.com/openshift-online/rosa-trusted-actions`
 - **Framework**: go-chi/chi v5
 - **API spec**: OpenAPI 3.0 in `openapi/` (multi-file, bundled at build time)
 - **Code generation**: `oapi-codegen` produces `internal/openapi/api.go` (committed, do not edit manually)
@@ -96,7 +96,7 @@ make clean-all          # Remove everything including node_modules
 - Use stdlib `testing` with `httptest` for tests (no test frameworks)
 - Use `logrus` for structured logging
 - Follow standard Go formatting (gofmt)
-- Import ordering: stdlib, external, then local (`github.com/openshift-online/rosa-trusted-actions-server/...`)
+- Import ordering: stdlib, external, then local (`github.com/openshift-online/rosa-trusted-actions/...`)
 
 **Reuse existing abstractions:**
 - Check existing handler patterns in `internal/handlers/`

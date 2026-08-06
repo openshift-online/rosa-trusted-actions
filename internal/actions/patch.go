@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/backplane"
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
 var _ Action = (*PatchAction)(nil)

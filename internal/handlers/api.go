@@ -11,8 +11,8 @@ import (
 	"github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/auth"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
+	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 )
 
 // Catalog of available trusted actions with their authorization requirements

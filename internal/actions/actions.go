@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/backplane"
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
 type ResourceTarget struct {

@@ -3,7 +3,7 @@ package audit
 import (
 	"time"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/actions"
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 )
 
 type Decision string

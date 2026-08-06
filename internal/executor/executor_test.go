@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/actions"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/audit"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/authorization"
-	"github.com/openshift-online/rosa-trusted-actions-server/internal/backplane"
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
+	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
+	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 	"k8s.io/client-go/dynamic"
 )
 
