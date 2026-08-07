@@ -18,11 +18,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
+	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/config"
 	"github.com/openshift-online/rosa-trusted-actions/internal/handlers"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
 
 var (
@@ -71,8 +73,20 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Setup logging
 	logger := setupLogging(cfg)
 
+	// Initialize database
+	dataStore, err := store.NewSQLiteStore(cmd.Context(), cfg.DatabaseURL, logger)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize database")
+	}
+	defer func() {
+		if err := dataStore.Close(); err != nil {
+			logger.WithError(err).Error("Failed to close database")
+		}
+	}()
+
 	// Create handler implementation
-	apiHandler := handlers.NewAPIHandler(logger)
+	actionCatalog := catalog.New()
+	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, dataStore)
 
 	// Setup auth middleware
 	var authnMiddleware auth.JWTMiddleware
@@ -134,6 +148,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Add API routes with auth middleware
 	router.Route("/api/v0/trusted-actions", func(r chi.Router) {
 		r.Use(authnMiddleware.AuthenticateAccountJWT)
+		r.Use(middleware.NewAuditLogger(dataStore, logger))
 		r.Use(authzMiddleware.AuthorizeAPI)
 		// HandlerWithOptions registers routes directly on r via BaseRouter,
 		// so the return value is not mounted — that would cause an infinite

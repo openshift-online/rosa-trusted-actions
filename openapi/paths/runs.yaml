@@ -9,6 +9,13 @@ get:
     with the include parameter for output and logs.
   operationId: listExecutions
   parameters:
+    - name: page
+      in: query
+      description: Page number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
     - name: limit
       in: query
       description: Max results per page (1-100)

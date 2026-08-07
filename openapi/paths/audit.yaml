@@ -9,6 +9,13 @@ get:
     schema; fields not applicable to a given call type are empty strings.
   operationId: listAuditEntries
   parameters:
+    - name: page
+      in: query
+      description: Page number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
     - name: limit
       in: query
       description: Max results per page (1-200)

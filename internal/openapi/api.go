@@ -312,11 +312,26 @@ type AuditEntryMethod string
 
 // AuditList defines model for AuditList.
 type AuditList struct {
+	// HasMore Whether more results are available
+	//
+	// Example: false
+	HasMore bool `json:"has_more"`
+
 	// Items Audit log entries (sorted by timestamp descending)
 	Items []AuditEntry `json:"items"`
 
 	// Kind Always "AuditList"
 	Kind AuditListKind `json:"kind"`
+
+	// Limit Max results per page
+	//
+	// Example: 50
+	Limit int `json:"limit"`
+
+	// Page Current page number
+	//
+	// Example: 1
+	Page int `json:"page"`
 
 	// Total Total number of matching audit entries
 	//
@@ -595,6 +610,9 @@ type TrustedActionSummary struct {
 
 // ListAuditEntriesParams defines parameters for ListAuditEntries.
 type ListAuditEntriesParams struct {
+	// Page Page number (1-based)
+	Page *int `form:"page,omitempty" json:"page,omitempty"`
+
 	// Limit Max results per page (1-200)
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
@@ -622,6 +640,9 @@ type ListAuditEntriesParamsMethod string
 
 // ListExecutionsParams defines parameters for ListExecutions.
 type ListExecutionsParams struct {
+	// Page Page number (1-based)
+	Page *int `form:"page,omitempty" json:"page,omitempty"`
+
 	// Limit Max results per page (1-100)
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
@@ -771,6 +792,19 @@ func (siw *ServerInterfaceWrapper) ListAuditEntries(w http.ResponseWriter, r *ht
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListAuditEntriesParams
 
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
 	// ------------- Optional query parameter "limit" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
@@ -881,6 +915,19 @@ func (siw *ServerInterfaceWrapper) ListExecutions(w http.ResponseWriter, r *http
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListExecutionsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
 
 	// ------------- Optional query parameter "limit" -------------
 

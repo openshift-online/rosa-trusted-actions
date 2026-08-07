@@ -3,6 +3,9 @@ required:
   - kind
   - items
   - total
+  - page
+  - limit
+  - has_more
 properties:
   kind:
     type: string
@@ -18,3 +21,15 @@ properties:
     type: integer
     description: Total number of matching audit entries
     example: 3
+  page:
+    type: integer
+    description: Current page number
+    example: 1
+  limit:
+    type: integer
+    description: Max results per page
+    example: 50
+  has_more:
+    type: boolean
+    description: Whether more results are available
+    example: false
