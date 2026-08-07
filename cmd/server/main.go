@@ -23,6 +23,7 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
 
 var (
@@ -71,8 +72,19 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Setup logging
 	logger := setupLogging(cfg)
 
+	// Initialize database
+	dataStore, err := store.NewSQLiteStore(cfg.DatabaseURL, logger)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize database")
+	}
+	defer func() {
+		if err := dataStore.Close(); err != nil {
+			logger.WithError(err).Error("Failed to close database")
+		}
+	}()
+
 	// Create handler implementation
-	apiHandler := handlers.NewAPIHandler(logger)
+	apiHandler := handlers.NewAPIHandler(logger, dataStore)
 
 	// Setup auth middleware
 	var authnMiddleware auth.JWTMiddleware

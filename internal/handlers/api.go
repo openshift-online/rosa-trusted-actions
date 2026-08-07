@@ -1,18 +1,21 @@
 package handlers
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
+	"github.com/openshift-online/rosa-trusted-actions/internal/models"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
+	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
 
 // Catalog of available trusted actions with their authorization requirements
@@ -46,13 +49,15 @@ func newCatalog() *catalog {
 type APIHandler struct {
 	logger        *logrus.Logger
 	ActionCatalog auth.ActionCatalog
+	store         store.Store
 }
 
 // NewAPIHandler creates a new API handler
-func NewAPIHandler(logger *logrus.Logger) *APIHandler {
+func NewAPIHandler(logger *logrus.Logger, s store.Store) *APIHandler {
 	return &APIHandler{
 		logger:        logger,
 		ActionCatalog: newCatalog(),
+		store:         s,
 	}
 }
 
@@ -64,7 +69,6 @@ var _ openapi.ServerInterface = (*APIHandler)(nil)
 func (h *APIHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Listing trusted actions catalog")
 
-	// TODO: Mock response for now
 	catalog := openapi.TrustedActionCatalog{
 		Total: 2,
 		Items: []openapi.TrustedActionSummary{
@@ -91,7 +95,6 @@ func (h *APIHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) Describe(w http.ResponseWriter, r *http.Request, action string) {
 	h.logger.WithField("action", action).Info("Describing trusted action")
 
-	// TODO: Mock response for now
 	description := "Target namespace"
 	trustedAction := openapi.TrustedAction{
 		Name:        action,
@@ -115,40 +118,27 @@ func (h *APIHandler) Describe(w http.ResponseWriter, r *http.Request, action str
 func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, action string) {
 	h.logger.WithField("action", action).Info("Creating execution for trusted action")
 
-	// Parse request body
 	var req openapi.ExecutionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := render.DecodeJSON(r.Body, &req); err != nil {
 		h.respondError(w, r, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
-	// Generate execution ID
-	executionID := uuid.New()
-
-	approval := openapi.ApprovalStateNotRequired
 	identity := auth.GetCallerIdentityFromContext(r.Context())
-	callerUsername := ""
+	username := ""
 	if identity != nil {
-		callerUsername = identity.Username
+		username = identity.Username
 	}
 
-	execution := openapi.Execution{
-		Id:            types.UUID(executionID),
-		Action:        action,
-		Status:        openapi.ExecutionStatusPending,
-		ApprovalState: &approval,
-		Username:      &callerUsername,
-		TargetCluster: req.TargetCluster,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-		DryRun:        req.DryRun,
-		Force:         req.Force,
-		Params:        req.Params,
+	exec := models.ExecutionFromRequest(action, req, username)
+
+	if err := h.store.CreateExecution(r.Context(), exec); err != nil {
+		h.respondError(w, r, http.StatusInternalServerError, "Failed to create execution", err)
+		return
 	}
 
-	// Return 202 Accepted as per API spec
 	w.WriteHeader(http.StatusAccepted)
-	render.JSON(w, r, execution)
+	render.JSON(w, r, exec.ToOpenAPI())
 }
 
 // ListAuditEntries implements GET /audit
@@ -156,33 +146,50 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 func (h *APIHandler) ListAuditEntries(w http.ResponseWriter, r *http.Request, params openapi.ListAuditEntriesParams) {
 	h.logger.Info("Listing audit entries")
 
-	auditID := uuid.New()
-	executionID := "exec-123"
-	jira := "OHSS-12345"
-	auditIdentity := auth.GetCallerIdentityFromContext(r.Context())
-	auditUsername := ""
-	if auditIdentity != nil {
-		auditUsername = auditIdentity.Username
+	filter := store.AuditFilter{
+		Action: params.Action,
+		Target: params.Target,
 	}
 
-	audit := openapi.AuditList{
+	if params.Operator != nil {
+		filter.Operator = params.Operator
+	}
+	if params.Method != nil {
+		m := string(*params.Method)
+		filter.Method = &m
+	}
+	if params.ApprovalState != nil {
+		a := string(*params.ApprovalState)
+		filter.ApprovalState = &a
+	}
+	if params.Limit != nil {
+		filter.Limit = *params.Limit
+	}
+	if params.Since != nil {
+		t, err := parseSince(*params.Since)
+		if err != nil {
+			h.respondError(w, r, http.StatusBadRequest, "Invalid since parameter", err)
+			return
+		}
+		filter.Since = t
+	}
+
+	result, err := h.store.ListAuditEntries(r.Context(), filter)
+	if err != nil {
+		h.respondError(w, r, http.StatusInternalServerError, "Failed to list audit entries", err)
+		return
+	}
+
+	items := make([]openapi.AuditEntry, 0, len(result.Items))
+	for _, entry := range result.Items {
+		items = append(items, entry.ToOpenAPI())
+	}
+
+	render.JSON(w, r, openapi.AuditList{
 		Kind:  openapi.AuditListKindAuditList,
-		Total: 1,
-		Items: []openapi.AuditEntry{
-			{
-				Id:          types.UUID(auditID),
-				Timestamp:   time.Now().Add(-10 * time.Minute),
-				Method:      openapi.AuditEntryMethodPOST,
-				Path:        "/api/v0/trusted-actions/cluster-info/run",
-				Username:    auditUsername,
-				StatusCode:  202,
-				ExecutionId: &executionID,
-				Jira:        &jira,
-			},
-		},
-	}
-
-	render.JSON(w, r, audit)
+		Total: result.Total,
+		Items: items,
+	})
 }
 
 // ListExecutions implements GET /runs
@@ -190,50 +197,80 @@ func (h *APIHandler) ListAuditEntries(w http.ResponseWriter, r *http.Request, pa
 func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, params openapi.ListExecutionsParams) {
 	h.logger.Info("Listing executions")
 
-	h.logger.WithFields(logrus.Fields{
-		"action": params.Action,
-		"status": params.Status,
-		"limit":  params.Limit,
-	}).Debug("Execution list parameters")
-
-	execID1 := uuid.New()
-	execID2 := uuid.New()
-	approval1 := openapi.ApprovalStateNotRequired
-	approval2 := openapi.ApprovalStateApproved
-	listIdentity := auth.GetCallerIdentityFromContext(r.Context())
-	listUsername := ""
-	if listIdentity != nil {
-		listUsername = listIdentity.Username
+	filter := store.ExecutionFilter{
+		Action: params.Action,
+		Target: params.Target,
 	}
 
-	executions := openapi.ExecutionList{
-		HasMore: false,
-		Items: []openapi.Execution{
-			{
-				Id:            types.UUID(execID1),
-				Action:        "cluster-info",
-				Status:        openapi.ExecutionStatusSucceeded,
-				ApprovalState: &approval1,
-				Username:      &listUsername,
-				TargetCluster: "test-cluster",
-				CreatedAt:     time.Now().Add(-1 * time.Hour),
-				UpdatedAt:     time.Now().Add(-30 * time.Minute),
-				CompletedAt:   &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
-			},
-			{
-				Id:            types.UUID(execID2),
-				Action:        "pod-restart",
-				Status:        openapi.ExecutionStatusRunning,
-				ApprovalState: &approval2,
-				Username:      &listUsername,
-				TargetCluster: "test-cluster",
-				CreatedAt:     time.Now().Add(-30 * time.Minute),
-				UpdatedAt:     time.Now().Add(-5 * time.Minute),
-			},
-		},
+	if params.Operator != nil {
+		filter.Operator = params.Operator
+	}
+	if params.Status != nil {
+		s := string(*params.Status)
+		filter.Status = &s
+	}
+	if params.Scope != nil {
+		s := string(*params.Scope)
+		filter.Scope = &s
+	}
+	if params.Type != nil {
+		t := string(*params.Type)
+		filter.Type = &t
+	}
+	if params.OutputStatus != nil {
+		o := string(*params.OutputStatus)
+		filter.OutputStatus = &o
+	}
+	if params.ApprovalState != nil {
+		a := string(*params.ApprovalState)
+		filter.ApprovalState = &a
+	}
+	if params.DryRun != nil {
+		b := *params.DryRun == openapi.ListExecutionsParamsDryRunTrue
+		filter.DryRun = &b
+	}
+	if params.Force != nil {
+		b := *params.Force == openapi.ListExecutionsParamsForceTrue
+		filter.Force = &b
+	}
+	if params.Limit != nil {
+		filter.Limit = *params.Limit
+	}
+	if params.Since != nil {
+		t, err := parseSince(*params.Since)
+		if err != nil {
+			h.respondError(w, r, http.StatusBadRequest, "Invalid since parameter", err)
+			return
+		}
+		filter.Since = t
 	}
 
-	render.JSON(w, r, executions)
+	result, err := h.store.ListExecutions(r.Context(), filter)
+	if err != nil {
+		h.respondError(w, r, http.StatusInternalServerError, "Failed to list executions", err)
+		return
+	}
+
+	items := make([]openapi.Execution, 0, len(result.Items))
+	for _, exec := range result.Items {
+		items = append(items, exec.ToOpenAPI())
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	render.JSON(w, r, openapi.ExecutionList{
+		Items:   items,
+		Total:   result.Total,
+		Page:    1,
+		Limit:   limit,
+		HasMore: result.Total > len(items),
+	})
 }
 
 // GetExecution implements GET /runs/{id}
@@ -241,52 +278,31 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id types.UUID, params openapi.GetExecutionParams) {
 	h.logger.WithField("execution_id", id).Info("Getting execution details")
 
-	// Parse include parameters
+	exec, err := h.store.GetExecution(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			h.respondError(w, r, http.StatusNotFound, "Execution not found", err)
+			return
+		}
+		h.respondError(w, r, http.StatusInternalServerError, "Failed to get execution", err)
+		return
+	}
+
+	result := exec.ToOpenAPI()
+
 	includeOutput := params.Include != nil && (*params.Include == openapi.Output || *params.Include == openapi.Outputlogs)
 	includeLogs := params.Include != nil && (*params.Include == openapi.Logs || *params.Include == openapi.Outputlogs)
 
-	approval := openapi.ApprovalStateNotRequired
-	getIdentity := auth.GetCallerIdentityFromContext(r.Context())
-	getUsername := ""
-	if getIdentity != nil {
-		getUsername = getIdentity.Username
-	}
-	outputPath := "s3://trusted-actions-bucket/outputs/exec-123/output.json"
-	outputStatus := openapi.OutputStatusUploaded
-
-	execution := openapi.Execution{
-		Id:            id,
-		Action:        "cluster-info",
-		Status:        openapi.ExecutionStatusSucceeded,
-		ApprovalState: &approval,
-		Username:      &getUsername,
-		TargetCluster: "test-cluster",
-		CreatedAt:     time.Now().Add(-1 * time.Hour),
-		UpdatedAt:     time.Now().Add(-30 * time.Minute),
-		CompletedAt:   &[]time.Time{time.Now().Add(-30 * time.Minute)}[0],
-		RunnerSeconds: &[]int{45}[0],
-		UploadSeconds: &[]int{2}[0],
-		OutputPath:    &outputPath,
-		OutputStatus:  &outputStatus,
-	}
-
-	// TODO Add output if requested
+	// Logs and Output are fetched from S3 at request time, not from the database.
+	// Placeholder until S3 retrieval is implemented.
 	if includeOutput {
-		var outputData interface{} = map[string]interface{}{
-			"nodes":  3,
-			"pods":   45,
-			"status": "healthy",
-		}
-		execution.Output = &outputData
+		h.logger.WithField("execution_id", id).Debug("Output retrieval not yet implemented")
 	}
-
-	// Add logs if requested
 	if includeLogs {
-		logs := "Execution started...\nConnecting to cluster...\nExecution completed successfully."
-		execution.Logs = &logs
+		h.logger.WithField("execution_id", id).Debug("Log retrieval not yet implemented")
 	}
 
-	render.JSON(w, r, execution)
+	render.JSON(w, r, result)
 }
 
 // Helper functions
@@ -302,4 +318,39 @@ func (h *APIHandler) respondError(w http.ResponseWriter, r *http.Request, status
 
 	w.WriteHeader(status)
 	render.JSON(w, r, errorResp)
+}
+
+func parseSince(since string) (*time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, since); err == nil {
+		return &t, nil
+	}
+
+	since = strings.TrimSpace(since)
+	if len(since) < 2 {
+		return nil, fmt.Errorf("invalid duration: %s", since)
+	}
+
+	unit := since[len(since)-1]
+	numStr := since[:len(since)-1]
+	num, err := strconv.Atoi(numStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid duration: %s", since)
+	}
+
+	var d time.Duration
+	switch unit {
+	case 's':
+		d = time.Duration(num) * time.Second
+	case 'm':
+		d = time.Duration(num) * time.Minute
+	case 'h':
+		d = time.Duration(num) * time.Hour
+	case 'd':
+		d = time.Duration(num) * 24 * time.Hour
+	default:
+		return nil, fmt.Errorf("unknown duration unit: %c", unit)
+	}
+
+	t := time.Now().UTC().Add(-d)
+	return &t, nil
 }
