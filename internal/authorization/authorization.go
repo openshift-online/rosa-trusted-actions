@@ -49,10 +49,6 @@ func (a *authorizer) Authorize(req Request) Result {
 		return Result{Allowed: true, Reason: "permissive (no namespace allowlist configured)"}
 	}
 
-	if req.Namespace == "" {
-		return Result{Allowed: false, Reason: "namespace is required"}
-	}
-
 	if req.Namespace == "" && !req.ClusterScoped {
 		return Result{Allowed: false, Reason: "namespace is required for namespaced resources"}
 	}
