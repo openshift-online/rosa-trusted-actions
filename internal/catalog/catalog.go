@@ -82,6 +82,17 @@ func New() *Catalog {
 		},
 	})
 
+	c.register(&ActionDefinition{
+		Name:         "describe-nodes",
+		Description:  "Describe nodes with correlated pods, events, and lease data",
+		Type:         openapi.Read,
+		Scope:        openapi.KubeApi,
+		AllowedRoles: allRoles,
+		Params: []ParamDefinition{
+			{Name: "name", Description: "Node name (empty to describe all nodes)"},
+		},
+	})
+
 	return c
 }
 
