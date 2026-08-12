@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -52,7 +53,7 @@ func newTestRunner(namespaces []string, bp backplane.ClientProvider) *ExecutorRu
 	authz := authorization.New(logger, namespaces, nil)
 	auditor := audit.NewMockLogger(logger)
 	exec := executor.New(logger, authz, auditor, bp)
-	return NewExecutorRunner(logger, exec)
+	return NewExecutorRunner(logger, exec, 5*time.Second)
 }
 
 func testExecution(action string, params map[string]string) *models.Execution {
@@ -81,13 +82,16 @@ func TestExecutorRunner_Run_Success(t *testing.T) {
 		"name":      "cluster-config",
 	})
 
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "succeeded" {
 		t.Errorf("expected status %q, got %q", "succeeded", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason != "" {
+		t.Errorf("expected empty reason on success, got %q", reason)
 	}
 }
 
@@ -102,13 +106,45 @@ func TestExecutorRunner_Run_Denied(t *testing.T) {
 		"name":      "cluster-config",
 	})
 
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "failed" {
 		t.Errorf("expected status %q, got %q", "failed", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on denial")
+	}
+}
+
+// TestExecutorRunner_Run_MissingNamespaceDenied guards against inferring
+// ClusterScoped from an omitted namespace param: a caller targeting a
+// namespaced resource without a namespace must be denied by the namespace
+// allowlist, not silently treated as a cluster-scoped (and thus
+// allowlist-exempt) request.
+func TestExecutorRunner_Run_MissingNamespaceDenied(t *testing.T) {
+	bp := &fakeClientProvider{client: dynamicfake.NewSimpleDynamicClient(runtime.NewScheme())}
+	runner := newTestRunner([]string{"openshift-monitoring"}, bp)
+
+	exec := testExecution("get", map[string]string{
+		"version":  "v1",
+		"resource": "configmaps",
+		// namespace intentionally omitted
+		"name": "cluster-config",
+	})
+
+	status, completedAt, reason := runner.Run(context.Background(), exec)
+
+	if status != "failed" {
+		t.Errorf("expected status %q (denied, not treated as cluster-scoped), got %q", "failed", status)
+	}
+	if completedAt == nil {
+		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on denial")
 	}
 }
 
@@ -123,13 +159,16 @@ func TestExecutorRunner_Run_ActionError(t *testing.T) {
 		"name":      "nonexistent",
 	})
 
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "failed" {
 		t.Errorf("expected status %q, got %q", "failed", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on action error")
 	}
 }
 
@@ -143,13 +182,59 @@ func TestExecutorRunner_Run_BackplaneError(t *testing.T) {
 		"namespace": "openshift-monitoring",
 	})
 
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "failed" {
 		t.Errorf("expected status %q, got %q", "failed", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on backplane error")
+	}
+}
+
+// slowClientProvider blocks until its context is cancelled, simulating a hung
+// backplane/cluster call.
+type slowClientProvider struct{}
+
+func (s *slowClientProvider) GetClient(ctx context.Context, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+func TestExecutorRunner_Run_RespectsExecutionTimeout(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+	authz := authorization.New(logger, []string{"openshift-monitoring"}, nil)
+	auditor := audit.NewMockLogger(logger)
+	exec := executor.New(logger, authz, auditor, &slowClientProvider{})
+	runner := NewExecutorRunner(logger, exec, 20*time.Millisecond)
+
+	e := testExecution("get", map[string]string{
+		"version":   "v1",
+		"resource":  "configmaps",
+		"namespace": "openshift-monitoring",
+	})
+
+	start := time.Now()
+	// A caller context that never cancels on its own — Run must still return
+	// promptly once its own executionTimeout elapses.
+	status, completedAt, reason := runner.Run(context.Background(), e)
+	elapsed := time.Since(start)
+
+	if status != "failed" {
+		t.Errorf("expected status %q, got %q", "failed", status)
+	}
+	if completedAt == nil {
+		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on timeout")
+	}
+	if elapsed > 2*time.Second {
+		t.Errorf("expected Run to return once the execution timeout elapsed, took %s", elapsed)
 	}
 }
 
@@ -159,13 +244,16 @@ func TestExecutorRunner_Run_UnknownAction(t *testing.T) {
 
 	exec := testExecution("unknown-action", map[string]string{})
 
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "failed" {
 		t.Errorf("expected status %q, got %q", "failed", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason for unknown action")
 	}
 }
 
@@ -177,13 +265,16 @@ func TestExecutorRunner_Run_MalformedParams(t *testing.T) {
 	badParams := json.RawMessage(`{"not":"a string map",`)
 	exec.Params = &badParams
 
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "failed" {
 		t.Errorf("expected status %q, got %q", "failed", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason for malformed params")
 	}
 }
 
@@ -203,12 +294,15 @@ func TestExecutorRunner_Run_NilParams(t *testing.T) {
 	}
 
 	// Must not panic on a nil Params field.
-	status, completedAt := runner.Run(context.Background(), exec)
+	status, completedAt, reason := runner.Run(context.Background(), exec)
 
 	if status != "failed" {
 		t.Errorf("expected status %q, got %q", "failed", status)
 	}
 	if completedAt == nil {
 		t.Fatal("expected non-nil completedAt")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason")
 	}
 }

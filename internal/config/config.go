@@ -46,6 +46,10 @@ type Config struct {
 	// WorkerPollInterval is the fallback poll interval a worker uses to check
 	// for pending executions when it hasn't been notified of new work.
 	WorkerPollInterval time.Duration
+	// WorkerExecutionTimeout bounds how long a single claimed execution may
+	// run before it is cancelled, so a hung backplane/cluster call can't
+	// block a worker indefinitely.
+	WorkerExecutionTimeout time.Duration
 
 	// Backplane Configuration
 	BackplaneURL          string
@@ -100,8 +104,9 @@ func Load() *Config {
 		DatabaseURL: getEnv("DATABASE_URL", ""),
 
 		// Worker Configuration
-		WorkerConcurrency:  getIntEnv("ROSA_TA_WORKER_CONCURRENCY", 4),
-		WorkerPollInterval: getDurationEnv("ROSA_TA_WORKER_POLL_INTERVAL", 5*time.Second),
+		WorkerConcurrency:      getPositiveIntEnv("ROSA_TA_WORKER_CONCURRENCY", 4),
+		WorkerPollInterval:     getPositiveDurationEnv("ROSA_TA_WORKER_POLL_INTERVAL", 5*time.Second),
+		WorkerExecutionTimeout: getPositiveDurationEnv("ROSA_TA_WORKER_EXECUTION_TIMEOUT", 2*time.Minute),
 
 		// Backplane Configuration
 		BackplaneURL:          getEnv("ROSA_TA_BACKPLANE_URL", ""),
@@ -154,6 +159,26 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 		if parsed, err := time.ParseDuration(value); err == nil {
 			return parsed
 		}
+	}
+	return defaultValue
+}
+
+// getPositiveIntEnv gets an integer environment variable with a default
+// value, falling back to the default when the parsed value is not positive
+// (e.g. a misconfigured worker concurrency of 0).
+func getPositiveIntEnv(key string, defaultValue int) int {
+	if v := getIntEnv(key, defaultValue); v > 0 {
+		return v
+	}
+	return defaultValue
+}
+
+// getPositiveDurationEnv gets a duration environment variable with a default
+// value, falling back to the default when the parsed value is not positive
+// (time.NewTicker panics on a non-positive duration).
+func getPositiveDurationEnv(key string, defaultValue time.Duration) time.Duration {
+	if v := getDurationEnv(key, defaultValue); v > 0 {
+		return v
 	}
 	return defaultValue
 }

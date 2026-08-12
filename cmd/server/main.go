@@ -164,7 +164,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// background, off the HTTP request path.
 	// -------------------------------------------------------------------------
 	workerCtx, cancelWorkers := context.WithCancel(context.Background())
-	workerPool := worker.New(dataStore, logger, worker.NewExecutorRunner(logger, actionExecutor), cfg.WorkerConcurrency, cfg.WorkerPollInterval)
+	workerPool := worker.New(dataStore, logger, worker.NewExecutorRunner(logger, actionExecutor, cfg.WorkerExecutionTimeout), cfg.WorkerConcurrency, cfg.WorkerPollInterval)
 	workerPool.Start(workerCtx)
 
 	// Create handler implementation

@@ -22,16 +22,28 @@ import (
 // manifest_work_name/runner_seconds/upload_seconds fields. This runner only
 // moves that synchronous call off the HTTP request path into the background
 // worker pool — it does not implement that two-phase dispatch.
+// defaultExecutionTimeout is used when NewExecutorRunner is given a
+// non-positive executionTimeout.
+const defaultExecutionTimeout = 2 * time.Minute
+
 type ExecutorRunner struct {
-	logger   *logrus.Logger
-	executor *executor.Executor
+	logger           *logrus.Logger
+	executor         *executor.Executor
+	executionTimeout time.Duration
 }
 
-func NewExecutorRunner(logger *logrus.Logger, exec *executor.Executor) *ExecutorRunner {
-	return &ExecutorRunner{logger: logger, executor: exec}
+// NewExecutorRunner creates a Runner backed by exec. executionTimeout bounds
+// how long a single claimed execution may run before it is cancelled, so a
+// hung backplane/cluster call can't block a worker indefinitely; non-positive
+// values fall back to defaultExecutionTimeout.
+func NewExecutorRunner(logger *logrus.Logger, exec *executor.Executor, executionTimeout time.Duration) *ExecutorRunner {
+	if executionTimeout <= 0 {
+		executionTimeout = defaultExecutionTimeout
+	}
+	return &ExecutorRunner{logger: logger, executor: exec, executionTimeout: executionTimeout}
 }
 
-func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (string, *time.Time) {
+func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (string, *time.Time, string) {
 	log := r.logger.WithFields(logrus.Fields{
 		"execution_id": exec.ID,
 		"action":       exec.Action,
@@ -50,16 +62,21 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (strin
 	}
 
 	target := actions.ResourceTarget{
-		Group:    params["group"],
-		Version:  params["version"],
-		Resource: params["resource"],
-		Name:     params["name"],
-		// Params carries only a flat namespace value (no explicit
-		// cluster-scoped flag today) — a resource is cluster-scoped exactly
-		// when no namespace was supplied, mirroring the two branches in
-		// actions.resourceClient.
-		Namespace:     params["namespace"],
-		ClusterScoped: params["namespace"] == "",
+		Group:     params["group"],
+		Version:   params["version"],
+		Resource:  params["resource"],
+		Name:      params["name"],
+		Namespace: params["namespace"],
+		// ClusterScoped is intentionally never derived from a missing
+		// namespace param: whether the target resource type is actually
+		// cluster-scoped is not something a caller-supplied (or absent)
+		// value can be trusted to declare. Doing so previously let a
+		// caller bypass the namespace allowlist entirely, since
+		// authorization.Authorize's "namespace required" check never
+		// fires once ClusterScoped is true. Until cluster-scoped targets
+		// can be derived from something the caller doesn't control (e.g.
+		// action/resource metadata), treat every claimed execution as
+		// namespaced.
 	}
 
 	callerID := ""
@@ -67,7 +84,10 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (strin
 		callerID = *exec.Username
 	}
 
-	result := r.executor.Execute(ctx, executor.Request{
+	execCtx, cancel := context.WithTimeout(ctx, r.executionTimeout)
+	defer cancel()
+
+	result := r.executor.Execute(execCtx, executor.Request{
 		CallerID:  callerID,
 		ClusterID: exec.TargetCluster,
 		Action:    act,
@@ -83,9 +103,10 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (strin
 		log.WithError(result.Error).Error("claimed execution failed")
 		return failedNow(result.Error)
 	}
+	log.Debug(result.Output)
 
 	now := time.Now().UTC()
-	return "succeeded", &now
+	return "succeeded", &now, ""
 }
 
 func resolveAction(name string) (actions.Action, error) {
@@ -112,7 +133,7 @@ func decodeParams(raw *json.RawMessage) (map[string]string, error) {
 	return params, nil
 }
 
-func failedNow(_ error) (string, *time.Time) {
+func failedNow(err error) (string, *time.Time, string) {
 	now := time.Now().UTC()
-	return "failed", &now
+	return "failed", &now, err.Error()
 }

@@ -69,10 +69,10 @@ func newFakeRunner() *fakeRunner {
 	return &fakeRunner{done: make(chan uuid.UUID, 10)}
 }
 
-func (r *fakeRunner) Run(ctx context.Context, exec *models.Execution) (string, *time.Time) {
+func (r *fakeRunner) Run(ctx context.Context, exec *models.Execution) (string, *time.Time, string) {
 	r.done <- exec.ID
 	now := time.Now().UTC()
-	return "succeeded", &now
+	return "succeeded", &now, ""
 }
 
 func testExec() *models.Execution {
@@ -124,6 +124,54 @@ func TestPool_PollFallback_FindsWorkWithoutNotify(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("worker did not find work via poll fallback")
+	}
+}
+
+// ctxAwareStore wraps fakeStore with an UpdateExecutionStatus that fails if
+// given an already-cancelled context, mimicking a context-aware DB driver.
+type ctxAwareStore struct {
+	fakeStore
+	updated chan struct{}
+}
+
+func (s *ctxAwareStore) UpdateExecutionStatus(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	close(s.updated)
+	return nil
+}
+
+func TestPool_Process_PersistsStatusAfterContextCancelled(t *testing.T) {
+	fs := &ctxAwareStore{updated: make(chan struct{})}
+	fr := newFakeRunner()
+	pool := New(fs, logrus.New(), fr, 1, time.Hour)
+
+	// Simulate shutdown having already cancelled the worker context by the
+	// time process() persists the status it already computed.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	pool.process(ctx, testExec())
+
+	select {
+	case <-fs.updated:
+	default:
+		t.Fatal("expected UpdateExecutionStatus to persist despite a cancelled ctx")
+	}
+}
+
+func TestPool_New_ClampsNonPositivePollInterval(t *testing.T) {
+	for _, interval := range []time.Duration{0, -time.Second} {
+		fs := &fakeStore{}
+		fr := newFakeRunner()
+		pool := New(fs, logrus.New(), fr, 1, interval)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		// Must not panic (time.NewTicker panics on a non-positive duration).
+		pool.Start(ctx)
+		cancel()
+		pool.Wait()
 	}
 }
 

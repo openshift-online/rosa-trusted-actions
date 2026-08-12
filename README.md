@@ -44,7 +44,7 @@ ocm get /api/clusters_mgmt/v1/clusters/${INTERNAL_ID}/credentials \
 
 ```bash
 export ROSA_TA_ENABLE_AUTH=false
-export ROSA_TA_KUBECONFIG=/tmp/<your-cluster-internal-id>.kubeconfig
+export ROSA_TA_KUBECONFIG=/tmp/${INTERNAL_ID}.kubeconfig
 
 go run ./cmd/server/ --log-level debug
 ```
@@ -91,7 +91,7 @@ curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
   -H 'Content-Type: application/json' \
   -d '{
     "target_cluster": "local",
-    "params": {"resource": "namespaces"}
+    "params": {"resource": "namespaces", "version": "v1"}
   }' | jq .
 
 # Get a specific pod
@@ -102,7 +102,8 @@ curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
     "params": {
       "resource":  "pods",
       "namespace": "kube-system",
-      "name":      "coredns-<id>"
+      "name":      "coredns-<id>",
+      "version":   "v1"
     }
   }' | jq .
 ```

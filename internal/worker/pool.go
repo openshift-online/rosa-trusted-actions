@@ -15,9 +15,10 @@ import (
 )
 
 // Runner executes a single claimed execution and reports its terminal status
-// (and, if applicable, when it completed).
+// (and, if applicable, when it completed), plus a human-readable reason when
+// status is not a success (empty otherwise).
 type Runner interface {
-	Run(ctx context.Context, exec *models.Execution) (status string, completedAt *time.Time)
+	Run(ctx context.Context, exec *models.Execution) (status string, completedAt *time.Time, reason string)
 }
 
 // Pool is an in-process worker pool that claims pending executions from the
@@ -35,10 +36,19 @@ type Pool struct {
 	wg           sync.WaitGroup
 }
 
-// New creates a worker pool. concurrency is clamped to at least 1.
+// defaultPollInterval is used when New is given a non-positive pollInterval
+// (matches the config package's ROSA_TA_WORKER_POLL_INTERVAL default).
+const defaultPollInterval = 5 * time.Second
+
+// New creates a worker pool. concurrency is clamped to at least 1;
+// pollInterval is clamped to defaultPollInterval when non-positive, since
+// time.NewTicker panics on a non-positive duration.
 func New(s store.Store, logger *logrus.Logger, runner Runner, concurrency int, pollInterval time.Duration) *Pool {
 	if concurrency < 1 {
 		concurrency = 1
+	}
+	if pollInterval <= 0 {
+		pollInterval = defaultPollInterval
 	}
 	return &Pool{
 		store:        s,
@@ -107,8 +117,30 @@ func (p *Pool) workerLoop(ctx context.Context) {
 }
 
 func (p *Pool) process(ctx context.Context, exec *models.Execution) {
-	status, completedAt := p.runner.Run(ctx, exec)
-	if err := p.store.UpdateExecutionStatus(ctx, exec.ID, status, completedAt); err != nil {
+	status, completedAt, reason := p.runner.Run(ctx, exec)
+
+	// TODO: persist reason alongside status once the store has somewhere to
+	// put it (Store.UpdateExecutionStatus / the executions table currently
+	// has no failure-reason column, and the OpenAPI-generated Execution type
+	// has no field to expose it through either). Surfaced via structured
+	// logging for now so it isn't silently dropped.
+	if reason != "" {
+		p.logger.WithFields(logrus.Fields{
+			"execution_id": exec.ID,
+			"status":       status,
+			"reason":       reason,
+		}).Warn("execution completed with failure reason")
+	}
+
+	// Detached from ctx's cancellation: if ctx is cancelled (e.g. shutdown)
+	// right as Run finishes, we've already computed a terminal status and
+	// must still persist it — otherwise the execution is stuck "running"
+	// forever. Still bounded so this can't hang if the store itself is
+	// unresponsive.
+	updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+
+	if err := p.store.UpdateExecutionStatus(updateCtx, exec.ID, status, completedAt); err != nil {
 		p.logger.WithError(err).WithField("execution_id", exec.ID).Error("updating execution status after run")
 	}
 }
