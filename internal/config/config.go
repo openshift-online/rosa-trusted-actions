@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Config holds the application configuration
@@ -37,6 +38,14 @@ type Config struct {
 
 	// Database Configuration (environment variables, for future use)
 	DatabaseURL string
+
+	// Worker Configuration (environment variables)
+	// WorkerConcurrency is the number of goroutines dequeuing and running
+	// executions concurrently.
+	WorkerConcurrency int
+	// WorkerPollInterval is the fallback poll interval a worker uses to check
+	// for pending executions when it hasn't been notified of new work.
+	WorkerPollInterval time.Duration
 
 	// Backplane Configuration
 	BackplaneURL          string
@@ -90,6 +99,10 @@ func Load() *Config {
 		// Database Configuration
 		DatabaseURL: getEnv("DATABASE_URL", ""),
 
+		// Worker Configuration
+		WorkerConcurrency:  getIntEnv("ROSA_TA_WORKER_CONCURRENCY", 4),
+		WorkerPollInterval: getDurationEnv("ROSA_TA_WORKER_POLL_INTERVAL", 5*time.Second),
+
 		// Backplane Configuration
 		BackplaneURL:          getEnv("ROSA_TA_BACKPLANE_URL", ""),
 		BackplaneClientID:     getEnv("ROSA_TA_BACKPLANE_CLIENT_ID", ""),
@@ -119,6 +132,26 @@ func getEnv(key, defaultValue string) string {
 func getBoolEnv(key string, defaultValue bool) bool {
 	if value := os.Getenv(key); value != "" {
 		if parsed, err := strconv.ParseBool(value); err == nil {
+			return parsed
+		}
+	}
+	return defaultValue
+}
+
+// getIntEnv gets an integer environment variable with a default value
+func getIntEnv(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if parsed, err := strconv.Atoi(value); err == nil {
+			return parsed
+		}
+	}
+	return defaultValue
+}
+
+// getDurationEnv gets a duration environment variable (e.g. "5s") with a default value
+func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if parsed, err := time.ParseDuration(value); err == nil {
 			return parsed
 		}
 	}

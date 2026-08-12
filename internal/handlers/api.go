@@ -13,7 +13,6 @@ import (
 	"github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
@@ -22,21 +21,31 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
 
+// ExecutionNotifier is notified when a new execution is ready to be
+// dequeued, so a worker can wake immediately instead of waiting for its next
+// poll. Implemented by worker.Pool; declared here to keep handlers decoupled
+// from the internal/worker package.
+type ExecutionNotifier interface {
+	Notify()
+}
+
 // APIHandler implements the generated ServerInterface
 type APIHandler struct {
 	logger        *logrus.Logger
 	ActionCatalog auth.ActionCatalog
 	catalog       *catalog.Catalog
 	store         store.Store
+	notifier      ExecutionNotifier
 }
 
 // NewAPIHandler creates a new API handler
-func NewAPIHandler(logger *logrus.Logger, c *catalog.Catalog, s store.Store) *APIHandler {
+func NewAPIHandler(logger *logrus.Logger, c *catalog.Catalog, s store.Store, notifier ExecutionNotifier) *APIHandler {
 	return &APIHandler{
 		logger:        logger,
 		ActionCatalog: c,
 		catalog:       c,
 		store:         s,
+		notifier:      notifier,
 	}
 }
 
@@ -76,11 +85,9 @@ func (h *APIHandler) Describe(w http.ResponseWriter, r *http.Request, action str
 
 // CreateExecution implements POST /{action}/run
 // Execute a Trusted Action against a target cluster.
-// When an executor is wired (kubeconfig or backplane provider), the action runs
-// synchronously and the response contains real cluster data. Without an executor
-// the server returns a stub Pending response.
-//
-// TODO: Replace this with a database write in the future that will be dequeued.
+// The request is persisted as a pending execution and the response returns
+// immediately; a background worker pool (internal/worker) dequeues and runs
+// it asynchronously. Poll GET /runs/{id} for status.
 func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, action string) {
 	h.logger.WithField("action", action).Info("Creating execution for trusted action")
 
@@ -107,6 +114,8 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 		h.respondError(w, r, http.StatusInternalServerError, "Failed to create execution", err)
 		return
 	}
+
+	h.notifier.Notify()
 
 	if ac := middleware.GetAuditContext(r.Context()); ac != nil {
 		ac.ExecutionID = exec.ID.String()

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -15,6 +16,24 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
+
+// fakeNotifier records Notify calls for assertions.
+type fakeNotifier struct {
+	mu    sync.Mutex
+	calls int
+}
+
+func (f *fakeNotifier) Notify() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+}
+
+func (f *fakeNotifier) callCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.calls
+}
 
 func newTestHandler(t *testing.T) *APIHandler {
 	t.Helper()
@@ -27,7 +46,7 @@ func newTestHandler(t *testing.T) *APIHandler {
 			t.Errorf("failed to close test store: %v", err)
 		}
 	})
-	return NewAPIHandler(logrus.New(), catalog.New(), s)
+	return NewAPIHandler(logrus.New(), catalog.New(), s, &fakeNotifier{})
 }
 
 func TestAPIHandler_Catalog(t *testing.T) {
@@ -117,6 +136,54 @@ func TestAPIHandler_CreateExecution(t *testing.T) {
 
 	if execution.TargetCluster != "test-cluster" {
 		t.Errorf("Expected target cluster 'test-cluster', got %s", execution.TargetCluster)
+	}
+}
+
+func TestAPIHandler_CreateExecution_NotifiesWorker(t *testing.T) {
+	handler := newTestHandler(t)
+	notifier, ok := handler.notifier.(*fakeNotifier)
+	if !ok {
+		t.Fatalf("expected notifier to be *fakeNotifier, got %T", handler.notifier)
+	}
+
+	requestBody := `{"target_cluster": "test-cluster", "jira": "ROSAENG-1234"}`
+	req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	handler.CreateExecution(w, req, "get")
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("Expected status 202, got %d", w.Code)
+	}
+	if got := notifier.callCount(); got != 1 {
+		t.Errorf("Notify calls: got %d, want 1", got)
+	}
+}
+
+func TestAPIHandler_CreateExecution_DoesNotNotifyOnStoreError(t *testing.T) {
+	s, err := store.NewSQLiteStore(context.Background(), ":memory:", logrus.New())
+	if err != nil {
+		t.Fatalf("failed to create test store: %v", err)
+	}
+	if err := s.Close(); err != nil {
+		t.Fatalf("failed to close test store: %v", err)
+	}
+	notifier := &fakeNotifier{}
+	handler := NewAPIHandler(logrus.New(), catalog.New(), s, notifier)
+
+	requestBody := `{"target_cluster": "test-cluster", "jira": "ROSAENG-1234"}`
+	req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	handler.CreateExecution(w, req, "get")
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("Expected status 500, got %d", w.Code)
+	}
+	if got := notifier.callCount(); got != 0 {
+		t.Errorf("Notify calls: got %d, want 0", got)
 	}
 }
 

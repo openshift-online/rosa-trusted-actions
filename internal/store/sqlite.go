@@ -191,6 +191,50 @@ func (s *SQLiteStore) UpdateExecutionStatus(ctx context.Context, id uuid.UUID, s
 	return nil
 }
 
+// ClaimNextExecution atomically claims the oldest pending execution and
+// transitions it to running. Safe today because SetMaxOpenConns(1) already
+// serializes all access to this connection; revisit locking semantics if/when
+// this store migrates to Postgres with multiple connections/replicas.
+func (s *SQLiteStore) ClaimNextExecution(ctx context.Context) (*models.Execution, error) {
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("beginning claim transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var id string
+	// TODO: exclude executions whose target already has the maximum number of
+	// active executions (OpenAPI documents a 429 business rule of 10
+	// active/target) once that cap needs enforcing here rather than at write time.
+	err = tx.GetContext(ctx, &id,
+		"SELECT id FROM executions WHERE status = 'pending' ORDER BY created_at ASC, id ASC LIMIT 1")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("selecting next pending execution: %w", err)
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		"UPDATE executions SET status = 'running', updated_at = ? WHERE id = ?",
+		time.Now().UTC().Format(timeLayout), id,
+	); err != nil {
+		return nil, fmt.Errorf("claiming execution: %w", err)
+	}
+
+	row := tx.QueryRowxContext(ctx, "SELECT "+executionColumns+" FROM executions WHERE id = ?", id)
+	var raw executionRow
+	if err := row.StructScan(&raw); err != nil {
+		return nil, fmt.Errorf("querying claimed execution: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("committing claim transaction: %w", err)
+	}
+
+	return raw.toModel()
+}
+
 func (s *SQLiteStore) CreateAuditEntry(ctx context.Context, entry *models.AuditEntry) error {
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO audit_entries (

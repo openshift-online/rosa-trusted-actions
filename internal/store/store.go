@@ -58,6 +58,10 @@ type Store interface {
 	GetExecution(ctx context.Context, id uuid.UUID) (*models.Execution, error)
 	ListExecutions(ctx context.Context, filter ExecutionFilter) (*ExecutionListResult, error)
 	UpdateExecutionStatus(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time) error
+	// ClaimNextExecution atomically claims the oldest pending execution,
+	// transitioning it to running, for a worker to process. Returns
+	// ErrNotFound if no execution is pending.
+	ClaimNextExecution(ctx context.Context) (*models.Execution, error)
 
 	CreateAuditEntry(ctx context.Context, entry *models.AuditEntry) error
 	ListAuditEntries(ctx context.Context, filter AuditFilter) (*AuditListResult, error)

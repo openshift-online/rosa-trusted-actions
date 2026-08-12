@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -242,6 +243,69 @@ func TestSQLiteStore_UpdateExecutionStatus_NotFound(t *testing.T) {
 	}
 }
 
+func TestSQLiteStore_ClaimNextExecution(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	older := testExecution("cluster-info", "cluster-1")
+	newer := testExecution("pod-restart", "cluster-2")
+	newer.CreatedAt = newer.CreatedAt.Add(time.Second)
+	newer.UpdatedAt = newer.UpdatedAt.Add(time.Second)
+
+	if err := s.CreateExecution(ctx, newer); err != nil {
+		t.Fatalf("CreateExecution newer failed: %v", err)
+	}
+	if err := s.CreateExecution(ctx, older); err != nil {
+		t.Fatalf("CreateExecution older failed: %v", err)
+	}
+
+	claimed, err := s.ClaimNextExecution(ctx)
+	if err != nil {
+		t.Fatalf("ClaimNextExecution failed: %v", err)
+	}
+	if claimed.ID != older.ID {
+		t.Errorf("expected to claim the oldest pending execution (%s), got %s", older.ID, claimed.ID)
+	}
+	if claimed.Status != "running" {
+		t.Errorf("Status: got %s, want running", claimed.Status)
+	}
+
+	got, err := s.GetExecution(ctx, older.ID)
+	if err != nil {
+		t.Fatalf("GetExecution failed: %v", err)
+	}
+	if got.Status != "running" {
+		t.Errorf("persisted status: got %s, want running", got.Status)
+	}
+
+	claimed2, err := s.ClaimNextExecution(ctx)
+	if err != nil {
+		t.Fatalf("second ClaimNextExecution failed: %v", err)
+	}
+	if claimed2.ID != newer.ID {
+		t.Errorf("expected to claim the remaining pending execution (%s), got %s", newer.ID, claimed2.ID)
+	}
+}
+
+func TestSQLiteStore_ClaimNextExecution_NotFound(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	if _, err := s.ClaimNextExecution(ctx); !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+
+	exec := testExecution("cluster-info", "cluster-1")
+	exec.Status = "running"
+	if err := s.CreateExecution(ctx, exec); err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	if _, err := s.ClaimNextExecution(ctx); !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound (only a running execution exists), got %v", err)
+	}
+}
+
 func TestSQLiteStore_CreateAuditEntry(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
@@ -381,18 +445,22 @@ func TestSQLiteStore_RollbackLastMigration(t *testing.T) {
 		t.Fatalf("RollbackLastMigration failed: %v", err)
 	}
 
-	var count int
-	if err := s.db.Get(&count, "SELECT COUNT(*) FROM schema_migrations"); err != nil {
+	// The last migration (004) is index-only, so rollback drops the index
+	// without changing the table count.
+	var version string
+	if err := s.db.Get(&version, "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1"); err != nil {
 		t.Fatalf("querying schema_migrations: %v", err)
 	}
-
-	var total int
-	if err := s.db.Get(&total, "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'schema_%'"); err != nil {
-		t.Fatalf("querying tables: %v", err)
+	if version == "004_add_executions_status_created_at_index" {
+		t.Error("expected migration 004 to be removed from schema_migrations after rollback")
 	}
 
-	if count != total {
-		t.Errorf("migration count (%d) should match non-schema table count (%d) after rollback", count, total)
+	var indexCount int
+	if err := s.db.Get(&indexCount, "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_executions_status_created_at'"); err != nil {
+		t.Fatalf("querying sqlite_master: %v", err)
+	}
+	if indexCount != 0 {
+		t.Error("expected idx_executions_status_created_at to be dropped after rolling back the last migration")
 	}
 }
 

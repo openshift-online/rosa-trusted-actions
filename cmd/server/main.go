@@ -17,16 +17,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/config"
-	"github.com/openshift-online/rosa-trusted-actions/internal/executor"
 	"github.com/openshift-online/rosa-trusted-actions/internal/handlers"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
+	"github.com/openshift-online/rosa-trusted-actions/internal/worker"
 )
 
 var (
@@ -86,9 +85,17 @@ func runServer(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
+	// -------------------------------------------------------------------------
+	// Worker pool — dequeues pending executions and runs them in the
+	// background, off the HTTP request path.
+	// -------------------------------------------------------------------------
+	workerCtx, cancelWorkers := context.WithCancel(context.Background())
+	workerPool := worker.New(dataStore, logger, worker.NewNoopRunner(logger), cfg.WorkerConcurrency, cfg.WorkerPollInterval)
+	workerPool.Start(workerCtx)
+
 	// Create handler implementation
 	actionCatalog := catalog.New()
-	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, dataStore)
+	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, dataStore, workerPool)
 
 	// Setup auth middleware
 	var authnMiddleware auth.JWTMiddleware
@@ -134,27 +141,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// Cluster access provider — kubeconfig for local dev, backplane for production.
-	// -------------------------------------------------------------------------
-	var bp backplane.ClientProvider
-	if cfg.Kubeconfig != "" {
-		logger.WithField("kubeconfig", cfg.Kubeconfig).Info("Using kubeconfig provider for cluster access (local mode)")
-		bp = backplane.NewKubeconfigProvider(logger, cfg.Kubeconfig)
-	} else {
-		bp = backplane.NewBackplaneProvider(logger, cfg.BackplaneURL, cfg.BackplaneClientID, cfg.BackplaneClientSecret)
-	}
-
-	// -------------------------------------------------------------------------
-	// Executor — orchestrates action dispatch, authorization, and audit logging.
-	// -------------------------------------------------------------------------
-	authzr := authorization.New(logger, cfg.AllowedNamespaces, cfg.AllowedSecrets)
-	auditor := audit.NewMockLogger(logger) // TODO: replace with persistent audit backend
-	exec := executor.New(logger, authzr, auditor, bp)
-
-	// -------------------------------------------------------------------------
 	// Handler and router
 	// -------------------------------------------------------------------------
-	apiHandler := handlers.NewAPIHandler(logger, exec)
 	actionAuthz := auth.NewActionAuthzMiddleware(apiHandler.ActionCatalog, logger)
 
 	router := chi.NewRouter()
@@ -254,12 +242,25 @@ func runServer(cmd *cobra.Command, args []string) error {
 
 	logger.Info("Shutting down server...")
 
+	cancelWorkers()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.WithError(err).Error("Server forced to shutdown")
 		return err
+	}
+
+	workersDone := make(chan struct{})
+	go func() {
+		workerPool.Wait()
+		close(workersDone)
+	}()
+	select {
+	case <-workersDone:
+	case <-ctx.Done():
+		logger.Warn("Timed out waiting for worker pool to finish in-flight executions")
 	}
 
 	logger.Info("Server stopped")
