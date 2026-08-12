@@ -17,9 +17,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
+	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/config"
+	"github.com/openshift-online/rosa-trusted-actions/internal/executor"
 	"github.com/openshift-online/rosa-trusted-actions/internal/handlers"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
@@ -85,18 +89,6 @@ func runServer(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	// -------------------------------------------------------------------------
-	// Worker pool — dequeues pending executions and runs them in the
-	// background, off the HTTP request path.
-	// -------------------------------------------------------------------------
-	workerCtx, cancelWorkers := context.WithCancel(context.Background())
-	workerPool := worker.New(dataStore, logger, worker.NewNoopRunner(logger), cfg.WorkerConcurrency, cfg.WorkerPollInterval)
-	workerPool.Start(workerCtx)
-
-	// Create handler implementation
-	actionCatalog := catalog.New()
-	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, dataStore, workerPool)
-
 	// Setup auth middleware
 	var authnMiddleware auth.JWTMiddleware
 	var authzMiddleware auth.AuthorizationMiddleware
@@ -139,6 +131,45 @@ func runServer(cmd *cobra.Command, args []string) error {
 		logger.Fatal("ROSA_TA_ENABLE_AUTH=false requires ROSA_TA_KUBECONFIG to be set; " +
 			"running mock auth against the real backplane is not permitted")
 	}
+
+	// -------------------------------------------------------------------------
+	// Execution pipeline — authorization, audit, and cluster access used to
+	// actually run a claimed action. Mirrors cmd/action-cli/main.go.
+	//
+	// audit.NewMockLogger only logs; there is no persistent audit backend for
+	// executed actions yet (separate from the request-level audit log written
+	// via middleware.NewAuditLogger).
+	//
+	// TODO: unify internal/audit.Logger (per-action decision/outcome, e.g.
+	// authorization denials and RBAC-scoped execution results) with the
+	// request-level audit log in internal/middleware+store (persisted
+	// AuditEntry rows queryable via GET /audit). These predate the DB (audit
+	// package from the cmd/action-cli era, pre-HTTP-server) and were never
+	// merged into one persisted trail.
+	// -------------------------------------------------------------------------
+	actionAuthorizer := authorization.New(logger, cfg.AllowedNamespaces, cfg.AllowedSecrets)
+	actionAuditor := audit.NewMockLogger(logger)
+
+	var bp backplane.ClientProvider
+	if cfg.Kubeconfig != "" {
+		bp = backplane.NewKubeconfigProvider(logger, cfg.Kubeconfig)
+	} else {
+		bp = backplane.NewBackplaneProvider(logger, cfg.BackplaneURL, cfg.BackplaneClientID, cfg.BackplaneClientSecret)
+	}
+
+	actionExecutor := executor.New(logger, actionAuthorizer, actionAuditor, bp)
+
+	// -------------------------------------------------------------------------
+	// Worker pool — dequeues pending executions and runs them in the
+	// background, off the HTTP request path.
+	// -------------------------------------------------------------------------
+	workerCtx, cancelWorkers := context.WithCancel(context.Background())
+	workerPool := worker.New(dataStore, logger, worker.NewExecutorRunner(logger, actionExecutor), cfg.WorkerConcurrency, cfg.WorkerPollInterval)
+	workerPool.Start(workerCtx)
+
+	// Create handler implementation
+	actionCatalog := catalog.New()
+	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, dataStore, workerPool)
 
 	// -------------------------------------------------------------------------
 	// Handler and router
