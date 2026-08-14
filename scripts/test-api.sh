@@ -72,10 +72,10 @@ echo ""
 # Test all endpoints
 test_endpoint "Health Check" "GET" "$SERVER_URL/health"
 test_endpoint "List Actions" "GET" "$API_BASE/"
-test_endpoint "Describe Action" "GET" "$API_BASE/cluster-info"
-test_endpoint "Execute Action" "POST" "$API_BASE/cluster-info/run" '{
+test_endpoint "Describe Action" "GET" "$API_BASE/get"
+test_endpoint "Execute Action" "POST" "$API_BASE/get/run" '{
     "target_cluster": "test-cluster",
-    "params": {"namespace": "default"},
+    "params": {"resource": "pods", "version": "v1", "namespace": "default"},
     "dry_run": true
 }'
 test_endpoint "List Executions" "GET" "$API_BASE/runs?limit=5"

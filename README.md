@@ -77,25 +77,30 @@ curl -s http://localhost:8080/api/v0/trusted-actions/ | jq .
 
 ### Execute a GET action against the cluster
 
-The request body accepts optional `params` to control which resource is fetched.
-Defaults to listing pods in the `default` namespace.
+The `get` action lists or fetches Kubernetes resources via `params`. `resource`, `version`, and
+`namespace` are all required — nothing is defaulted server-side. Cluster-scoped resources (e.g.
+`nodes`, `namespaces`) aren't supported yet: every request is currently treated as namespaced,
+regardless of the resource type, so `namespace` must always be set.
 
 ```bash
-# List pods in the default namespace (default params)
-curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
-  -H 'Content-Type: application/json' \
-  -d '{"target_cluster": "local"}' | jq .
-
-# List all namespaces
-curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
+# List pods in the default namespace
+curl -s -X POST http://localhost:8080/api/v0/trusted-actions/get/run \
   -H 'Content-Type: application/json' \
   -d '{
     "target_cluster": "local",
-    "params": {"resource": "namespaces", "version": "v1"}
+    "params": {"resource": "pods", "version": "v1", "namespace": "default"}
+  }' | jq .
+
+# List pods in a different namespace
+curl -s -X POST http://localhost:8080/api/v0/trusted-actions/get/run \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "target_cluster": "local",
+    "params": {"resource": "pods", "version": "v1", "namespace": "kube-system"}
   }' | jq .
 
 # Get a specific pod
-curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
+curl -s -X POST http://localhost:8080/api/v0/trusted-actions/get/run \
   -H 'Content-Type: application/json' \
   -d '{
     "target_cluster": "local",
@@ -108,28 +113,32 @@ curl -s -X POST http://localhost:8080/api/v0/trusted-actions/cluster-info/run \
   }' | jq .
 ```
 
-A successful response looks like:
+`POST .../run` itself only returns `202` with `status: pending` — execution happens
+asynchronously on a background worker. Poll `GET /api/v0/trusted-actions/runs/{id}` for the
+result:
 
 ```json
 {
   "id": "...",
-  "action": "cluster-info",
+  "action": "get",
   "status": "succeeded",
   "target_cluster": "local",
-  "output": [ ... ],
   "completed_at": "..."
 }
 ```
 
+(`output`/`logs` retrieval via `?include=output,logs` is not implemented yet — it's a placeholder
+pending a persistent audit/output backend.)
+
 ### Supported params
 
-| Param       | Default   | Description                                            |
-|-------------|-----------|--------------------------------------------------------|
-| `resource`  | `pods`    | Kubernetes resource type (e.g. `namespaces`, `nodes`)  |
-| `namespace` | `default` | Namespace to query (omit for cluster-scoped resources) |
-| `name`      | *(empty)* | Specific resource name — omit to list all              |
-| `version`   | `v1`      | API version                                            |
-| `group`     | *(empty)* | API group (empty = core group)                         |
+| Param       | Required | Description                                                           |
+|-------------|----------|------------------------------------------------------------------------|
+| `resource`  | yes      | Kubernetes resource type, plural (e.g. `pods`, `configmaps`)          |
+| `version`   | yes      | API version (e.g. `v1`)                                               |
+| `namespace` | yes      | Namespace to query — every request is currently treated as namespaced |
+| `name`      | no       | Specific resource name — omit to list all                             |
+| `group`     | no       | API group (omit for core resources)                                   |
 
 ## Development
 

@@ -1,0 +1,15 @@
+services:
+  ministack:
+    image: ministackorg/ministack:1.4.16
+    container_name: rosa-ta-ministack
+    ports:
+      - "4566:4566"
+    environment:
+      - MINISTACK_REGION=us-east-1
+      - MINISTACK_ACCOUNT_ID=123456789012
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4566/_localstack/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s

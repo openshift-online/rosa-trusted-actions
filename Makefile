@@ -95,6 +95,18 @@ test-coverage: generate ## Run tests with coverage
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 
+.PHONY: itest-up
+itest-up: ## Create kind cluster + start ministack, waiting for both to be ready
+	./integration/itest-up.sh
+
+.PHONY: itest-run
+itest-run: ## Start the server against the kind cluster and smoke test the 'get' action
+	./integration/itest-run.sh
+
+.PHONY: itest-down
+itest-down: ## Tear down the kind cluster and ministack, removing generated artifacts
+	./integration/itest-down.sh
+
 .PHONY: test-api
 test-api: ## Test API endpoints (requires server to be running)
 	@echo "Testing API endpoints..."
