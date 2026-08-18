@@ -20,6 +20,11 @@ type ResourceTarget struct {
 	ClusterScoped bool   `json:"clusterScoped"`
 }
 
+type 	Clients struct {
+	Dynamic     dynamic.Interface
+	PodExecutor backplane.PodExecutor
+}
+
 type ActionRequest struct {
 	Target         ResourceTarget
 	ClusterVersion string
@@ -34,20 +39,21 @@ type ActionResult struct {
 type Action interface {
 	Name() string
 	RequiredRBAC(target ResourceTarget) []backplane.RBACRule
-	Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error)
+	UsesPodExec() bool
+	Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error)
 }
 
-func resourceClient(client dynamic.Interface, gvr schema.GroupVersionResource, target ResourceTarget) (dynamic.ResourceInterface, error) {
+func resourceClient(clients Clients, gvr schema.GroupVersionResource, target ResourceTarget) (dynamic.ResourceInterface, error) {
 	if target.ClusterScoped {
 		if target.Namespace != "" {
 			return nil, fmt.Errorf("namespace must be empty for cluster-scoped resource %s", target.Resource)
 		}
-		return client.Resource(gvr), nil
+		return clients.Dynamic.Resource(gvr), nil
 	}
 	if target.Namespace == "" {
 		return nil, fmt.Errorf("namespace is required for namespaced resource %s", target.Resource)
 	}
-	return client.Resource(gvr).Namespace(target.Namespace), nil
+	return clients.Dynamic.Resource(gvr).Namespace(target.Namespace), nil
 }
 
 func scopeLabel(namespace string) string {
@@ -55,4 +61,10 @@ func scopeLabel(namespace string) string {
 		return "cluster scope"
 	}
 	return namespace
+}
+
+func setIfPresent(m map[string]interface{}, key string, value interface{}) {
+	if value != nil {
+		m[key] = value
+	}
 }

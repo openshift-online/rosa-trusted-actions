@@ -6,7 +6,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
@@ -17,7 +16,8 @@ type DeleteAction struct{}
 
 func NewDeleteAction() *DeleteAction { return &DeleteAction{} }
 
-func (d *DeleteAction) Name() string { return "delete" }
+func (d *DeleteAction) Name() string      { return "delete" }
+func (d *DeleteAction) UsesPodExec() bool { return false }
 
 func (d *DeleteAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	rule := backplane.RBACRule{
@@ -31,7 +31,7 @@ func (d *DeleteAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule 
 	return []backplane.RBACRule{rule}
 }
 
-func (d *DeleteAction) Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error) {
+func (d *DeleteAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
 	if req.Target.Name == "" {
 		return nil, fmt.Errorf("delete action requires a resource name")
 	}
@@ -42,7 +42,7 @@ func (d *DeleteAction) Execute(ctx context.Context, client dynamic.Interface, re
 		Resource: req.Target.Resource,
 	}
 
-	rc, err := resourceClient(client, gvr, req.Target)
+	rc, err := resourceClient(clients, gvr, req.Target)
 	if err != nil {
 		return nil, err
 	}

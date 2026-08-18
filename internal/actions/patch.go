@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
@@ -19,7 +18,8 @@ type PatchAction struct{}
 
 func NewPatchAction() *PatchAction { return &PatchAction{} }
 
-func (p *PatchAction) Name() string { return "patch" }
+func (p *PatchAction) Name() string      { return "patch" }
+func (p *PatchAction) UsesPodExec() bool { return false }
 
 func (p *PatchAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	rule := backplane.RBACRule{
@@ -33,7 +33,7 @@ func (p *PatchAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	return []backplane.RBACRule{rule}
 }
 
-func (p *PatchAction) Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error) {
+func (p *PatchAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
 	if req.Target.Name == "" {
 		return nil, fmt.Errorf("patch action requires a resource name")
 	}
@@ -49,7 +49,7 @@ func (p *PatchAction) Execute(ctx context.Context, client dynamic.Interface, req
 		Resource: req.Target.Resource,
 	}
 
-	rc, err := resourceClient(client, gvr, req.Target)
+	rc, err := resourceClient(clients, gvr, req.Target)
 	if err != nil {
 		return nil, err
 	}

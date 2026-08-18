@@ -81,6 +81,11 @@ func (b *BackplaneProvider) GetClient(ctx context.Context, clusterID string, rba
 	return client, nil
 }
 
+// TODO(ROSAENG-62342): Implement backplane pod executor support.
+func (b *BackplaneProvider) GetPodExecutor(_ context.Context, _ string, _ []RBACRule) (PodExecutor, error) {
+	return nil, fmt.Errorf("GetPodExecutor not yet implemented for BackplaneProvider")
+}
+
 func (b *BackplaneProvider) requestAccess(ctx context.Context, clusterID string, rbacRules []RBACRule) (string, error) {
 	reqBody := trustedActionRequest{
 		RBACRules:          rbacRules,

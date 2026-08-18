@@ -101,6 +101,19 @@ func New() *Catalog {
 		AllowedRoles: allRoles,
 	})
 
+	c.register(&ActionDefinition{
+		Name:         "list-alerts",
+		Description:  "List firing or pending alerts from Prometheus and optionally active silences from Alertmanager",
+		Type:         openapi.Read,
+		Scope:        openapi.KubeApi,
+		AllowedRoles: allRoles,
+		Params: []ParamDefinition{
+			{Name: "severity", Description: "Filter by severity: critical, warning (empty for both)"},
+			{Name: "state", Description: "Alert state: firing, pending, all", Default: "firing"},
+			{Name: "silences", Description: "Include active silences: true, false", Default: "false"},
+		},
+	})
+
 	return c
 }
 

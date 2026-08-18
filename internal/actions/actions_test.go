@@ -569,7 +569,7 @@ func TestAction_Execute(t *testing.T) {
 				g := NewWithT(t)
 
 				client := newFakeClient(test.clientObjects...)
-				result, err := test.action.Execute(context.Background(), client, ActionRequest{
+				result, err := test.action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
 					Target: test.target,
 					Params: test.params,
 				})

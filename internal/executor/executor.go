@@ -95,12 +95,28 @@ func (e *Executor) Execute(ctx context.Context, req Request) (result *Result) {
 		}
 	}
 
+	clients := actions.Clients{Dynamic: client}
+
+	if req.Action.UsesPodExec() {
+		podExec, podErr := e.backplane.GetPodExecutor(ctx, req.ClusterID, rbacRules)
+		if podErr != nil {
+			rec.Outcome = audit.OutcomeFailure
+			rec.Error = podErr.Error()
+			return &Result{
+				Allowed: true,
+				Reason:  authResult.Reason,
+				Error:   fmt.Errorf("failed to get pod executor: %w", podErr),
+			}
+		}
+		clients.PodExecutor = podExec
+	}
+
 	actionReq := actions.ActionRequest{
 		Target:         req.Target,
 		ClusterVersion: req.ClusterVersion,
 		Params:         req.Params,
 	}
-	output, err := req.Action.Execute(ctx, client, actionReq)
+	output, err := req.Action.Execute(ctx, clients, actionReq)
 	if err != nil {
 		rec.Outcome = audit.OutcomeFailure
 		rec.Error = err.Error()

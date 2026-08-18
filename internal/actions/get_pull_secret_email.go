@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
@@ -32,7 +31,8 @@ func NewGetPullSecretEmailAction() *GetPullSecretEmailAction {
 	return &GetPullSecretEmailAction{}
 }
 
-func (g *GetPullSecretEmailAction) Name() string { return "get-pull-secret-email" }
+func (g *GetPullSecretEmailAction) Name() string      { return "get-pull-secret-email" }
+func (g *GetPullSecretEmailAction) UsesPodExec() bool { return false }
 
 func (g *GetPullSecretEmailAction) RequiredRBAC(_ ResourceTarget) []backplane.RBACRule {
 	return []backplane.RBACRule{
@@ -45,8 +45,8 @@ func (g *GetPullSecretEmailAction) RequiredRBAC(_ ResourceTarget) []backplane.RB
 	}
 }
 
-func (g *GetPullSecretEmailAction) Execute(ctx context.Context, client dynamic.Interface, _ ActionRequest) (*ActionResult, error) {
-	secret, err := client.Resource(secretsGVR).Namespace(pullSecretNamespace).Get(ctx, pullSecretName, metav1.GetOptions{})
+func (g *GetPullSecretEmailAction) Execute(ctx context.Context, clients Clients, _ ActionRequest) (*ActionResult, error) {
+	secret, err := clients.Dynamic.Resource(secretsGVR).Namespace(pullSecretNamespace).Get(ctx, pullSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secret %s/%s: %w", pullSecretNamespace, pullSecretName, err)
 	}

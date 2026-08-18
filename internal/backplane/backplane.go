@@ -13,6 +13,11 @@ type RBACRule struct {
 	Verbs         []string `json:"verbs"`
 }
 
+type PodExecutor interface {
+	Exec(ctx context.Context, namespace, pod, container string, command []string) ([]byte, error)
+}
+
 type ClientProvider interface {
 	GetClient(ctx context.Context, clusterID string, rbacRules []RBACRule) (dynamic.Interface, error)
+	GetPodExecutor(ctx context.Context, clusterID string, rbacRules []RBACRule) (PodExecutor, error)
 }

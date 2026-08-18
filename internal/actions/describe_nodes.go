@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
@@ -37,7 +36,8 @@ func NewDescribeNodesAction() *DescribeNodesAction {
 	return &DescribeNodesAction{}
 }
 
-func (d *DescribeNodesAction) Name() string { return "describe-nodes" }
+func (d *DescribeNodesAction) Name() string      { return "describe-nodes" }
+func (d *DescribeNodesAction) UsesPodExec() bool { return false }
 
 func (d *DescribeNodesAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	nodesRule := backplane.RBACRule{
@@ -59,16 +59,16 @@ func (d *DescribeNodesAction) RequiredRBAC(target ResourceTarget) []backplane.RB
 	}
 }
 
-func (d *DescribeNodesAction) Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error) {
+func (d *DescribeNodesAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
 	var nodeItems []unstructured.Unstructured
 	if req.Target.Name != "" {
-		node, err := client.Resource(nodesGVR).Get(ctx, req.Target.Name, metav1.GetOptions{})
+		node, err := clients.Dynamic.Resource(nodesGVR).Get(ctx, req.Target.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get node %s: %w", req.Target.Name, err)
 		}
 		nodeItems = []unstructured.Unstructured{*node}
 	} else {
-		nodes, err := client.Resource(nodesGVR).List(ctx, metav1.ListOptions{})
+		nodes, err := clients.Dynamic.Resource(nodesGVR).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to list nodes: %w", err)
 		}
@@ -82,23 +82,21 @@ func (d *DescribeNodesAction) Execute(ctx context.Context, client dynamic.Interf
 		eventSelector += ",involvedObject.name=" + req.Target.Name
 	}
 
-	pods, err := client.Resource(podsGVR).Namespace("").List(ctx, metav1.ListOptions{
+	pods, err := clients.Dynamic.Resource(podsGVR).Namespace("").List(ctx, metav1.ListOptions{
 		FieldSelector: podSelector,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list pods: %w", err)
 	}
 
-	events, err := client.Resource(eventsGVR).Namespace("").List(ctx, metav1.ListOptions{
+	events, err := clients.Dynamic.Resource(eventsGVR).Namespace("").List(ctx, metav1.ListOptions{
 		FieldSelector: eventSelector,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}
 
-	// Leases are always listed as there's one per node, and they're small,
-	// so a targeted get doesn't meaningfully reduce API server load.
-	leases, err := client.Resource(leasesGVR).Namespace(kubeNodeLeaseNamespace).List(ctx, metav1.ListOptions{})
+	leases, err := clients.Dynamic.Resource(leasesGVR).Namespace(kubeNodeLeaseNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list leases: %w", err)
 	}
@@ -217,11 +215,6 @@ func reshapeNode(node unstructured.Unstructured, pods []interface{}, events []in
 	return unstructured.Unstructured{Object: out}
 }
 
-func setIfPresent(m map[string]interface{}, key string, value interface{}) {
-	if value != nil {
-		m[key] = value
-	}
-}
 
 func extractPod(pod unstructured.Unstructured) map[string]interface{} {
 	spec, _ := pod.Object["spec"].(map[string]interface{})

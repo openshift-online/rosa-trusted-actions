@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"testing"
 	"time"
@@ -32,6 +33,10 @@ func (f *fakeClientProvider) GetClient(_ context.Context, _ string, _ []backplan
 		return nil, f.err
 	}
 	return f.client, nil
+}
+
+func (f *fakeClientProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+	return nil, fmt.Errorf("not implemented in test fake")
 }
 
 func newConfigMap(namespace, name string) *unstructured.Unstructured {
@@ -202,6 +207,10 @@ type slowClientProvider struct{}
 func (s *slowClientProvider) GetClient(ctx context.Context, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
 	<-ctx.Done()
 	return nil, ctx.Err()
+}
+
+func (s *slowClientProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+	return nil, fmt.Errorf("not implemented in test fake")
 }
 
 func TestExecutorRunner_Run_RespectsExecutionTimeout(t *testing.T) {

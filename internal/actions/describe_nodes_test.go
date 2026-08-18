@@ -201,7 +201,7 @@ func TestDescribeNodesAction_Execute_EmptyCluster(t *testing.T) {
 	client := newDescribeNodesFakeClient()
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -217,7 +217,7 @@ func TestDescribeNodesAction_Execute_SingleNode(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"))
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -272,7 +272,7 @@ func TestDescribeNodesAction_Execute_MultipleNodes(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -294,7 +294,7 @@ func TestDescribeNodesAction_Execute_PodCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -361,7 +361,7 @@ func TestDescribeNodesAction_Execute_PodContainerResources(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"), pod)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -457,7 +457,7 @@ func TestDescribeNodesAction_Execute_PodStatus(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"), pod)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -520,7 +520,7 @@ func TestDescribeNodesAction_Execute_EventCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -567,7 +567,7 @@ func TestDescribeNodesAction_Execute_LeaseCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -608,7 +608,7 @@ func TestDescribeNodesAction_Execute_FullCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -676,7 +676,7 @@ func TestDescribeNodesAction_Execute_NodeTaintsAndUnschedulable(t *testing.T) {
 	client := newDescribeNodesFakeClient(node)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{})
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -734,7 +734,7 @@ func TestDescribeNodesAction_Execute_SingleNodeByName(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), client, ActionRequest{
+	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
 		Target: ResourceTarget{Name: "node-a"},
 	})
 	if err != nil {
@@ -777,7 +777,7 @@ func TestDescribeNodesAction_Execute_SingleNodeNotFound(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"))
 	action := NewDescribeNodesAction()
 
-	_, err := action.Execute(context.Background(), client, ActionRequest{
+	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
 		Target: ResourceTarget{Name: "nonexistent"},
 	})
 	if err == nil {
@@ -794,7 +794,7 @@ func TestDescribeNodesAction_Execute_SingleNodeFieldSelectors(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	_, err := action.Execute(context.Background(), client, ActionRequest{
+	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
 		Target: ResourceTarget{Name: "node-a"},
 	})
 	if err != nil {

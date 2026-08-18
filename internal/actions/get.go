@@ -7,8 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
@@ -18,7 +16,8 @@ type GetAction struct{}
 
 func NewGetAction() *GetAction { return &GetAction{} }
 
-func (g *GetAction) Name() string { return "get" }
+func (g *GetAction) Name() string      { return "get" }
+func (g *GetAction) UsesPodExec() bool { return false }
 
 func (g *GetAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	rule := backplane.RBACRule{
@@ -34,14 +33,14 @@ func (g *GetAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	return []backplane.RBACRule{rule}
 }
 
-func (g *GetAction) Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error) {
+func (g *GetAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    req.Target.Group,
 		Version:  req.Target.Version,
 		Resource: req.Target.Resource,
 	}
 
-	rc, err := resourceClient(client, gvr, req.Target)
+	rc, err := resourceClient(clients, gvr, req.Target)
 	if err != nil {
 		return nil, err
 	}
