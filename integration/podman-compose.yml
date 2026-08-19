@@ -1,12 +1,17 @@
 services:
   ministack:
-    image: ministackorg/ministack:1.4.16
-    container_name: rosa-ta-ministack
+    # user: root required — LocalStack's init/ready.d scripts execute as root, and
+    # rootless podman on Fedora remaps the container UID; without this the init
+    # script volume mount is unreadable and LocalStack fails to initialise.
+    user: root
+    # FIXME: Using a real old image so we don't need the TOKEN as we don't use pro features.
+    image: localstack/localstack:4.14.0
+    container_name: rosa-ta-localstack
     ports:
       - "4566:4566"
     environment:
-      - MINISTACK_REGION=us-east-1
-      - MINISTACK_ACCOUNT_ID=123456789012
+      - AWS_DEFAULT_REGION=us-east-1
+      - LOCALSTACK_ACCOUNT_ID=123456789012
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4566/_localstack/health')"]
       interval: 5s

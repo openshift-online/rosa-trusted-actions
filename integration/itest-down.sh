@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-# Tears down the kind cluster and ministack compose stack created by itest-up.sh, and removes
+# Tears down the kind cluster and localstack compose stack created by itest-up.sh, and removes
 # generated local artifacts. Safe to run even if nothing is up. See integration/README.md Phase 1.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLUSTER_NAME=${ROSA_TA_KIND_CLUSTER_NAME:-"rosa-ta"}
 KUBECONFIG_PATH="$SCRIPT_DIR/.kind-kubeconfig"
 COMPOSE_FILE="$SCRIPT_DIR/podman-compose.yml"
-MINISTACK_CONTAINER="rosa-ta-ministack"
+LOCALSTACK_CONTAINER="rosa-ta-localstack"
 DB_PATH="$SCRIPT_DIR/.trusted_actions.db"
 SERVER_LOG="$SCRIPT_DIR/.server.log"
 
@@ -26,17 +26,17 @@ for bin in kind podman podman-compose; do
     command -v "$bin" > /dev/null 2>&1 || fail "'$bin' is required but not found on PATH"
 done
 
-# --- ministack ---
-if podman container exists "$MINISTACK_CONTAINER" 2> /dev/null; then
-    log "Stopping ministack"
+# --- localstack ---
+if podman container exists "$LOCALSTACK_CONTAINER" 2> /dev/null; then
+    log "Stopping localstack"
     podman-compose -f "$COMPOSE_FILE" down
-    ok "ministack stopped"
+    ok "localstack stopped"
 else
-    log "ministack container not found, nothing to stop"
+    log "localstack container not found, nothing to stop"
 fi
 
 # --- kind cluster ---
-if kind get clusters 2> /dev/null | grep -qx "$CLUSTER_NAME"; then
+if kind get clusters 2> /dev/null | grep -Fqx "$CLUSTER_NAME"; then
     log "Deleting kind cluster '$CLUSTER_NAME'"
     kind delete cluster --name "$CLUSTER_NAME"
     ok "kind cluster '$CLUSTER_NAME' deleted"

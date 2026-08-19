@@ -11,6 +11,7 @@ CLUSTER_NAME=${ROSA_TA_KIND_CLUSTER_NAME:-"rosa-ta"}
 KUBECONFIG_PATH="$SCRIPT_DIR/.kind-kubeconfig"
 DB_PATH="$SCRIPT_DIR/.trusted_actions.db"
 SERVER_LOG="$SCRIPT_DIR/.server.log"
+SERVER_BIN="$SCRIPT_DIR/.server-bin"
 SERVER_URL="http://localhost:8080"
 API_BASE="$SERVER_URL/api/v0/trusted-actions"
 WAIT_TIMEOUT=${ROSA_TA_ITEST_WAIT_TIMEOUT:-60}
@@ -32,7 +33,11 @@ done
 # --- 1. Retrieve a kubeconfig from kind ---
 kind get clusters 2> /dev/null | grep -qx "$CLUSTER_NAME" \
     || fail "kind cluster '$CLUSTER_NAME' not found — run 'make itest-up' first"
+old_umask=$(umask)
+umask 077
 kind get kubeconfig --name "$CLUSTER_NAME" > "$KUBECONFIG_PATH"
+umask "$old_umask"
+chmod 0600 "$KUBECONFIG_PATH"
 ok "kubeconfig retrieved: $KUBECONFIG_PATH"
 
 # --- 2. Automatically set the env variables ---
@@ -48,10 +53,13 @@ cleanup() {
         kill "$SERVER_PID" 2> /dev/null || true
         wait "$SERVER_PID" 2> /dev/null || true
     fi
+    rm -f "$SERVER_BIN"
 }
 trap cleanup EXIT
 
-(cd "$REPO_ROOT" && go run ./cmd/server --log-level debug) > "$SERVER_LOG" 2>&1 &
+go build -C "$REPO_ROOT" -o "$SERVER_BIN" ./cmd/server || fail "failed to build server binary"
+
+"$SERVER_BIN" --log-level debug --listen-addr ":8080" > "$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 
 elapsed=0
