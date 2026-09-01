@@ -189,7 +189,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Global middleware
 	router.Use(middleware.NewLogger(logger))
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Recoverer)
+	router.Use(middleware.Recoverer(logger))
 	router.Use(chimiddleware.RealIP)
 	router.Use(chimiddleware.Timeout(60 * time.Second))
 

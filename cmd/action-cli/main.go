@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -24,6 +25,8 @@ func main() {
 	}
 
 	var (
+		logLevel       string
+		logJSON        bool
 		kubeconfig     string
 		namespace      string
 		group          string
@@ -43,13 +46,24 @@ func main() {
 		silences       bool
 	)
 
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "debug", "log level (debug, info, warn, error)")
+	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "enable JSON logging")
+
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Execute a primitive action (get, patch, delete)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger := logrus.New()
-			logger.SetLevel(logrus.DebugLevel)
-			logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+			level, err := logrus.ParseLevel(logLevel)
+			if err != nil {
+				level = logrus.DebugLevel
+			}
+			logger.SetLevel(level)
+			if logJSON {
+				logger.SetFormatter(&logrus.JSONFormatter{TimestampFormat: time.RFC3339})
+			} else {
+				logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, TimestampFormat: time.RFC3339})
+			}
 
 			var act actions.Action
 			switch action {

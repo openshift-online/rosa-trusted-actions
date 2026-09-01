@@ -26,26 +26,27 @@ func RequestID(next http.Handler) http.Handler {
 }
 
 // Recoverer recovers from panics and logs them
-func Recoverer(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error":      err,
-					"stack":      string(debug.Stack()),
-					"request_id": r.Context().Value("request_id"),
-					"method":     r.Method,
-					"uri":        r.RequestURI,
-				}).Error("Panic recovered")
+func Recoverer(logger *logrus.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.WithFields(logrus.Fields{
+						"error":      err,
+						"stack":      string(debug.Stack()),
+						"request_id": r.Context().Value("request_id"),
+						"method":     r.Method,
+						"uri":        r.RequestURI,
+					}).Error("Panic recovered")
 
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			}
-		}()
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
-
 
 // Timeout wraps a handler with a timeout
 func Timeout(timeout time.Duration) func(next http.Handler) http.Handler {

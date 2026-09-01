@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -96,11 +96,13 @@ func readConfigFile(configFilePath string) *configFile {
 	if configFilePath != "" {
 		data, err := os.ReadFile(configFilePath)
 		if err != nil {
-			log.Fatalf("Failed to read '%s' config file: %v", configFilePath, err)
+			fmt.Fprintf(os.Stderr, "Failed to read '%s' config file: %v\n", configFilePath, err)
+			os.Exit(1)
 		}
 		err = yaml.Unmarshal(data, configFile)
 		if err != nil {
-			log.Fatalf("Failed to unmarshal '%s' config file: %v", configFilePath, err)
+			fmt.Fprintf(os.Stderr, "Failed to unmarshal '%s' config file: %v\n", configFilePath, err)
+			os.Exit(1)
 		}
 	}
 	return configFile
