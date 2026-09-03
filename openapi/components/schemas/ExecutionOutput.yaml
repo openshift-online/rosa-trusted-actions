@@ -1,0 +1,18 @@
+type: object
+required:
+  - message
+  - resources
+properties:
+  message:
+    type: string
+    description: Execution message/logs
+    example: listed 0 pods in kube-system
+  resources:
+    type: array
+    items:
+      type: object
+    description: Kube objects list
+    example: []
+  _links:
+    $ref: ./ExecutionOutputLinks.yaml
+

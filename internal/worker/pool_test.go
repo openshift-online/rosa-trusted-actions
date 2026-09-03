@@ -38,13 +38,17 @@ func (f *fakeStore) ClaimNextExecution(ctx context.Context) (*models.Execution, 
 	return exec, nil
 }
 
-func (f *fakeStore) UpdateExecutionStatus(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time) error {
+func (f *fakeStore) UpdateExecutionWithResult(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time, output *models.ExecutionOutput) error {
 	return nil
 }
 
 func (f *fakeStore) CreateExecution(ctx context.Context, exec *models.Execution) error { return nil }
 
 func (f *fakeStore) GetExecution(ctx context.Context, id uuid.UUID) (*models.Execution, error) {
+	return nil, store.ErrNotFound
+}
+
+func (f *fakeStore) GetExecutionOutput(ctx context.Context, execId uuid.UUID) (*models.ExecutionOutput, error) {
 	return nil, store.ErrNotFound
 }
 
@@ -69,10 +73,9 @@ func newFakeRunner() *fakeRunner {
 	return &fakeRunner{done: make(chan uuid.UUID, 10)}
 }
 
-func (r *fakeRunner) Run(ctx context.Context, exec *models.Execution) (string, *time.Time, string) {
+func (r *fakeRunner) Run(ctx context.Context, exec *models.Execution) RunResult {
 	r.done <- exec.ID
-	now := time.Now().UTC()
-	return "succeeded", &now, ""
+	return RunResult{Status: "succeeded"}
 }
 
 func testExec() *models.Execution {
@@ -134,7 +137,7 @@ type ctxAwareStore struct {
 	updated chan struct{}
 }
 
-func (s *ctxAwareStore) UpdateExecutionStatus(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time) error {
+func (s *ctxAwareStore) UpdateExecutionWithResult(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time, output *models.ExecutionOutput) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}

@@ -10,17 +10,17 @@ import (
 )
 
 type AuditEntry struct {
-	ID            uuid.UUID `db:"id"`
-	Timestamp     time.Time `db:"timestamp"`
-	Method        string    `db:"method"`
-	Path          string    `db:"path"`
-	Username      string    `db:"username"`
-	StatusCode    int       `db:"status_code"`
-	Action        *string   `db:"action"`
-	ExecutionID   *string   `db:"execution_id"`
-	Jira          *string   `db:"jira"`
-	ApprovalState *string   `db:"approval_state"`
-	TargetCluster *string   `db:"target_cluster"`
+	ID            uuid.UUID
+	Timestamp     time.Time
+	Method        string
+	Path          string
+	Username      string
+	StatusCode    int
+	Action        *string
+	ExecutionID   *string
+	Jira          *string
+	ApprovalState *string
+	TargetCluster *string
 }
 
 func (a *AuditEntry) ToOpenAPI() openapi.AuditEntry {

@@ -1,0 +1,9 @@
+type: object
+properties:
+  self:
+    $ref: ./HALLink.yaml
+  execution:
+    $ref: ./HALLink.yaml
+required:
+  - self
+  - execution

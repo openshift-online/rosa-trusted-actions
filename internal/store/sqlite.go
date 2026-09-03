@@ -81,19 +81,19 @@ func (s *SQLiteStore) CreateExecution(ctx context.Context, exec *models.Executio
 		INSERT INTO executions (
 			id, action, status, approval_state, username, target_cluster,
 			jira, dry_run, force, params, scope, type, revision,
-			manifest_work_name, output_path, output_status,
+			manifest_work_name,
 			runner_seconds, upload_seconds, duration_seconds,
 			created_at, updated_at, completed_at
 		) VALUES (
 			?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?, ?,
-			?, ?, ?,
+			?,
 			?, ?, ?,
 			?, ?, ?
 		)`,
 		exec.ID.String(), exec.Action, exec.Status, exec.ApprovalState, exec.Username, exec.TargetCluster,
 		exec.Jira, exec.DryRun, exec.Force, paramsStr, exec.Scope, exec.Type, exec.Revision,
-		exec.ManifestWorkName, exec.OutputPath, exec.OutputStatus,
+		exec.ManifestWorkName,
 		exec.RunnerSeconds, exec.UploadSeconds, exec.DurationSeconds,
 		exec.CreatedAt.UTC().Format(timeLayout), exec.UpdatedAt.UTC().Format(timeLayout),
 		formatTimePtr(exec.CompletedAt),
@@ -115,11 +115,21 @@ func (s *SQLiteStore) GetExecution(ctx context.Context, id uuid.UUID) (*models.E
 		return nil, fmt.Errorf("querying execution: %w", err)
 	}
 
-	exec, err := raw.toModel()
-	if err != nil {
-		return nil, err
+	return raw.toModel()
+}
+
+func (s *SQLiteStore) GetExecutionOutput(ctx context.Context, execId uuid.UUID) (*models.ExecutionOutput, error) {
+	row := s.db.QueryRowxContext(ctx, "SELECT "+outputColumns+" FROM executions_output WHERE exec_id = ?", execId.String())
+
+	var raw executionOutputRow
+	if err := row.StructScan(&raw); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("querying execution: %w", err)
 	}
-	return exec, nil
+
+	return raw.toModel()
 }
 
 func (s *SQLiteStore) ListExecutions(ctx context.Context, filter ExecutionFilter) (*ExecutionListResult, error) {
@@ -169,9 +179,45 @@ func (s *SQLiteStore) ListExecutions(ctx context.Context, filter ExecutionFilter
 	return &ExecutionListResult{Items: items, Total: total, Limit: limit, Offset: offset}, nil
 }
 
-func (s *SQLiteStore) UpdateExecutionStatus(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time) error {
-	result, err := s.db.ExecContext(ctx, `
+func (s *SQLiteStore) UpdateExecutionWithResult(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time, output *models.ExecutionOutput) error {
+	opts := &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+		ReadOnly:  false,
+	}
+
+	tx, err := s.db.BeginTx(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("initiating transaction: %w", err)
+	}
+	defer func() {
+		err := tx.Rollback() // Always safe to call; does nothing if committed
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			s.logger.WithError(err).Warn("Failed to rollback transaction")
+		}
+	}()
+
+	txExec := func(query string, mustAffectRows bool, args ...any) error {
+		result, err := tx.ExecContext(ctx, query, args...)
+		if err != nil {
+			return fmt.Errorf("updating table: %w", err)
+		}
+
+		if mustAffectRows {
+			n, err := result.RowsAffected()
+			if err != nil {
+				return fmt.Errorf("checking rows affected: %w", err)
+			}
+			if n == 0 {
+				return ErrNotFound
+			}
+		}
+		return nil
+	}
+
+	// Update execution status
+	err = txExec(`
 		UPDATE executions SET status = ?, updated_at = ?, completed_at = ? WHERE id = ?`,
+		true,
 		status,
 		time.Now().UTC().Format(timeLayout),
 		formatTimePtr(completedAt),
@@ -181,13 +227,47 @@ func (s *SQLiteStore) UpdateExecutionStatus(ctx context.Context, id uuid.UUID, s
 		return fmt.Errorf("updating execution status: %w", err)
 	}
 
-	n, err := result.RowsAffected()
+	// Delete the existing output if any (should not happen)
+	err = txExec(`
+		DELETE FROM executions_output WHERE exec_id = ?`,
+		false,
+		id.String(),
+	)
 	if err != nil {
-		return fmt.Errorf("checking rows affected: %w", err)
+		return fmt.Errorf("deleting execution output: %w", err)
 	}
-	if n == 0 {
-		return ErrNotFound
+
+	// Create a new output
+	if output != nil {
+		resourcesData, err := json.Marshal(output.Resources)
+		if err != nil {
+			return fmt.Errorf("serialising execution ouput resources in DB: %w", err)
+		}
+		resourcesAsJson := string(resourcesData)
+
+		outputId := uuid.New()
+		err = txExec(`
+		INSERT INTO executions_output (
+			`+outputColumns+`
+		) VALUES (
+			?, ?, ?, ?
+		)`,
+			true,
+			outputId.String(),
+			id.String(),
+			output.Message,
+			resourcesAsJson,
+		)
+		if err != nil {
+			return fmt.Errorf("creating execution output: %w", err)
+		}
 	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("committing transaction: %w", err)
+	}
+
 	return nil
 }
 
@@ -301,9 +381,11 @@ func (s *SQLiteStore) ListAuditEntries(ctx context.Context, filter AuditFilter) 
 
 const executionColumns = `id, action, status, approval_state, username, target_cluster,
 	jira, dry_run, force, params, scope, type, revision,
-	manifest_work_name, output_path, output_status,
+	manifest_work_name,
 	runner_seconds, upload_seconds, duration_seconds,
 	created_at, updated_at, completed_at`
+
+const outputColumns = `id, exec_id, message, resources`
 
 const auditColumns = `id, timestamp, method, path, username, status_code,
 	action, execution_id, jira, approval_state, target_cluster`
@@ -324,8 +406,6 @@ type executionRow struct {
 	Type             *string `db:"type"`
 	Revision         *string `db:"revision"`
 	ManifestWorkName *string `db:"manifest_work_name"`
-	OutputPath       *string `db:"output_path"`
-	OutputStatus     *string `db:"output_status"`
 	RunnerSeconds    *int    `db:"runner_seconds"`
 	UploadSeconds    *int    `db:"upload_seconds"`
 	DurationSeconds  *int    `db:"duration_seconds"`
@@ -364,8 +444,6 @@ func (r *executionRow) toModel() (*models.Execution, error) {
 		Type:             r.Type,
 		Revision:         r.Revision,
 		ManifestWorkName: r.ManifestWorkName,
-		OutputPath:       r.OutputPath,
-		OutputStatus:     r.OutputStatus,
 		RunnerSeconds:    r.RunnerSeconds,
 		UploadSeconds:    r.UploadSeconds,
 		DurationSeconds:  r.DurationSeconds,
@@ -387,6 +465,27 @@ func (r *executionRow) toModel() (*models.Execution, error) {
 	}
 
 	return exec, nil
+}
+
+type executionOutputRow struct {
+	ID        string `db:"id"`
+	ExecId    string `db:"exec_id"`
+	Message   string `db:"message"`
+	Resources string `db:"resources"`
+}
+
+func (r *executionOutputRow) toModel() (*models.ExecutionOutput, error) {
+	resources := []map[string]interface{}{}
+
+	err := json.Unmarshal([]byte(r.Resources), &resources)
+	if err != nil {
+		return nil, fmt.Errorf("parsing execution output resources: %w", err)
+	}
+
+	return &models.ExecutionOutput{
+		Message:   r.Message,
+		Resources: resources,
+	}, nil
 }
 
 type auditRow struct {
@@ -456,10 +555,6 @@ func buildExecutionWhere(filter ExecutionFilter) ([]string, []interface{}) {
 	if filter.Type != nil {
 		clauses = append(clauses, "type = ?")
 		args = append(args, *filter.Type)
-	}
-	if filter.OutputStatus != nil {
-		clauses = append(clauses, "output_status = ?")
-		args = append(args, *filter.OutputStatus)
 	}
 	if filter.ApprovalState != nil {
 		clauses = append(clauses, "approval_state = ?")

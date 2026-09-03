@@ -36,8 +36,6 @@ properties:
     $ref: ./ApprovalState.yaml
   status:
     $ref: ./ExecutionStatus.yaml
-  output_status:
-    $ref: ./OutputStatus.yaml
   revision:
     type: string
     description: Git SHA of TA definition
@@ -47,10 +45,6 @@ properties:
     additionalProperties:
       type: string
     description: Parameters passed at submission time
-  output_path:
-    type: string
-    description: URI for output artifact
-    example: 's3://bucket-name/fa65418c-.../output.json'
   manifest_work_name:
     type: string
     description: Dispatch resource name
@@ -85,12 +79,5 @@ properties:
     type: integer
     description: 'Total wall-clock time (completed_at - created_at) in seconds'
     example: 29
-  output:
-    description: >-
-      Parsed JSON output from the TA. Only included when
-      include=output is set and execution is in a terminal state.
-  logs:
-    type: string
-    description: >-
-      Raw text content of execution.log. Only included when
-      include=logs is set and execution is in a terminal state.
+  _links:
+    $ref: ./ExecutionLinks.yaml

@@ -32,6 +32,8 @@ type ExecutorRunner struct {
 	executionTimeout time.Duration
 }
 
+var _ Runner = &ExecutorRunner{}
+
 // NewExecutorRunner creates a Runner backed by exec. executionTimeout bounds
 // how long a single claimed execution may run before it is cancelled, so a
 // hung backplane/cluster call can't block a worker indefinitely; non-positive
@@ -43,7 +45,7 @@ func NewExecutorRunner(logger *logrus.Logger, exec *executor.Executor, execution
 	return &ExecutorRunner{logger: logger, executor: exec, executionTimeout: executionTimeout}
 }
 
-func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (string, *time.Time, string) {
+func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) RunResult {
 	log := r.logger.WithFields(logrus.Fields{
 		"execution_id": exec.ID,
 		"action":       exec.Action,
@@ -52,13 +54,13 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (strin
 	act, err := resolveAction(exec.Action)
 	if err != nil {
 		log.WithError(err).Error("resolving action for claimed execution")
-		return failedNow(err)
+		return runResultError(err)
 	}
 
 	params, err := decodeParams(exec.Params)
 	if err != nil {
 		log.WithError(err).Error("decoding params for claimed execution")
-		return failedNow(err)
+		return runResultError(err)
 	}
 
 	target := actions.ResourceTarget{
@@ -97,16 +99,18 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) (strin
 
 	if !result.Allowed {
 		log.WithField("reason", result.Reason).Warn("claimed execution denied by authorizer")
-		return failedNow(fmt.Errorf("denied: %s", result.Reason))
+		return runResultError(fmt.Errorf("denied: %s", result.Reason))
 	}
 	if result.Error != nil {
 		log.WithError(result.Error).Error("claimed execution failed")
-		return failedNow(result.Error)
+		return runResultError(result.Error)
 	}
 	log.Debug(result.Output)
 
-	now := time.Now().UTC()
-	return "succeeded", &now, ""
+	return RunResult{
+		Status: "succeeded",
+		Output: result.Output,
+	}
 }
 
 func resolveAction(name string) (actions.Action, error) {
@@ -133,7 +137,9 @@ func decodeParams(raw *json.RawMessage) (map[string]string, error) {
 	return params, nil
 }
 
-func failedNow(err error) (string, *time.Time, string) {
-	now := time.Now().UTC()
-	return "failed", &now, err.Error()
+func runResultError(err error) RunResult {
+	return RunResult{
+		Status: "failed",
+		Reason: err.Error(),
+	}
 }

@@ -10,15 +10,22 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/models"
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
 
-// Runner executes a single claimed execution and reports its terminal status
-// (and, if applicable, when it completed), plus a human-readable reason when
-// status is not a success (empty otherwise).
+// Result for an execution, terminal status, human-readable reason for the
+// status and, if applicable, the action result
+type RunResult struct {
+	Status string
+	Reason string
+	Output *actions.ActionResult
+}
+
+// Runner executes a single claimed execution
 type Runner interface {
-	Run(ctx context.Context, exec *models.Execution) (status string, completedAt *time.Time, reason string)
+	Run(ctx context.Context, exec *models.Execution) RunResult
 }
 
 // Pool is an in-process worker pool that claims pending executions from the
@@ -117,19 +124,27 @@ func (p *Pool) workerLoop(ctx context.Context) {
 }
 
 func (p *Pool) process(ctx context.Context, exec *models.Execution) {
-	status, completedAt, reason := p.runner.Run(ctx, exec)
+	result := p.runner.Run(ctx, exec)
+	status := result.Status
+	completedAt := time.Now().UTC()
 
 	// TODO: persist reason alongside status once the store has somewhere to
 	// put it (Store.UpdateExecutionStatus / the executions table currently
 	// has no failure-reason column, and the OpenAPI-generated Execution type
 	// has no field to expose it through either). Surfaced via structured
 	// logging for now so it isn't silently dropped.
-	if reason != "" {
+	if result.Reason != "" {
 		p.logger.WithFields(logrus.Fields{
 			"execution_id": exec.ID,
-			"status":       status,
-			"reason":       reason,
+			"status":       result.Status,
+			"reason":       result.Reason,
 		}).Warn("execution completed with failure reason")
+	}
+
+	output, err := models.OutputFromActionResult(result.Output)
+	if err != nil {
+		p.logger.WithError(err).WithField("execution_id", exec.ID).Error("creating execution output data")
+		status = "failed"
 	}
 
 	// Detached from ctx's cancellation: if ctx is cancelled (e.g. shutdown)
@@ -140,7 +155,7 @@ func (p *Pool) process(ctx context.Context, exec *models.Execution) {
 	updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 
-	if err := p.store.UpdateExecutionStatus(updateCtx, exec.ID, status, completedAt); err != nil {
-		p.logger.WithError(err).WithField("execution_id", exec.ID).Error("updating execution status after run")
+	if err := p.store.UpdateExecutionWithResult(updateCtx, exec.ID, status, &completedAt, output); err != nil {
+		p.logger.WithError(err).WithField("execution_id", exec.ID).Error("updating execution with result after run")
 	}
 }

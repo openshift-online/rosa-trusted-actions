@@ -131,27 +131,6 @@ func (e ExecutionStatus) Valid() bool {
 	}
 }
 
-// Defines values for OutputStatus.
-const (
-	OutputStatusFailed   OutputStatus = "failed"
-	OutputStatusPending  OutputStatus = "pending"
-	OutputStatusUploaded OutputStatus = "uploaded"
-)
-
-// Valid indicates whether the value is a known member of the OutputStatus enum.
-func (e OutputStatus) Valid() bool {
-	switch e {
-	case OutputStatusFailed:
-		return true
-	case OutputStatusPending:
-		return true
-	case OutputStatusUploaded:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for Scope.
 const (
 	AwsApi  Scope = "aws-api"
@@ -218,27 +197,6 @@ func (e ListExecutionsParamsForce) Valid() bool {
 	case ListExecutionsParamsForceFalse:
 		return true
 	case ListExecutionsParamsForceTrue:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for GetExecutionParamsInclude.
-const (
-	Logs       GetExecutionParamsInclude = "logs"
-	Output     GetExecutionParamsInclude = "output"
-	Outputlogs GetExecutionParamsInclude = "output,logs"
-)
-
-// Valid indicates whether the value is a known member of the GetExecutionParamsInclude enum.
-func (e GetExecutionParamsInclude) Valid() bool {
-	switch e {
-	case Logs:
-		return true
-	case Output:
-		return true
-	case Outputlogs:
 		return true
 	default:
 		return false
@@ -363,6 +321,8 @@ type ErrorKind string
 
 // Execution defines model for Execution.
 type Execution struct {
+	UnderscoreLinks *ExecutionLinks `json:"_links,omitempty"`
+
 	// Action Trusted Action name
 	//
 	// Example: get_pods
@@ -398,24 +358,10 @@ type Execution struct {
 	// Example: ROSAENG-1234
 	Jira *string `json:"jira,omitempty"`
 
-	// Logs Raw text content of execution.log. Only included when include=logs is set and execution is in a terminal state.
-	Logs *string `json:"logs,omitempty"`
-
 	// ManifestWorkName Dispatch resource name
 	//
 	// Example: ta-fa65418c-...
 	ManifestWorkName *string `json:"manifest_work_name,omitempty"`
-
-	// Output Parsed JSON output from the TA. Only included when include=output is set and execution is in a terminal state.
-	Output interface{} `json:"output,omitempty"`
-
-	// OutputPath URI for output artifact
-	//
-	// Example: s3://bucket-name/fa65418c-.../output.json
-	OutputPath *string `json:"output_path,omitempty"`
-
-	// OutputStatus State of artifact upload
-	OutputStatus *OutputStatus `json:"output_status,omitempty"`
 
 	// Params Parameters passed at submission time
 	Params *map[string]string `json:"params,omitempty"`
@@ -458,6 +404,12 @@ type Execution struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// ExecutionLinks defines model for ExecutionLinks.
+type ExecutionLinks struct {
+	Output *HALLink `json:"output,omitempty"`
+	Self   HALLink  `json:"self"`
+}
+
 // ExecutionList defines model for ExecutionList.
 type ExecutionList struct {
 	// HasMore Whether more results are available
@@ -480,6 +432,27 @@ type ExecutionList struct {
 	//
 	// Example: 1
 	Total int `json:"total"`
+}
+
+// ExecutionOutput defines model for ExecutionOutput.
+type ExecutionOutput struct {
+	UnderscoreLinks *ExecutionOutputLinks `json:"_links,omitempty"`
+
+	// Message Execution message/logs
+	//
+	// Example: listed 0 pods in kube-system
+	Message string `json:"message"`
+
+	// Resources Kube objects list
+	//
+	// Example: []
+	Resources []map[string]interface{} `json:"resources"`
+}
+
+// ExecutionOutputLinks defines model for ExecutionOutputLinks.
+type ExecutionOutputLinks struct {
+	Execution HALLink `json:"execution"`
+	Self      HALLink `json:"self"`
 }
 
 // ExecutionRequest defines model for ExecutionRequest.
@@ -509,8 +482,17 @@ type ExecutionRequest struct {
 // ExecutionStatus Lifecycle state of a Trusted Action execution
 type ExecutionStatus string
 
-// OutputStatus State of artifact upload
-type OutputStatus string
+// HALLink defines model for HALLink.
+type HALLink struct {
+	// Href Example: /api/users/123
+	Href string `json:"href"`
+
+	// Method Example: GET
+	Method string `json:"method"`
+
+	// Templated Example: false
+	Templated *bool `json:"templated,omitempty"`
+}
 
 // Scope Where the Trusted Action executes (Kubernetes API or AWS API)
 type Scope string
@@ -664,9 +646,6 @@ type ListExecutionsParams struct {
 	// Type Filter by type
 	Type *ActionType `form:"type,omitempty" json:"type,omitempty"`
 
-	// OutputStatus Filter by output status
-	OutputStatus *OutputStatus `form:"output_status,omitempty" json:"output_status,omitempty"`
-
 	// ApprovalState Filter by approval state
 	ApprovalState *ApprovalState `form:"approval_state,omitempty" json:"approval_state,omitempty"`
 
@@ -686,15 +665,6 @@ type ListExecutionsParamsDryRun string
 // ListExecutionsParamsForce defines parameters for ListExecutions.
 type ListExecutionsParamsForce string
 
-// GetExecutionParams defines parameters for GetExecution.
-type GetExecutionParams struct {
-	// Include Opt-in content to include alongside metadata. Comma-separated combination of "output" and "logs".
-	Include *GetExecutionParamsInclude `form:"include,omitempty" json:"include,omitempty"`
-}
-
-// GetExecutionParamsInclude defines parameters for GetExecution.
-type GetExecutionParamsInclude string
-
 // CreateExecutionJSONRequestBody defines body for CreateExecution for application/json ContentType.
 type CreateExecutionJSONRequestBody = ExecutionRequest
 
@@ -709,9 +679,12 @@ type ServerInterface interface {
 	// ListExecutions List executions
 	// (GET /runs)
 	ListExecutions(w http.ResponseWriter, r *http.Request, params ListExecutionsParams)
+	// GetExecutionOutput Retrieve execution output
+	// (GET /runs/{exec_id}/output)
+	GetExecutionOutput(w http.ResponseWriter, r *http.Request, execId openapi_types.UUID)
 	// GetExecution Retrieve execution details
 	// (GET /runs/{id})
-	GetExecution(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetExecutionParams)
+	GetExecution(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// Describe Describe a specific Trusted Action
 	// (GET /{action})
 	Describe(w http.ResponseWriter, r *http.Request, action string)
@@ -742,9 +715,15 @@ func (_ Unimplemented) ListExecutions(w http.ResponseWriter, r *http.Request, pa
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetExecutionOutput Retrieve execution output
+// (GET /runs/{exec_id}/output)
+func (_ Unimplemented) GetExecutionOutput(w http.ResponseWriter, r *http.Request, execId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetExecution Retrieve execution details
 // (GET /runs/{id})
-func (_ Unimplemented) GetExecution(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetExecutionParams) {
+func (_ Unimplemented) GetExecution(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1020,19 +999,6 @@ func (siw *ServerInterfaceWrapper) ListExecutions(w http.ResponseWriter, r *http
 		return
 	}
 
-	// ------------- Optional query parameter "output_status" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "output_status", r.URL.Query(), &params.OutputStatus, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		var requiredError *runtime.RequiredParameterError
-		if errors.As(err, &requiredError) {
-			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "output_status"})
-		} else {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "output_status", Err: err})
-		}
-		return
-	}
-
 	// ------------- Optional query parameter "approval_state" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "approval_state", r.URL.Query(), &params.ApprovalState, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -1096,6 +1062,32 @@ func (siw *ServerInterfaceWrapper) ListExecutions(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetExecutionOutput operation middleware
+func (siw *ServerInterfaceWrapper) GetExecutionOutput(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "exec_id" -------------
+	var execId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "exec_id", chi.URLParam(r, "exec_id"), &execId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "exec_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExecutionOutput(w, r, execId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetExecution operation middleware
 func (siw *ServerInterfaceWrapper) GetExecution(w http.ResponseWriter, r *http.Request) {
 
@@ -1111,24 +1103,8 @@ func (siw *ServerInterfaceWrapper) GetExecution(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetExecutionParams
-
-	// ------------- Optional query parameter "include" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "include", r.URL.Query(), &params.Include, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		var requiredError *runtime.RequiredParameterError
-		if errors.As(err, &requiredError) {
-			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include"})
-		} else {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include", Err: err})
-		}
-		return
-	}
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetExecution(w, r, id, params)
+		siw.Handler.GetExecution(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1314,6 +1290,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/runs/{id}", wrapper.GetExecution)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/runs/{exec_id}/output", wrapper.GetExecutionOutput)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/runs", wrapper.ListExecutions)

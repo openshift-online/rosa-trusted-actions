@@ -1,0 +1,8 @@
+type: object
+properties:
+  self:
+    $ref: ./HALLink.yaml
+  output:
+    $ref: ./HALLink.yaml
+required:
+  - self

@@ -1,14 +1,14 @@
 get:
   tags:
     - Executions
-  summary: Retrieve execution details
+  summary: Retrieve execution output
   description: >-
-    Retrieve an execution's metadata.
-    Output can be fetch using GET /runs/{id}/output endpoint for terminal executions
+    Retrieve an execution's output.
+    Only works for terminal executions
     (succeeded, failed, timed_out).
-  operationId: getExecution
+  operationId: getExecutionOutput
   parameters:
-    - name: id
+    - name: exec_id
       in: path
       required: true
       description: Execution ID (UUID)
@@ -17,13 +17,13 @@ get:
         format: uuid
   responses:
     '200':
-      description: Execution details
+      description: Execution output
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/Execution.yaml
+            $ref: ../components/schemas/ExecutionOutput.yaml
     '404':
-      description: Execution not found
+      description: No output or execution not found
       content:
         application/json:
           schema:
@@ -31,4 +31,4 @@ get:
           example:
             kind: Error
             code: not-found
-            reason: Execution not found
+            reason: No output for the execution or execution not found

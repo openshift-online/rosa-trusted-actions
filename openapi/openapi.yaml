@@ -48,6 +48,8 @@ paths:
     $ref: 'paths/{action}@run.yaml'
   '/runs/{id}':
     $ref: 'paths/runs@{id}.yaml'
+  '/runs/{exec_id}/output':
+    $ref: 'paths/runs@{exec_id}@output.yaml'
   /runs:
     $ref: paths/runs.yaml
   /audit:

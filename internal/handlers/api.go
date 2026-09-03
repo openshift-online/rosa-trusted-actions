@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -128,8 +129,16 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 		}
 	}
 
+	result := exec.ToOpenAPI()
+	result.UnderscoreLinks = &openapi.ExecutionLinks{
+		Self: openapi.HALLink{
+			Href:   path.Join(path.Dir(path.Dir(r.URL.Path)), "runs", exec.ID.String()),
+			Method: "GET",
+		},
+	}
+
 	w.WriteHeader(http.StatusAccepted)
-	render.JSON(w, r, exec.ToOpenAPI())
+	render.JSON(w, r, result)
 }
 
 // ListAuditEntries implements GET /audit
@@ -234,10 +243,6 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 		t := string(*params.Type)
 		filter.Type = &t
 	}
-	if params.OutputStatus != nil {
-		o := string(*params.OutputStatus)
-		filter.OutputStatus = &o
-	}
 	if params.ApprovalState != nil {
 		a := string(*params.ApprovalState)
 		filter.ApprovalState = &a
@@ -307,7 +312,7 @@ func (h *APIHandler) ListExecutions(w http.ResponseWriter, r *http.Request, para
 
 // GetExecution implements GET /runs/{id}
 // Retrieve execution details
-func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id types.UUID, params openapi.GetExecutionParams) {
+func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id types.UUID) {
 	h.logger.WithField("execution_id", id).Info("Getting execution details")
 
 	exec, err := h.store.GetExecution(r.Context(), id)
@@ -322,16 +327,54 @@ func (h *APIHandler) GetExecution(w http.ResponseWriter, r *http.Request, id typ
 
 	result := exec.ToOpenAPI()
 
-	includeOutput := params.Include != nil && (*params.Include == openapi.Output || *params.Include == openapi.Outputlogs)
-	includeLogs := params.Include != nil && (*params.Include == openapi.Logs || *params.Include == openapi.Outputlogs)
-
-	// Logs and Output are fetched from S3 at request time, not from the database.
-	// Placeholder until S3 retrieval is implemented.
-	if includeOutput {
-		h.logger.WithField("execution_id", id).Debug("Output retrieval not yet implemented")
+	result.UnderscoreLinks = &openapi.ExecutionLinks{
+		Self: openapi.HALLink{
+			Href:   r.URL.Path,
+			Method: "GET",
+		},
 	}
-	if includeLogs {
-		h.logger.WithField("execution_id", id).Debug("Log retrieval not yet implemented")
+
+	{
+		_, err := h.store.GetExecutionOutput(r.Context(), id)
+		if err == nil {
+			result.UnderscoreLinks.Output = &openapi.HALLink{
+				Href:   path.Join(r.URL.Path, "output"),
+				Method: "GET",
+			}
+		} else if !errors.Is(err, store.ErrNotFound) {
+			h.logger.WithError(err).Warn("checking output existence")
+		}
+	}
+
+	render.JSON(w, r, result)
+}
+
+// GetExecutionOutput implements GET /runs/{exec_id}/output
+// Retrieve execution output
+func (h *APIHandler) GetExecutionOutput(w http.ResponseWriter, r *http.Request, execId types.UUID) {
+	h.logger.WithField("execution_id", execId).Info("Getting execution details")
+
+	output, err := h.store.GetExecutionOutput(r.Context(), execId)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			h.respondError(w, r, http.StatusNotFound, "Output not found", err)
+			return
+		}
+		h.respondError(w, r, http.StatusInternalServerError, "Failed to get output", err)
+		return
+	}
+
+	result := output.ToOpenAPI()
+
+	result.UnderscoreLinks = &openapi.ExecutionOutputLinks{
+		Self: openapi.HALLink{
+			Href:   r.URL.Path,
+			Method: "GET",
+		},
+		Execution: openapi.HALLink{
+			Href:   path.Dir(r.URL.Path),
+			Method: "GET",
+		},
 	}
 
 	render.JSON(w, r, result)

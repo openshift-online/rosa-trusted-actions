@@ -1,6 +1,0 @@
-type: string
-enum:
-  - pending
-  - uploaded
-  - failed
-description: State of artifact upload

@@ -10,9 +10,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
+	"github.com/openshift-online/rosa-trusted-actions/internal/models"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
 )
@@ -52,7 +54,7 @@ func newTestHandler(t *testing.T) *APIHandler {
 func TestAPIHandler_Catalog(t *testing.T) {
 	handler := newTestHandler(t)
 
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/", nil)
 	w := httptest.NewRecorder()
 
 	handler.Catalog(w, req)
@@ -78,7 +80,7 @@ func TestAPIHandler_Catalog(t *testing.T) {
 func TestAPIHandler_Describe(t *testing.T) {
 	handler := newTestHandler(t)
 
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/get", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/get", nil)
 	w := httptest.NewRecorder()
 
 	handler.Describe(w, req, "get")
@@ -111,7 +113,7 @@ func TestAPIHandler_CreateExecution(t *testing.T) {
 		"dry_run": true
 	}`
 
-	req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -147,7 +149,7 @@ func TestAPIHandler_CreateExecution_NotifiesWorker(t *testing.T) {
 	}
 
 	requestBody := `{"target_cluster": "test-cluster", "jira": "ROSAENG-1234"}`
-	req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -173,7 +175,7 @@ func TestAPIHandler_CreateExecution_DoesNotNotifyOnStoreError(t *testing.T) {
 	handler := NewAPIHandler(logrus.New(), catalog.New(), s, notifier)
 
 	requestBody := `{"target_cluster": "test-cluster", "jira": "ROSAENG-1234"}`
-	req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -192,7 +194,7 @@ func TestAPIHandler_CreateExecution_InvalidJSON(t *testing.T) {
 
 	requestBody := `{"invalid": json}`
 
-	req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -215,10 +217,11 @@ func TestAPIHandler_CreateExecution_InvalidJSON(t *testing.T) {
 func TestAPIHandler_GetExecution_NotFound(t *testing.T) {
 	handler := newTestHandler(t)
 
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs/"+uuid.New().String(), nil)
+	id := uuid.New()
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+id.String(), nil)
 	w := httptest.NewRecorder()
 
-	handler.GetExecution(w, req, uuid.New(), openapi.GetExecutionParams{})
+	handler.GetExecution(w, req, id)
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("Expected status 404, got %d", w.Code)
@@ -232,7 +235,7 @@ func TestAPIHandler_GetExecution_Found(t *testing.T) {
 		"target_cluster": "test-cluster",
 		"jira": "ROSAENG-1234"
 	}`
-	createReq := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	createReq := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	createReq.Header.Set("Content-Type", "application/json")
 	createW := httptest.NewRecorder()
 	handler.CreateExecution(createW, createReq, "get")
@@ -246,9 +249,9 @@ func TestAPIHandler_GetExecution_Found(t *testing.T) {
 		t.Fatalf("Failed to parse create response: %v", err)
 	}
 
-	getReq := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs/"+created.Id.String(), nil)
+	getReq := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+created.Id.String(), nil)
 	getW := httptest.NewRecorder()
-	handler.GetExecution(getW, getReq, created.Id, openapi.GetExecutionParams{})
+	handler.GetExecution(getW, getReq, created.Id)
 
 	if getW.Code != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", getW.Code)
@@ -267,10 +270,73 @@ func TestAPIHandler_GetExecution_Found(t *testing.T) {
 	}
 }
 
+func TestAPIHandler_GetExecutionOutput_NotFound(t *testing.T) {
+	handler := newTestHandler(t)
+
+	id := uuid.New()
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+id.String()+"/output", nil)
+	w := httptest.NewRecorder()
+
+	handler.GetExecutionOutput(w, req, id)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404, got %d", w.Code)
+	}
+}
+
+func TestAPIHandler_GetExecutionOutput_Found(t *testing.T) {
+	g := NewWithT(t)
+	handler := newTestHandler(t)
+
+	requestBody := `{
+		"target_cluster": "test-cluster",
+		"jira": "ROSAENG-1234"
+	}`
+	createReq := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+	createReq.Header.Set("Content-Type", "application/json")
+	createW := httptest.NewRecorder()
+	handler.CreateExecution(createW, createReq, "get")
+	g.Expect(createW.Code).To(Equal(http.StatusAccepted))
+
+	var created openapi.Execution
+	err := json.Unmarshal(createW.Body.Bytes(), &created)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	message := "execution logs"
+	resources := []map[string]interface{}{
+		{
+			"name":     "object1",
+			"data":     "some data",
+			"some-key": "some value",
+		},
+		{
+			"name":   "object2",
+			"data":   "some other data",
+			"secret": "can't say",
+		},
+	}
+	err = handler.store.UpdateExecutionWithResult(context.Background(), created.Id, "succeeded", nil, &models.ExecutionOutput{
+		Message:   message,
+		Resources: resources,
+	})
+	g.Expect(err).ToNot(HaveOccurred())
+
+	getOutputReq := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+created.Id.String()+"/output", nil)
+	getOutputW := httptest.NewRecorder()
+	handler.GetExecutionOutput(getOutputW, getOutputReq, created.Id)
+	g.Expect(getOutputW.Code).To(Equal(http.StatusOK))
+
+	var got openapi.ExecutionOutput
+	err = json.Unmarshal(getOutputW.Body.Bytes(), &got)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(got.Message).To(Equal(message))
+	g.Expect(got.Resources).To(Equal(resources))
+}
+
 func TestAPIHandler_ListExecutions_Empty(t *testing.T) {
 	handler := newTestHandler(t)
 
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs", nil)
 	w := httptest.NewRecorder()
 
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{})
@@ -297,7 +363,7 @@ func TestAPIHandler_ListExecutions_WithResults(t *testing.T) {
 
 	for _, cluster := range []string{"cluster-1", "cluster-2"} {
 		body := `{"target_cluster": "` + cluster + `", "jira": "ROSAENG-1234"}`
-		req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
+		req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		handler.CreateExecution(w, req, "get")
@@ -306,7 +372,7 @@ func TestAPIHandler_ListExecutions_WithResults(t *testing.T) {
 		}
 	}
 
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs", nil)
 	w := httptest.NewRecorder()
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{})
 
@@ -332,7 +398,7 @@ func TestAPIHandler_ListExecutions_Pagination(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		body := `{"target_cluster": "cluster", "jira": "ROSAENG-1234"}`
-		req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
+		req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		handler.CreateExecution(w, req, "get")
@@ -343,7 +409,7 @@ func TestAPIHandler_ListExecutions_Pagination(t *testing.T) {
 
 	limit := 2
 	page1 := 1
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?limit=2&page=1", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?limit=2&page=1", nil)
 	w := httptest.NewRecorder()
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{Limit: &limit, Page: &page1})
 
@@ -369,7 +435,7 @@ func TestAPIHandler_ListExecutions_Pagination(t *testing.T) {
 	}
 
 	page2 := 2
-	req2 := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?limit=2&page=2", nil)
+	req2 := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?limit=2&page=2", nil)
 	w2 := httptest.NewRecorder()
 	handler.ListExecutions(w2, req2, openapi.ListExecutionsParams{Limit: &limit, Page: &page2})
 
@@ -401,7 +467,7 @@ func TestAPIHandler_ListExecutions_PageWithoutLimit(t *testing.T) {
 	// Create 3 executions
 	for i := 0; i < 3; i++ {
 		body := `{"target_cluster": "cluster", "jira": "ROSAENG-1234"}`
-		req := httptest.NewRequest("POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
+		req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		handler.CreateExecution(w, req, "get")
@@ -412,7 +478,7 @@ func TestAPIHandler_ListExecutions_PageWithoutLimit(t *testing.T) {
 
 	// Request page 1 without limit (should use default 20, return all 3 items)
 	page1 := 1
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?page=1", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?page=1", nil)
 	w := httptest.NewRecorder()
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{Page: &page1})
 
@@ -443,7 +509,7 @@ func TestAPIHandler_ListExecutions_InvalidPage(t *testing.T) {
 
 	// Test page < 1
 	page0 := 0
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?page=0", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?page=0", nil)
 	w := httptest.NewRecorder()
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{Page: &page0})
 
@@ -454,7 +520,7 @@ func TestAPIHandler_ListExecutions_InvalidPage(t *testing.T) {
 	// Test page overflow (large page * limit would overflow int)
 	largeLimit := 100
 	largePage := 25000000 // 25M * 100 = 2.5B > maxint32
-	req2 := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?page=25000000&limit=100", nil)
+	req2 := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?page=25000000&limit=100", nil)
 	w2 := httptest.NewRecorder()
 	handler.ListExecutions(w2, req2, openapi.ListExecutionsParams{Page: &largePage, Limit: &largeLimit})
 
@@ -466,7 +532,7 @@ func TestAPIHandler_ListExecutions_InvalidPage(t *testing.T) {
 func TestAPIHandler_ListAuditEntries_Empty(t *testing.T) {
 	handler := newTestHandler(t)
 
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/audit", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/audit", nil)
 	w := httptest.NewRecorder()
 
 	handler.ListAuditEntries(w, req, openapi.ListAuditEntriesParams{})
@@ -489,7 +555,7 @@ func TestAPIHandler_ListExecutions_NegativeSince(t *testing.T) {
 	handler := newTestHandler(t)
 
 	since := "-24h"
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?since=-24h", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?since=-24h", nil)
 	w := httptest.NewRecorder()
 
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{Since: &since})
@@ -503,7 +569,7 @@ func TestAPIHandler_ListExecutions_ZeroSince(t *testing.T) {
 	handler := newTestHandler(t)
 
 	since := "0h"
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs?since=0h", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?since=0h", nil)
 	w := httptest.NewRecorder()
 
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{Since: &since})
@@ -517,7 +583,7 @@ func TestAPIHandler_ListExecutions_OverflowSince(t *testing.T) {
 	handler := newTestHandler(t)
 
 	since := "999999999999d"
-	req := httptest.NewRequest("GET", "/api/v0/trusted-actions/runs", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs", nil)
 	w := httptest.NewRecorder()
 
 	handler.ListExecutions(w, req, openapi.ListExecutionsParams{Since: &since})

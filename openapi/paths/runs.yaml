@@ -5,8 +5,8 @@ get:
   description: >-
     List executions for the authenticated account with filtering and
     pagination. Results are sorted by created_at descending (most recent
-    first). List responses include metadata only — use GET /runs/{id}
-    with the include parameter for output and logs.
+    first). List responses include metadata only — use GET /runs/{id}/output
+    to fetch the output for each execution.
   operationId: listExecutions
   parameters:
     - name: page
@@ -54,11 +54,6 @@ get:
       description: Filter by type
       schema:
         $ref: ../components/schemas/ActionType.yaml
-    - name: output_status
-      in: query
-      description: Filter by output status
-      schema:
-        $ref: ../components/schemas/OutputStatus.yaml
     - name: approval_state
       in: query
       description: Filter by approval state

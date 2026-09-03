@@ -11,28 +11,26 @@ import (
 )
 
 type Execution struct {
-	ID               uuid.UUID        `db:"id"`
-	Action           string           `db:"action"`
-	Status           string           `db:"status"`
-	ApprovalState    *string          `db:"approval_state"`
-	Username         *string          `db:"username"`
-	TargetCluster    string           `db:"target_cluster"`
-	Jira             *string          `db:"jira"`
-	DryRun           *bool            `db:"dry_run"`
-	Force            *bool            `db:"force"`
-	Params           *json.RawMessage `db:"params"`
-	Scope            *string          `db:"scope"`
-	Type             *string          `db:"type"`
-	Revision         *string          `db:"revision"`
-	ManifestWorkName *string          `db:"manifest_work_name"`
-	OutputPath       *string          `db:"output_path"`
-	OutputStatus     *string          `db:"output_status"`
-	RunnerSeconds    *int             `db:"runner_seconds"`
-	UploadSeconds    *int             `db:"upload_seconds"`
-	DurationSeconds  *int             `db:"duration_seconds"`
-	CreatedAt        time.Time        `db:"created_at"`
-	UpdatedAt        time.Time        `db:"updated_at"`
-	CompletedAt      *time.Time       `db:"completed_at"`
+	ID               uuid.UUID
+	Action           string
+	Status           string
+	ApprovalState    *string
+	Username         *string
+	TargetCluster    string
+	Jira             *string
+	DryRun           *bool
+	Force            *bool
+	Params           *json.RawMessage
+	Scope            *string
+	Type             *string
+	Revision         *string
+	ManifestWorkName *string
+	RunnerSeconds    *int
+	UploadSeconds    *int
+	DurationSeconds  *int
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	CompletedAt      *time.Time
 }
 
 func (e *Execution) ToOpenAPI() openapi.Execution {
@@ -47,7 +45,6 @@ func (e *Execution) ToOpenAPI() openapi.Execution {
 		Force:            e.Force,
 		Revision:         e.Revision,
 		ManifestWorkName: e.ManifestWorkName,
-		OutputPath:       e.OutputPath,
 		RunnerSeconds:    e.RunnerSeconds,
 		UploadSeconds:    e.UploadSeconds,
 		DurationSeconds:  e.DurationSeconds,
@@ -69,11 +66,6 @@ func (e *Execution) ToOpenAPI() openapi.Execution {
 	if e.Type != nil {
 		t := openapi.ActionType(*e.Type)
 		out.Type = &t
-	}
-
-	if e.OutputStatus != nil {
-		os := openapi.OutputStatus(*e.OutputStatus)
-		out.OutputStatus = &os
 	}
 
 	if e.Params != nil {

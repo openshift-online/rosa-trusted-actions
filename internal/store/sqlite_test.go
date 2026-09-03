@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/models"
@@ -59,31 +61,43 @@ func TestSQLiteStore_CreateExecution(t *testing.T) {
 		t.Fatalf("CreateExecution failed: %v", err)
 	}
 
-	got, err := s.GetExecution(ctx, exec.ID)
-	if err != nil {
-		t.Fatalf("GetExecution failed: %v", err)
+	{
+		got, err := s.GetExecution(ctx, exec.ID)
+		if err != nil {
+			t.Fatalf("GetExecution failed: %v", err)
+		}
+
+		if got.ID != exec.ID {
+			t.Errorf("ID: got %v, want %v", got.ID, exec.ID)
+		}
+		if got.Action != exec.Action {
+			t.Errorf("Action: got %v, want %v", got.Action, exec.Action)
+		}
+		if got.Status != exec.Status {
+			t.Errorf("Status: got %v, want %v", got.Status, exec.Status)
+		}
+		if got.TargetCluster != exec.TargetCluster {
+			t.Errorf("TargetCluster: got %v, want %v", got.TargetCluster, exec.TargetCluster)
+		}
+		if got.DryRun == nil || *got.DryRun != true {
+			t.Errorf("DryRun: got %v, want true", got.DryRun)
+		}
+		if got.Params == nil {
+			t.Fatal("Params: got nil, want non-nil")
+		}
+		if string(*got.Params) != `{"namespace":"default"}` {
+			t.Errorf("Params: got %s, want %s", string(*got.Params), `{"namespace":"default"}`)
+		}
 	}
 
-	if got.ID != exec.ID {
-		t.Errorf("ID: got %v, want %v", got.ID, exec.ID)
-	}
-	if got.Action != exec.Action {
-		t.Errorf("Action: got %v, want %v", got.Action, exec.Action)
-	}
-	if got.Status != exec.Status {
-		t.Errorf("Status: got %v, want %v", got.Status, exec.Status)
-	}
-	if got.TargetCluster != exec.TargetCluster {
-		t.Errorf("TargetCluster: got %v, want %v", got.TargetCluster, exec.TargetCluster)
-	}
-	if got.DryRun == nil || *got.DryRun != true {
-		t.Errorf("DryRun: got %v, want true", got.DryRun)
-	}
-	if got.Params == nil {
-		t.Fatal("Params: got nil, want non-nil")
-	}
-	if string(*got.Params) != `{"namespace":"default"}` {
-		t.Errorf("Params: got %s, want %s", string(*got.Params), `{"namespace":"default"}`)
+	{
+		got, err := s.GetExecutionOutput(ctx, exec.ID)
+		if err == nil {
+			t.Errorf("GetExecutionOutput succeeded")
+		}
+		if got != nil {
+			t.Errorf("ExecutionOutput: got %v, want nothing", got)
+		}
 	}
 }
 
@@ -93,6 +107,16 @@ func TestSQLiteStore_GetExecution_NotFound(t *testing.T) {
 
 	_, err := s.GetExecution(ctx, uuid.New())
 	if err != ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestSQLiteStore_GetExecutionOuput_NotFound(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	_, err := s.GetExecutionOutput(ctx, uuid.New())
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -216,20 +240,77 @@ func TestSQLiteStore_UpdateExecutionStatus(t *testing.T) {
 	}
 
 	completedAt := time.Now().UTC().Truncate(time.Microsecond)
-	err := s.UpdateExecutionStatus(ctx, exec.ID, "succeeded", &completedAt)
+	err := s.UpdateExecutionWithResult(ctx, exec.ID, "succeeded", &completedAt, nil)
 	if err != nil {
 		t.Fatalf("UpdateExecutionStatus failed: %v", err)
 	}
 
-	got, err := s.GetExecution(ctx, exec.ID)
-	if err != nil {
-		t.Fatalf("GetExecution failed: %v", err)
+	{
+		got, err := s.GetExecution(ctx, exec.ID)
+		if err != nil {
+			t.Fatalf("GetExecution failed: %v", err)
+		}
+		if got.Status != "succeeded" {
+			t.Errorf("Status: got %s, want succeeded", got.Status)
+		}
+		if got.CompletedAt == nil {
+			t.Fatal("CompletedAt: got nil, want non-nil")
+		}
 	}
-	if got.Status != "succeeded" {
-		t.Errorf("Status: got %s, want succeeded", got.Status)
+	{
+		got, err := s.GetExecutionOutput(ctx, exec.ID)
+		if err == nil {
+			t.Errorf("GetExecutionOutput succeeded")
+		}
+		if got != nil {
+			t.Errorf("ExecutionOutput: got %v, want nothing", got)
+		}
 	}
-	if got.CompletedAt == nil {
-		t.Fatal("CompletedAt: got nil, want non-nil")
+}
+
+func TestSQLiteStore_UpdateExecutionStatusAndOutput(t *testing.T) {
+	g := NewWithT(t)
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	exec := testExecution("cluster-info", "cluster-1")
+	err := s.CreateExecution(ctx, exec)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	completedAt := time.Now().UTC().Truncate(time.Microsecond)
+	message := "execution logs"
+	resources := []map[string]interface{}{
+		{
+			"name":     "object1",
+			"data":     "some data",
+			"some-key": "some value",
+		},
+		{
+			"name":   "object2",
+			"data":   "some other data",
+			"secret": "can't say",
+		},
+	}
+
+	err = s.UpdateExecutionWithResult(ctx, exec.ID, "succeeded", &completedAt, &models.ExecutionOutput{
+		Message:   message,
+		Resources: resources,
+	})
+	g.Expect(err).ToNot(HaveOccurred())
+
+	{
+		got, err := s.GetExecution(ctx, exec.ID)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(got).ToNot(BeNil())
+		g.Expect(got.Status).To(Equal("succeeded"))
+		g.Expect(got.CompletedAt).ToNot(BeNil())
+	}
+	{
+		got, err := s.GetExecutionOutput(ctx, exec.ID)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(got).ToNot(BeNil())
+		g.Expect(got.Message).To(Equal(message))
+		g.Expect(got.Resources).To(Equal(resources))
 	}
 }
 
@@ -237,8 +318,8 @@ func TestSQLiteStore_UpdateExecutionStatus_NotFound(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	err := s.UpdateExecutionStatus(ctx, uuid.New(), "succeeded", nil)
-	if err != ErrNotFound {
+	err := s.UpdateExecutionWithResult(ctx, uuid.New(), "succeeded", nil, nil)
+	if !strings.Contains(err.Error(), ErrNotFound.Error()) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -451,16 +532,16 @@ func TestSQLiteStore_RollbackLastMigration(t *testing.T) {
 	if err := s.db.Get(&version, "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1"); err != nil {
 		t.Fatalf("querying schema_migrations: %v", err)
 	}
-	if version == "004_add_executions_status_created_at_index" {
-		t.Error("expected migration 004 to be removed from schema_migrations after rollback")
+	if version == "005_create_executions_output" {
+		t.Error("expected migration 005 to be removed from schema_migrations after rollback")
 	}
 
 	var indexCount int
-	if err := s.db.Get(&indexCount, "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_executions_status_created_at'"); err != nil {
+	if err := s.db.Get(&indexCount, "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_executions_output_exec_id'"); err != nil {
 		t.Fatalf("querying sqlite_master: %v", err)
 	}
 	if indexCount != 0 {
-		t.Error("expected idx_executions_status_created_at to be dropped after rolling back the last migration")
+		t.Error("expected idx_executions_output_exec_id to be dropped after rolling back the last migration")
 	}
 }
 

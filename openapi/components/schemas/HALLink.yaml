@@ -1,0 +1,15 @@
+type: object
+required:
+  - href
+  - method
+properties:
+  href:
+    type: string
+    format: uri
+    example: "/api/users/123"
+  templated:
+    type: boolean
+    example: false
+  method:
+    type: string
+    example: "GET"

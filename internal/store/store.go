@@ -19,7 +19,6 @@ type ExecutionFilter struct {
 	Operator      *string
 	Scope         *string
 	Type          *string
-	OutputStatus  *string
 	ApprovalState *string
 	DryRun        *bool
 	Force         *bool
@@ -56,8 +55,9 @@ type AuditListResult struct {
 type Store interface {
 	CreateExecution(ctx context.Context, exec *models.Execution) error
 	GetExecution(ctx context.Context, id uuid.UUID) (*models.Execution, error)
+	GetExecutionOutput(ctx context.Context, execId uuid.UUID) (*models.ExecutionOutput, error)
 	ListExecutions(ctx context.Context, filter ExecutionFilter) (*ExecutionListResult, error)
-	UpdateExecutionStatus(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time) error
+	UpdateExecutionWithResult(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time, output *models.ExecutionOutput) error
 	// ClaimNextExecution atomically claims the oldest pending execution,
 	// transitioning it to running, for a worker to process. Returns
 	// ErrNotFound if no execution is pending.
