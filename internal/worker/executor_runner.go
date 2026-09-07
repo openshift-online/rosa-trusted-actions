@@ -114,16 +114,13 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) RunRes
 }
 
 func resolveAction(name string) (actions.Action, error) {
-	switch name {
-	case "get":
-		return actions.NewGetAction(), nil
-	case "patch":
-		return actions.NewPatchAction(), nil
-	case "delete":
-		return actions.NewDeleteAction(), nil
-	default:
+	action := actions.CreateAction(name)
+
+	if action == nil {
 		return nil, fmt.Errorf("unknown action %q", name)
 	}
+
+	return action, nil
 }
 
 func decodeParams(raw *json.RawMessage) (map[string]string, error) {

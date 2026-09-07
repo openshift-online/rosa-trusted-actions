@@ -13,7 +13,9 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
-var _ Action = (*GetPullSecretEmailAction)(nil)
+func init() {
+	CreateAndRegisterActionFactory[*GetPullSecretEmailAction]()
+}
 
 var secretsGVR = schema.GroupVersionResource{
 	Group: "", Version: "v1", Resource: "secrets",

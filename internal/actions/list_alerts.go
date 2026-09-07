@@ -22,6 +22,10 @@ const (
 	alertmanagerPort           = 9093
 )
 
+func init() {
+	CreateAndRegisterActionFactory[*ListAlertsAction]()
+}
+
 type ListAlertsAction struct{}
 
 func NewListAlertsAction() *ListAlertsAction {

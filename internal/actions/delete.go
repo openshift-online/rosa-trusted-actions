@@ -10,7 +10,9 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
-var _ Action = (*DeleteAction)(nil)
+func init() {
+	CreateAndRegisterActionFactory[*DeleteAction]()
+}
 
 type DeleteAction struct{}
 

@@ -11,7 +11,9 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
-var _ Action = (*DescribeNodesAction)(nil)
+func init() {
+	CreateAndRegisterActionFactory[*DescribeNodesAction]()
+}
 
 var (
 	nodesGVR = schema.GroupVersionResource{
@@ -214,7 +216,6 @@ func reshapeNode(node unstructured.Unstructured, pods []interface{}, events []in
 
 	return unstructured.Unstructured{Object: out}
 }
-
 
 func extractPod(pod unstructured.Unstructured) map[string]interface{} {
 	spec, _ := pod.Object["spec"].(map[string]interface{})

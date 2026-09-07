@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
-var _ Action = (*GetAction)(nil)
+func init() {
+	CreateAndRegisterActionFactory[*GetAction]()
+}
 
 type GetAction struct{}
 

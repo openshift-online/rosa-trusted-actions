@@ -12,7 +12,9 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 )
 
-var _ Action = (*PatchAction)(nil)
+func init() {
+	CreateAndRegisterActionFactory[*PatchAction]()
+}
 
 type PatchAction struct{}
 

@@ -20,7 +20,7 @@ type ResourceTarget struct {
 	ClusterScoped bool   `json:"clusterScoped"`
 }
 
-type 	Clients struct {
+type Clients struct {
 	Dynamic     dynamic.Interface
 	PodExecutor backplane.PodExecutor
 }
@@ -41,6 +41,28 @@ type Action interface {
 	RequiredRBAC(target ResourceTarget) []backplane.RBACRule
 	UsesPodExec() bool
 	Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error)
+}
+
+type actionFactory = func() Action
+
+var nameToActionFactory = map[string]actionFactory{}
+
+func CreateAndRegisterActionFactory[A Action]() {
+	var action A
+
+	nameToActionFactory[action.Name()] = func() Action {
+		var action A
+
+		return action
+	}
+}
+
+func CreateAction(actionName string) Action {
+	actionFactory := nameToActionFactory[actionName]
+	if actionFactory == nil {
+		return nil
+	}
+	return actionFactory()
 }
 
 func resourceClient(clients Clients, gvr schema.GroupVersionResource, target ResourceTarget) (dynamic.ResourceInterface, error) {
