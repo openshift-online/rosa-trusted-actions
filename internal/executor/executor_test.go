@@ -22,14 +22,14 @@ type fakeClientProvider struct {
 	err    error
 }
 
-func (f *fakeClientProvider) GetClient(_ context.Context, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
+func (f *fakeClientProvider) GetClient(_ context.Context, _, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
 	return f.client, nil
 }
 
-func (f *fakeClientProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+func (f *fakeClientProvider) GetPodExecutor(_ context.Context, _, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
 	return nil, fmt.Errorf("not implemented in test fake")
 }
 

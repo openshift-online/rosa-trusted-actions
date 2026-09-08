@@ -25,6 +25,7 @@ func (p *PatchAction) UsesPodExec() bool { return false }
 
 func (p *PatchAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	rule := backplane.RBACRule{
+		Namespace: target.Namespace,
 		APIGroups: []string{target.Group},
 		Resources: []string{target.Resource},
 		Verbs:     []string{"patch"},

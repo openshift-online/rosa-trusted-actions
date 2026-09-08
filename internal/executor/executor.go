@@ -84,7 +84,7 @@ func (e *Executor) Execute(ctx context.Context, req Request) (result *Result) {
 	// from all sub-actions and call GetClient once to reuse a single session.
 	// (possible design decision for later)
 	rbacRules := req.Action.RequiredRBAC(req.Target)
-	client, err := e.backplane.GetClient(ctx, req.ClusterID, rbacRules)
+	client, err := e.backplane.GetClient(ctx, req.ClusterID, req.Action.Name(), rbacRules)
 	if err != nil {
 		rec.Outcome = audit.OutcomeFailure
 		rec.Error = err.Error()
@@ -98,7 +98,7 @@ func (e *Executor) Execute(ctx context.Context, req Request) (result *Result) {
 	clients := actions.Clients{Dynamic: client}
 
 	if req.Action.UsesPodExec() {
-		podExec, podErr := e.backplane.GetPodExecutor(ctx, req.ClusterID, rbacRules)
+		podExec, podErr := e.backplane.GetPodExecutor(ctx, req.ClusterID, req.Action.Name(), rbacRules)
 		if podErr != nil {
 			rec.Outcome = audit.OutcomeFailure
 			rec.Error = podErr.Error()
