@@ -21,6 +21,7 @@ func (g *GetAction) UsesPodExec() bool { return false }
 
 func (g *GetAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	rule := backplane.RBACRule{
+		Namespace: target.Namespace,
 		APIGroups: []string{target.Group},
 		Resources: []string{target.Resource},
 	}
