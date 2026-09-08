@@ -28,14 +28,14 @@ type fakeClientProvider struct {
 	err    error
 }
 
-func (f *fakeClientProvider) GetClient(_ context.Context, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
+func (f *fakeClientProvider) GetClient(_ context.Context, _, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
 	return f.client, nil
 }
 
-func (f *fakeClientProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+func (f *fakeClientProvider) GetPodExecutor(_ context.Context, _, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
 	return nil, fmt.Errorf("not implemented in test fake")
 }
 
@@ -204,12 +204,12 @@ func TestExecutorRunner_Run_BackplaneError(t *testing.T) {
 // backplane/cluster call.
 type slowClientProvider struct{}
 
-func (s *slowClientProvider) GetClient(ctx context.Context, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
+func (s *slowClientProvider) GetClient(ctx context.Context, _, _ string, _ []backplane.RBACRule) (dynamic.Interface, error) {
 	<-ctx.Done()
 	return nil, ctx.Err()
 }
 
-func (s *slowClientProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+func (s *slowClientProvider) GetPodExecutor(_ context.Context, _, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
 	return nil, fmt.Errorf("not implemented in test fake")
 }
 

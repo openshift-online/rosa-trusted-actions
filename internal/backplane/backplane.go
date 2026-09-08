@@ -7,6 +7,7 @@ import (
 )
 
 type RBACRule struct {
+	Namespace     string   `json:"namespace,omitempty"`
 	APIGroups     []string `json:"apiGroups"`
 	Resources     []string `json:"resources"`
 	ResourceNames []string `json:"resourceNames,omitempty"`
@@ -18,6 +19,6 @@ type PodExecutor interface {
 }
 
 type ClientProvider interface {
-	GetClient(ctx context.Context, clusterID string, rbacRules []RBACRule) (dynamic.Interface, error)
-	GetPodExecutor(ctx context.Context, clusterID string, rbacRules []RBACRule) (PodExecutor, error)
+	GetClient(ctx context.Context, clusterID, actionName string, rbacRules []RBACRule) (dynamic.Interface, error)
+	GetPodExecutor(ctx context.Context, clusterID, actionName string, rbacRules []RBACRule) (PodExecutor, error)
 }

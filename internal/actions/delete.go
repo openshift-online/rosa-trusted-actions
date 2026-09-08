@@ -21,6 +21,7 @@ func (d *DeleteAction) UsesPodExec() bool { return false }
 
 func (d *DeleteAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	rule := backplane.RBACRule{
+		Namespace: target.Namespace,
 		APIGroups: []string{target.Group},
 		Resources: []string{target.Resource},
 		Verbs:     []string{"delete"},

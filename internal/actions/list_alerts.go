@@ -31,10 +31,14 @@ func NewListAlertsAction() *ListAlertsAction {
 func (l *ListAlertsAction) Name() string      { return "list-alerts" }
 func (l *ListAlertsAction) UsesPodExec() bool { return true }
 
-func (l *ListAlertsAction) RequiredRBAC(_ ResourceTarget) []backplane.RBACRule {
+func (l *ListAlertsAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
+	ns := target.Namespace
+	if ns == "" {
+		ns = defaultMonitoringNamespace
+	}
 	return []backplane.RBACRule{
-		{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"list"}},
-		{APIGroups: []string{""}, Resources: []string{"pods/exec"}, Verbs: []string{"create"}},
+		{Namespace: ns, APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"list"}},
+		{Namespace: ns, APIGroups: []string{""}, Resources: []string{"pods/exec"}, Verbs: []string{"create"}},
 	}
 }
 

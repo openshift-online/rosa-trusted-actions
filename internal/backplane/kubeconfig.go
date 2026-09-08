@@ -29,7 +29,7 @@ func NewKubeconfigProvider(logger *logrus.Logger, kubeconfigPath string) *Kubeco
 	}
 }
 
-func (k *KubeconfigProvider) GetClient(_ context.Context, clusterID string, rbacRules []RBACRule) (dynamic.Interface, error) {
+func (k *KubeconfigProvider) GetClient(_ context.Context, clusterID, _ string, rbacRules []RBACRule) (dynamic.Interface, error) {
 	k.logger.WithFields(logrus.Fields{
 		"cluster_id": clusterID,
 		"kubeconfig": k.kubeconfig,
@@ -49,7 +49,7 @@ func (k *KubeconfigProvider) GetClient(_ context.Context, clusterID string, rbac
 	return client, nil
 }
 
-func (k *KubeconfigProvider) GetPodExecutor(_ context.Context, clusterID string, rbacRules []RBACRule) (PodExecutor, error) {
+func (k *KubeconfigProvider) GetPodExecutor(_ context.Context, clusterID, _ string, rbacRules []RBACRule) (PodExecutor, error) {
 	k.logger.WithFields(logrus.Fields{
 		"cluster_id": clusterID,
 		"kubeconfig": k.kubeconfig,
