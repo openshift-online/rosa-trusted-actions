@@ -51,7 +51,7 @@ func main() {
 
 	runCmd := &cobra.Command{
 		Use:   "run",
-		Short: "Execute a primitive action (get, patch, delete)",
+		Short: "Execute an action (get, patch, delete...)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger := logrus.New()
 			level, err := logrus.ParseLevel(logLevel)
@@ -65,34 +65,10 @@ func main() {
 				logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, TimestampFormat: time.RFC3339})
 			}
 
-			var act actions.Action
-			switch action {
-			case "get":
-				act = actions.NewGetAction()
-			case "patch":
-				act = actions.NewPatchAction()
-			case "delete":
-				act = actions.NewDeleteAction()
-			case "get-pull-secret-email":
-				act = actions.NewGetPullSecretEmailAction()
-				namespace = "openshift-config"
-				resource = "secrets"
-				name = "pull-secret"
-				if allowedSecrets == "" {
-					allowedSecrets = "openshift-config/pull-secret"
-				}
-			case "list-alerts":
-				act = actions.NewListAlertsAction()
-				if namespace == "" {
-					namespace = "openshift-monitoring"
-				}
-				resource = "services"
-			case "describe-nodes":
-				act = actions.NewDescribeNodesAction()
-				clusterScoped = true
-				resource = "nodes"
-			default:
-				return fmt.Errorf("unknown action %q, must be one of: get, patch, delete, get-pull-secret-email, list-alerts, describe-nodes", action)
+			act := actions.CreateAction(action)
+
+			if act == nil {
+				return fmt.Errorf("unknown action %q, must be one of: %s", action, strings.Join(actions.GetActionsNames(), ", "))
 			}
 
 			if resource == "" {

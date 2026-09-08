@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	CreateAndRegisterActionFactory[*GetPullSecretEmailAction]()
+	RegisterActionFactory(NewGetPullSecretEmailAction)
 }
 
 var secretsGVR = schema.GroupVersionResource{

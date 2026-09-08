@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	CreateAndRegisterActionFactory[*DeleteAction]()
+	RegisterActionFactory(NewDeleteAction)
 }
 
 type DeleteAction struct{}

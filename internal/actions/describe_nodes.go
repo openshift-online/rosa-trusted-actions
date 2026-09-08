@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	CreateAndRegisterActionFactory[*DescribeNodesAction]()
+	RegisterActionFactory(NewDescribeNodesAction)
 }
 
 var (

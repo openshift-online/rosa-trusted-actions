@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -43,15 +44,15 @@ type Action interface {
 	Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error)
 }
 
-type actionFactory = func() Action
+var nameToActionFactory = map[string]func() Action{}
 
-var nameToActionFactory = map[string]actionFactory{}
+type ActionFactory[A Action] = func() A
 
-func CreateAndRegisterActionFactory[A Action]() {
-	var action A
+func RegisterActionFactory[A Action](actionFactory ActionFactory[A]) {
+	action := actionFactory()
 
 	nameToActionFactory[action.Name()] = func() Action {
-		var action A
+		action := actionFactory()
 
 		return action
 	}
@@ -63,6 +64,16 @@ func CreateAction(actionName string) Action {
 		return nil
 	}
 	return actionFactory()
+}
+
+func GetActionsNames() []string {
+	actionNames := []string{}
+	for actionName := range nameToActionFactory {
+		actionNames = append(actionNames, actionName)
+	}
+	sort.Strings(actionNames)
+
+	return actionNames
 }
 
 func resourceClient(clients Clients, gvr schema.GroupVersionResource, target ResourceTarget) (dynamic.ResourceInterface, error) {

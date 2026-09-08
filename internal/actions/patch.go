@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	CreateAndRegisterActionFactory[*PatchAction]()
+	RegisterActionFactory(NewPatchAction)
 }
 
 type PatchAction struct{}

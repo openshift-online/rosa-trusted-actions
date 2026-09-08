@@ -23,7 +23,7 @@ const (
 )
 
 func init() {
-	CreateAndRegisterActionFactory[*ListAlertsAction]()
+	RegisterActionFactory(NewListAlertsAction)
 }
 
 type ListAlertsAction struct{}

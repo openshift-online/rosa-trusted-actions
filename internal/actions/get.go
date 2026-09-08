@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	CreateAndRegisterActionFactory[*GetAction]()
+	RegisterActionFactory(NewGetAction)
 }
 
 type GetAction struct{}
