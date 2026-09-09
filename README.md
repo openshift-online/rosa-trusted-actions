@@ -246,3 +246,16 @@ rosa-trusted-actions-server/
 ```
 
 Run `make help` for all available targets.
+
+### Show the API in a browsable format
+
+If you want to see the current API as a html package you can use [redocly](https://github.com/redocly/redoc) to render
+it into a static HTML page:
+
+``` bash
+npx @redocly/cli build-docs api-spec.yaml -o api-spec.html
+```
+
+You can now open `api-spec.html` to see the current API.
+
+**DISCLAIMER:** the API is still in development and subject to significant changes.
