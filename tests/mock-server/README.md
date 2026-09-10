@@ -37,7 +37,7 @@ make mock-server MOCK_SERVER_PORT=8081
 curl -X POST http://localhost:8080/backplane/trustedactions/00000000-0000-0000-0000-000000000001 \
   -H "Authorization: Bearer $BACKPLANE_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"my-trusted-action","rbac":{"clusterRoleRules":[],"roles":[]}}'
+  -d '{"name":"my-trusted-action","customerDataAccess":false,"rbac":{"clusterRoleRules":[],"roles":[]}}'
 ```
 
 Instance identifiers are minted per request, so take the `instanceId` from the POST response above
