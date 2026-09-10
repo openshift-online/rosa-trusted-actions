@@ -89,9 +89,11 @@ if (rejection !== null) {
   var now = new Date();
   var expiryDate = new Date(now.getTime() + (24 * 60 * 60 * 1000));
 
-  // proxyURI /backplane/trustedaction/{cluster}/{name}--{uuid}/api/v1/namespaces/foo/pods.
+  // proxyURI /backplane/trustedaction/{cluster}/{name}--{uuid}, with the Kubernetes path appended:
+  // /backplane/trustedaction/{cluster}/{name}--{uuid}/api/v1/namespaces/foo/pods. No trailing slash,
+  // so appending an absolute Kubernetes path does not produce a doubled one the router redirects.
   var trustedAction = {
-    proxyUri: "/backplane/trustedaction/" + clusterId + "/" + instanceId + "/",
+    proxyUri: "/backplane/trustedaction/" + clusterId + "/" + instanceId,
     instanceId: instanceId,
     expiry: expiryDate.toISOString()
   };

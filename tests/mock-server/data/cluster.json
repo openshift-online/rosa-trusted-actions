@@ -1,1 +1,121 @@
-{}
+{
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/ns-a/pods": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods",
+      "namespace": "ns-a"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "pod-1",
+          "namespace": "ns-a",
+          "labels": {
+            "app": "demo"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "registry.example.com/demo:1"
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "pod-2",
+          "namespace": "ns-a",
+          "labels": {
+            "app": "other"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "registry.example.com/demo:2"
+            }
+          ]
+        },
+        "status": {
+          "phase": "Pending"
+        }
+      }
+    ]
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/ns-a/pods/pod-1": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods",
+      "namespace": "ns-a"
+    },
+    "object": {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "pod-1",
+        "namespace": "ns-a",
+        "labels": {
+          "app": "demo"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.example.com/demo:1"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    }
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/ns-a/pods/gone": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods",
+      "namespace": "ns-a"
+    },
+    "object": null
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/ns-a/secrets": {
+    "kind": "Secret",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "secrets",
+      "namespace": "ns-a"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+          "name": "secret-1",
+          "namespace": "ns-a"
+        },
+        "type": "Opaque",
+        "data": {
+          "token": "cGxhY2Vob2xkZXI="
+        }
+      }
+    ]
+  }
+}
