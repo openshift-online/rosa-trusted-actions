@@ -85,6 +85,37 @@
       }
     }
   },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/ns-a/pods/pod-2": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods",
+      "namespace": "ns-a"
+    },
+    "object": {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "pod-2",
+        "namespace": "ns-a",
+        "labels": {
+          "app": "other"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.example.com/demo:2"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Pending"
+      }
+    }
+  },
   "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/ns-a/pods/gone": {
     "kind": "Pod",
     "apiVersion": "v1",
@@ -117,5 +148,135 @@
         }
       }
     ]
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/pods": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "pod-1",
+          "namespace": "ns-a",
+          "labels": {
+            "app": "demo"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "registry.example.com/demo:1"
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "pod-2",
+          "namespace": "ns-a",
+          "labels": {
+            "app": "other"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "registry.example.com/demo:2"
+            }
+          ]
+        },
+        "status": {
+          "phase": "Pending"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "pod-b",
+          "namespace": "ns-b",
+          "labels": {
+            "app": "demo"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "registry.example.com/demo:3"
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      }
+    ]
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/nodes": {
+    "kind": "Node",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "nodes"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Node",
+        "metadata": {
+          "name": "node-1",
+          "labels": {
+            "node-role.kubernetes.io/worker": ""
+          }
+        },
+        "status": {
+          "conditions": [
+            {
+              "type": "Ready",
+              "status": "True"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/nodes/node-1": {
+    "kind": "Node",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "nodes"
+    },
+    "object": {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "node-1",
+        "labels": {
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True"
+          }
+        ]
+      }
+    }
   }
 }
