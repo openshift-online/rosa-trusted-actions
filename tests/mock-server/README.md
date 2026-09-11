@@ -31,7 +31,16 @@ It listens on 8080, the same port as `make run`. To run both, give the mock anot
 make mock-server MOCK_SERVER_PORT=8081
 ```
 
+`kubectl` is not a valid client against this mock: it performs API discovery at startup (requests
+to `/api`, `/apis`, and `/api/v1`) and those paths are not modelled. Use `curl` for one-off
+requests, or construct a dynamic client with a `rest.Config{Host: proxyUri}` that targets an
+explicit GroupVersionResource — the client skips discovery when the GVR is provided directly.
+
 ## Example curls
+
+The CRUD endpoints use the plural prefix (`/backplane/trustedactions/`) while the proxy uses the
+singular form (`/backplane/trustedaction/`). This matches the backplane contract; the asymmetry is
+not a typo.
 
 ```bash
 curl -X POST http://localhost:8080/backplane/trustedactions/00000000-0000-0000-0000-000000000001 \
@@ -107,6 +116,55 @@ Reads are what the fixture models: a permitted write answers 501 rather than pre
 written something. A permitted read of an entry that declares neither `items` nor `object` is 501
 too — a malformed entry must not be able to pass for a not-found.
 
+## Cross-cluster isolation
+
+Two clusters are preloaded: C1 (`00000000-0000-0000-0000-000000000001`) holding pods in `ns-a`,
+and C2 (`00000000-0000-0000-0000-000000000002`) holding pods in `ns-b`. The composite-key design
+(`{clusterId}:{path}` in the fixture store, `{clusterId}:{instanceId}` in the action store) means
+no code change was needed to add the second cluster — the isolation falls out of the key structure.
+
+```bash
+C1=00000000-0000-0000-0000-000000000001
+C2=00000000-0000-0000-0000-000000000002
+
+# Baseline: C1 action granted ns-a pods — confirms C1 serves its own resources.
+P1=$(curl -s -X POST http://localhost:8080/backplane/trustedactions/$C1 \
+      -H 'Content-Type: application/json' \
+      -d '{"name":"c1-baseline","customerDataAccess":false,"rbac":{"clusterRoleRules":[],
+           "roles":[{"namespace":"ns-a","rules":[
+             {"verbs":["get","list"],"apiGroups":[""],"resources":["pods"]}]}]}}' | jq -r .proxyUri)
+
+curl -s localhost:8080$P1/api/v1/namespaces/ns-a/pods/pod-1  # 200 — C1 has pod-1 in ns-a
+
+# Generous grant: C1 action whose rules cover ns-b pods. The grant is generous; the
+# inventory is simply not C1's, so the fixture entry is absent.
+P1G=$(curl -s -X POST http://localhost:8080/backplane/trustedactions/$C1 \
+       -H 'Content-Type: application/json' \
+       -d '{"name":"c1-generous","customerDataAccess":false,"rbac":{"clusterRoleRules":[],
+            "roles":[{"namespace":"ns-b","rules":[
+              {"verbs":["get","list"],"apiGroups":[""],"resources":["pods"]}]}]}}' | jq -r .proxyUri)
+
+curl -s localhost:8080$P1G/api/v1/namespaces/ns-b/pods/pod-2  # 501, no fixture entry for C1:ns-b
+
+# C2 action granted ns-b pods — confirms C2 serves its own resources.
+P2=$(curl -s -X POST http://localhost:8080/backplane/trustedactions/$C2 \
+      -H 'Content-Type: application/json' \
+      -d '{"name":"c2-action","customerDataAccess":false,"rbac":{"clusterRoleRules":[],
+           "roles":[{"namespace":"ns-b","rules":[
+             {"verbs":["get","list"],"apiGroups":[""],"resources":["pods"]}]}]}}' | jq -r .proxyUri)
+
+curl -s localhost:8080$P2/api/v1/namespaces/ns-b/pods/pod-2  # 200 — C2 has pod-2 in ns-b
+
+# Cross-cluster: paste C1's instance ID into a C2 proxy URL — refused because the key
+# {C2}:{C1-instance} was never written.
+C1_INSTANCE=$(echo $P1 | awk -F/ '{print $NF}')
+curl -s localhost:8080/backplane/trustedaction/$C2/$C1_INSTANCE/api/v1/namespaces/ns-b/pods/pod-2
+# 404, trusted action instance not found for this cluster
+```
+
+The 501 on the generous-grant case and the 404 on the cross-cluster probe are deliberately
+different: one is a gap in the fixture, the other is a missing action entry.
+
 ## What the matcher does, and what it does not
 
 Rules are matched the way Kubernetes matches them: `*` in `verbs`, `apiGroups` or `resources`
@@ -131,3 +189,24 @@ The matcher is deliberately small, and its gaps are loud rather than silent:
 - **Subresources are 501.** `/api/v1/namespaces/ns-a/pods/pod-1/log` and friends are not modelled.
 - **Non-resource URLs are 501.** `/healthz`, `/version` and discovery paths such as `/api/v1` are
   not modelled either.
+
+## Deliberate deviations
+
+Three properties of this mock look like bugs to a first reader; they are not.
+
+**Expiry window is longer than the contract's.** The mock returns an expiry 24 hours from
+creation. The contract (`CreateTrustedActionResult.expiry`) says 720 minutes (12 hours). The
+longer window keeps the mock usable across a full workday without re-creating actions. The
+timestamp is not enforced anywhere in the scripts, so the discrepancy has no practical effect.
+
+**Forbidden-rule policy is a hand-copy.** The list of verb/resource combinations that cause
+`createTrustedAction` to return 400 (`scripts/trustedactions-post.js`, `FORBIDDEN_POLICIES`) is
+transcribed from backplane's unpublished validation logic. Backplane can add, remove, or tighten
+entries without notice; any divergence will be silent and will not be caught without a manual
+comparison against backplane's source.
+
+**Spec sync is not automated.** `tests/mock-server/backplane.yaml` (the vendored spec this mock
+is built from) and the corresponding spec in the upstream client repository were byte-identical
+when this README was written. An automated check that flags divergence when either file changes
+is planned but not yet implemented; running `diff` manually is the only way to verify they are
+still in sync.
