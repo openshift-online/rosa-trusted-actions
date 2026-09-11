@@ -97,6 +97,8 @@ against:
   from the entry if the object omits them.
 - `"object": null` means the resource is genuinely absent — a deliberate 404, distinct from a path
   with no entry at all.
+- an omitted `namespace` means the resource is cluster-scoped, like `/api/v1/nodes`, or is a
+  collection read across all namespaces, like `/api/v1/pods`.
 
 The `identity` block is what the resource *is* — it is not a ceiling on what may be granted. The
 only rules that decide access are the ones the trusted action requested.
@@ -104,3 +106,28 @@ only rules that decide access are the ones the trusted action requested.
 Reads are what the fixture models: a permitted write answers 501 rather than pretending to have
 written something. A permitted read of an entry that declares neither `items` nor `object` is 501
 too — a malformed entry must not be able to pass for a not-found.
+
+## What the matcher does, and what it does not
+
+Rules are matched the way Kubernetes matches them: `*` in `verbs`, `apiGroups` or `resources`
+matches anything, and the core API group is the empty string. `resourceNames` narrows a rule to the
+objects it names, so a grant on `pod-1` can neither read `pod-2` nor list the collection:
+
+```bash
+# roles: [{namespace: ns-a, rules: [{verbs:[get], apiGroups:[""], resources:[pods],
+#                                    resourceNames:[pod-1]}]}]
+curl -s -o /dev/null -w '%{http_code}\n' localhost:8080$P/api/v1/namespaces/ns-a/pods/pod-1  # 200
+curl -s -o /dev/null -w '%{http_code}\n' localhost:8080$P/api/v1/namespaces/ns-a/pods/pod-2  # 403
+```
+
+A cluster-scoped resource and an all-namespace collection carry no namespace, so only a
+`clusterRoleRules` entry authorises them — a `roles` entry is bound to one namespace and cannot.
+
+The matcher is deliberately small, and its gaps are loud rather than silent:
+
+- **Selectors are ignored.** `?labelSelector=` or `?fieldSelector=` on a request is answered
+  unfiltered, and the mock logs a warning naming the selector so the result is not mistaken for a
+  filtered one.
+- **Subresources are 501.** `/api/v1/namespaces/ns-a/pods/pod-1/log` and friends are not modelled.
+- **Non-resource URLs are 501.** `/healthz`, `/version` and discovery paths such as `/api/v1` are
+  not modelled either.

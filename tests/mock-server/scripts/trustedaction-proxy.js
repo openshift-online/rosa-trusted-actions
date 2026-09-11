@@ -60,42 +60,112 @@ function kubeVerb(method, isCollection) {
   }
 }
 
-// Exact matching only at this stage; wildcards and resource names are ticket 04.
-function ruleMatches(rule, verb, identity) {
-  return (rule.verbs || []).indexOf(verb) >= 0 &&
-    (rule.apiGroups || []).indexOf(identity.apiGroup) >= 0 &&
-    (rule.resources || []).indexOf(identity.resource) >= 0;
+// Kubernetes treats "*" in a rule's verbs, apiGroups or resources as matching anything, and the
+// core API group as the empty string on both sides of the comparison.
+function listMatches(values, wanted) {
+  var list = values || [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] === "*" || list[i] === wanted) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// resourceNames narrows a rule to individually named objects, so a rule carrying them cannot cover
+// a request that names none. That is what stops a grant on one object from listing its siblings,
+// and what stops it from reading them by name.
+function nameMatches(rule, name) {
+  var names = rule.resourceNames || [];
+  if (names.length === 0) {
+    return true;
+  }
+  return name !== "" && names.indexOf(name) >= 0;
+}
+
+function ruleMatches(rule, verb, target) {
+  return listMatches(rule.verbs, verb) &&
+    listMatches(rule.apiGroups, target.apiGroup) &&
+    listMatches(rule.resources, target.resource) &&
+    nameMatches(rule, target.name);
 }
 
 // The granted rules are the only rule set whose correctness matters: the entry's identity block is
 // what the resource is, not a ceiling. So the single denial reason is that the caller never
 // requested the permission.
-function isPermitted(rbac, verb, identity) {
+function isPermitted(rbac, verb, target) {
   if (!rbac) {
     return false;
   }
 
   var clusterRoleRules = rbac.clusterRoleRules || [];
   for (var i = 0; i < clusterRoleRules.length; i++) {
-    if (ruleMatches(clusterRoleRules[i], verb, identity)) {
+    if (ruleMatches(clusterRoleRules[i], verb, target)) {
       return true;
     }
   }
 
+  // A Role is bound in one namespace, so it authorises neither a cluster-scoped resource nor a
+  // collection read across all namespaces -- both of which carry no namespace at all.
+  if (target.namespace === "") {
+    return false;
+  }
+
   var roles = rbac.roles || [];
   for (var r = 0; r < roles.length; r++) {
-    if (roles[r].namespace !== identity.namespace) {
+    if (roles[r].namespace !== target.namespace) {
       continue;
     }
     var rules = roles[r].rules || [];
     for (var j = 0; j < rules.length; j++) {
-      if (ruleMatches(rules[j], verb, identity)) {
+      if (ruleMatches(rules[j], verb, target)) {
         return true;
       }
     }
   }
 
   return false;
+}
+
+// The entry's identity says what the resource is; the path says which object of it was addressed.
+// Only the name, the subresource and resource-ness are read from the path -- enough to honour
+// resourceNames and to be honest about the two surfaces the mock does not model, without
+// reimplementing the API server's path parsing.
+function parseKubePath(path) {
+  var segments = [];
+  var raw = path.split("/");
+  for (var i = 0; i < raw.length; i++) {
+    if (raw[i] !== "") {
+      segments.push(raw[i]);
+    }
+  }
+
+  // /api/{version}/... is the core group; /apis/{group}/{version}/... is every other one. Anything
+  // else -- /healthz, /version, /openapi/v2 -- addresses no resource, and so does a bare
+  // group-version, which is discovery.
+  var rest;
+  if (segments[0] === "api" && segments.length > 2) {
+    rest = segments.slice(2);
+  } else if (segments[0] === "apis" && segments.length > 3) {
+    rest = segments.slice(3);
+  } else {
+    return { nonResource: true };
+  }
+
+  // namespaces/{ns}/... is a namespaced request; without the trailing resource it is the
+  // namespaces resource itself, which is cluster-scoped. The API server resolves the same
+  // ambiguity by hardcoding the namespace's own two subresources, so hardcode them too.
+  if (rest[0] === "namespaces" && rest.length > 2 &&
+      rest[2] !== "status" && rest[2] !== "finalize") {
+    rest = rest.slice(2);
+  }
+
+  return {
+    nonResource: false,
+    resource: rest[0],
+    name: rest.length > 1 ? rest[1] : "",
+    subresource: rest.length > 2 ? rest.slice(2).join("/") : ""
+  };
 }
 
 // The fixture writes the object; the entry's declared type fills in only what it omitted, so what
@@ -129,6 +199,19 @@ if (queryStart >= 0) {
 var prefix = "/backplane/trustedaction/" + clusterId + "/" + instanceId;
 var kubePath = requestPath.substring(prefix.length).replace(/^\/+/, "/");
 
+// Selectors are not applied, so say so on the way past: an unfiltered result must not be mistaken
+// for a filtered one.
+var selectorParams = ["labelSelector", "fieldSelector"];
+var queryParams = context.request.queryParams || {};
+for (var s = 0; s < selectorParams.length; s++) {
+  if (has(queryParams, selectorParams[s])) {
+    console.warn("ignoring " + selectorParams[s] + "=" + queryParams[selectorParams[s]] +
+      " on " + kubePath + ": the mock does not filter, the result is unfiltered");
+  }
+}
+
+var request = parseKubePath(kubePath);
+
 var granted = actionStore.load(clusterId + ":" + instanceId);
 var entry = clusterStore.load(clusterId + ":" + kubePath);
 var fixtureKey = clusterId + ":" + kubePath;
@@ -137,6 +220,13 @@ if (!granted) {
   // covers both an unknown instance and one belonging to a different cluster: the key is composite,
   // so an instance created against another cluster simply is not there
   errorResponse(404, "trusted action instance not found for this cluster: " + instanceId);
+} else if (request.nonResource) {
+  // reported before the fixture lookup, so the gap is named for what it is rather than as a
+  // missing entry a fixture author could try to add
+  errorResponse(501, "the mock does not implement non-resource URL requests: " + kubePath);
+} else if (request.subresource !== "") {
+  errorResponse(501, "the mock does not implement subresource requests: " +
+    request.resource + "/" + request.subresource);
 } else if (!entry) {
   // a gap in the mock must not be able to masquerade as a legitimate not-found
   errorResponse(501, "no fixture entry for " + fixtureKey);
@@ -146,14 +236,24 @@ if (!granted) {
 } else {
   var isCollection = has(entry, "items");
   var verb = kubeVerb(String(context.request.method).toUpperCase(), isCollection);
-  var identity = entry.identity || {};
+  // What access is decided against: the entry says what the resource is, the path says which
+  // object of it was addressed. An omitted apiGroup is the core group and an omitted namespace is
+  // cluster scope, so normalise both to the empty string the matcher compares against.
+  var declared = entry.identity || {};
+  var target = {
+    apiGroup: declared.apiGroup || "",
+    resource: declared.resource,
+    namespace: declared.namespace || "",
+    name: request.name
+  };
+  var scope = target.namespace === "" ? "at cluster scope" : "in namespace " + target.namespace;
 
   if (verb === null) {
     errorResponse(501, "no Kubernetes verb for HTTP method " + context.request.method);
-  } else if (!isPermitted(granted.rbac, verb, identity)) {
+  } else if (!isPermitted(granted.rbac, verb, target)) {
     errorResponse(403, "the trusted action did not request " + verb + " on " +
-      (identity.apiGroup ? identity.apiGroup + "/" : "") + identity.resource +
-      " in namespace " + identity.namespace);
+      (target.apiGroup ? target.apiGroup + "/" : "") + target.resource +
+      (target.name ? "/" + target.name : "") + " " + scope);
   } else if (verb !== "list" && verb !== "get") {
     // permitted, but the fixture is a read model: say so rather than answer a write with content
     errorResponse(501, "the mock does not implement " + verb);
