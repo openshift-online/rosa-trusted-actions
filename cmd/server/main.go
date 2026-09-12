@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -162,7 +163,25 @@ func runServer(cmd *cobra.Command, args []string) error {
 	if cfg.Kubeconfig != "" {
 		bp = backplane.NewKubeconfigProvider(logger, cfg.Kubeconfig)
 	} else {
-		bp = backplane.NewBackplaneProvider(logger, cfg.BackplaneURL, cfg.BackplaneClientID, cfg.BackplaneClientSecret)
+		if u, err := url.Parse(cfg.BackplaneURL); err != nil || u.Scheme != "https" {
+			logger.Fatalf("ROSA_TA_BACKPLANE_URL must use HTTPS: %s", cfg.BackplaneURL)
+		}
+		bpConn, err := sdk.NewConnectionBuilder().
+			URL(cfg.OCMBaseURL).
+			Client(cfg.BackplaneClientID, cfg.BackplaneClientSecret).
+			BuildContext(cmd.Context())
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to create backplane OCM connection")
+		}
+		defer func() {
+			if err := bpConn.Close(); err != nil {
+				logger.WithError(err).Error("Failed to close backplane OCM connection")
+			}
+		}()
+		bp = backplane.NewBackplaneProvider(logger, cfg.BackplaneURL, func(ctx context.Context) (string, error) {
+			accessToken, _, err := bpConn.TokensContext(ctx)
+			return accessToken, err
+		})
 	}
 
 	actionExecutor := executor.New(logger, actionAuthorizer, actionAuditor, bp)
