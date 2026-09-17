@@ -22,11 +22,14 @@ make run
 ## Local Development (mock auth)
 
 The server normally requires live OCM credentials and a reachable JWKS endpoint.
-Set `ROSA_TA_ENABLE_AUTH=false` to bypass both — the server injects a hardcoded
+- Set `ROSA_TA_AUTH=disabled` to bypass both — the server injects a hardcoded
 `dev-user` identity with the SREP role so every endpoint is reachable without a
 token.
+- Set `ROSA_TA_AUTH=ocmconfig` to use the OCM credentials stored in your OCM config file
+(probably require you to run `ocm login` first).
+The OCM config file will also tell which JWKS endpoint to target.
 
-> **Warning:** never set `ROSA_TA_ENABLE_AUTH=false` outside a local or CI environment.
+> **Warning:** never set `ROSA_TA_AUTH` outside a local or CI environment.
 
 ### Get a kubeconfig (OpenShift managed clusters)
 
@@ -43,7 +46,7 @@ ocm get /api/clusters_mgmt/v1/clusters/${INTERNAL_ID}/credentials \
 ### Start the server
 
 ```bash
-export ROSA_TA_ENABLE_AUTH=false
+export ROSA_TA_AUTH=disabled
 export ROSA_TA_KUBECONFIG=/tmp/${INTERNAL_ID}.kubeconfig
 
 go run ./cmd/server/ --log-level debug

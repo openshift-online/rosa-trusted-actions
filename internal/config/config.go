@@ -10,6 +10,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type AuthPolicy string
+
+const (
+	EnabledAuthPolicy   AuthPolicy = "enabled"
+	DisabledAuthPolicy  AuthPolicy = "disabled"
+	OcmConfigAuthPolicy AuthPolicy = "ocmconfig"
+)
+
 // Config holds the application configuration
 type Config struct {
 	// Server configuration (CLI flags)
@@ -68,9 +76,9 @@ type Config struct {
 
 	// Development / local-testing flags
 	// EnableAuth controls whether OCM JWT validation and AMS role checks are
-	// enforced. Defaults to true. Set ROSA_TA_ENABLE_AUTH=false to use the
+	// enforced. Defaults to true. Set ROSA_TA_AUTH=disabled to use the
 	// hardcoded mock identity ("dev-user" / SREP role) — never use in production.
-	EnableAuth bool
+	AuthPolicy AuthPolicy
 }
 
 type configFile struct {
@@ -111,6 +119,26 @@ func readConfigFile(configFilePath string) *configFile {
 // Load loads configuration from environment variables with defaults
 func Load(configFilePath string) *Config {
 	configFile := readConfigFile(configFilePath)
+
+	envAuthPolicy := getEnv("ROSA_TA_AUTH", "")
+	authPolicy := EnabledAuthPolicy
+	if len(envAuthPolicy) > 0 {
+		switch envAuthPolicy {
+		case string(EnabledAuthPolicy):
+			authPolicy = EnabledAuthPolicy
+		case string(DisabledAuthPolicy):
+			authPolicy = DisabledAuthPolicy
+		case string(OcmConfigAuthPolicy):
+			authPolicy = OcmConfigAuthPolicy
+		default:
+			fmt.Fprintf(os.Stderr, "Invalid ROSA_TA_AUTH value: %s\n", envAuthPolicy)
+			os.Exit(1)
+		}
+	} else {
+		if !getBoolEnv("ROSA_TA_ENABLE_AUTH", true) {
+			authPolicy = DisabledAuthPolicy
+		}
+	}
 
 	return &Config{
 		// Server config (set via CLI flags, defaults here for reference)
@@ -161,7 +189,7 @@ func Load(configFilePath string) *Config {
 		AllowedSecrets:    getStringSliceEnv("ROSA_TA_ALLOWED_SECRETS", configFile.Actions.AllowedSecrets),
 
 		// Development flags
-		EnableAuth: getBoolEnv("ROSA_TA_ENABLE_AUTH", true),
+		AuthPolicy: authPolicy,
 	}
 }
 

@@ -11,16 +11,16 @@ Integration testing for rosa-trusted-actions requires multiple systems to be in 
 [PR #42](https://github.com/openshift-online/rosa-trusted-actions/pull/42) (mock auth) changes what's
 needed to get started locally:
 
-- `ROSA_TA_ENABLE_AUTH=false` swaps in `MockMiddleware`/`MockAuthzMiddleware` — a hardcoded
+- `ROSA_TA_AUTH=disabled` swaps in `MockMiddleware`/`MockAuthzMiddleware` — a hardcoded
   `dev-user` identity with the SREP role, no OCM/AMS network calls at all.
 - Setting `ROSA_TA_KUBECONFIG=<path>` makes `cmd/server/main.go` select `KubeconfigProvider`
   instead of `BackplaneProvider`, so cluster access doesn't need Backplane either.
 - `internal/executor.Executor` is now wired into `internal/handlers/api.go`, so `CreateExecution`
   actually dispatches actions instead of stubbing a `202`.
-- As a safety guard, the server refuses to start with `ROSA_TA_ENABLE_AUTH=false` and no
+- As a safety guard, the server refuses to start with `ROSA_TA_AUTH=disabled` and no
   `ROSA_TA_KUBECONFIG` set (mock auth against the real Backplane is not allowed).
 
-In combination, `ROSA_TA_ENABLE_AUTH=false` + `ROSA_TA_KUBECONFIG=<path>` is a fully wired local
+In combination, `ROSA_TA_AUTH=disabled` + `ROSA_TA_KUBECONFIG=<path>` is a fully wired local
 path with zero OCM/Backplane dependency — that's what Phase 1 below builds on. OCM and Backplane
 are only mocked in later phases, once we actually need to exercise those code paths for real.
 
@@ -40,7 +40,7 @@ Setup:
   (`ministackorg/ministack`, a LocalStack-API-compatible AWS emulator — see the caveat below) —
   and waits for both to be ready before returning.
 - `make itest-run` (or `./integration/itest-run.sh` directly) retrieves a fresh kubeconfig from
-  the kind cluster, exports `ROSA_TA_ENABLE_AUTH=false` / `ROSA_TA_KUBECONFIG` / `DATABASE_URL`
+  the kind cluster, exports `ROSA_TA_AUTH=disabled` / `ROSA_TA_KUBECONFIG` / `DATABASE_URL`
   for it, starts the server (`go run ./cmd/server`), waits for `/health`, then exercises the
   catalog's `get` action — list pods in `kube-system` (no fixtures needed, that namespace exists
   in any stock kind cluster) — via `POST /api/v0/trusted-actions/get/run`, polling
@@ -49,7 +49,7 @@ Setup:
 - To poke at the server manually instead (e.g. to try other `params`), run `itest-up.sh` once,
   then:
   ```bash
-  export ROSA_TA_ENABLE_AUTH=false
+  export ROSA_TA_AUTH=disabled
   export ROSA_TA_KUBECONFIG=integration/.kind-kubeconfig
   go run ./cmd/server --log-level debug
   ```
@@ -71,7 +71,7 @@ audit backend lands.
 ### Phase 2 — OCM mocking (not Phase 1)
 
 **Goal:** exercise the real `auth.Middleware` / `auth.RoleAuthzMiddleware` / `ocm.Authorization`
-code paths (`ROSA_TA_ENABLE_AUTH=true`), instead of bypassing them via mock auth.
+code paths (`ROSA_TA_AUTH=enabled`), instead of bypassing them via mock auth.
 
 This splits into two independent pieces:
 
@@ -86,7 +86,7 @@ This splits into two independent pieces:
   wire-level coverage, stand up a small fake HTTP server implementing the access-review endpoint
   and point `ROSA_TA_OCM_BASE_URL` at it.
 
-Run this with `ROSA_TA_ENABLE_AUTH=true`, paired with Phase 1's kind cluster via
+Run this with `ROSA_TA_AUTH=enabled`, paired with Phase 1's kind cluster via
 `ROSA_TA_KUBECONFIG` to satisfy PR #42's startup guard (real auth + kubeconfig cluster access,
 still no live Backplane needed).
 

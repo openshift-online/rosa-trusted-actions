@@ -109,7 +109,7 @@ func (m *RoleAuthzMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
 
 		for _, role := range m.roles {
 			allowed, err := m.authz.AccessReview(
-				ctx, identity.Username, "*", role.AMSResource)
+				ctx, identity.Username, "get", role.AMSResource)
 			if err != nil {
 				hadErr = true
 				m.logger.WithError(err).WithFields(logrus.Fields{

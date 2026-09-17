@@ -41,7 +41,7 @@ chmod 0600 "$KUBECONFIG_PATH"
 ok "kubeconfig retrieved: $KUBECONFIG_PATH"
 
 # --- 2. Automatically set the env variables ---
-export ROSA_TA_ENABLE_AUTH=false
+export ROSA_TA_AUTH=disabled
 export ROSA_TA_KUBECONFIG="$KUBECONFIG_PATH"
 export DATABASE_URL="$DB_PATH"
 

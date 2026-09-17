@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	ocmconfig "github.com/openshift-online/ocm-cli/pkg/config"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/sirupsen/logrus"
@@ -101,7 +102,10 @@ func runServer(cmd *cobra.Command, args []string) error {
 	var authnMiddleware auth.JWTMiddleware
 	var authzMiddleware auth.AuthorizationMiddleware
 
-	if cfg.EnableAuth {
+	switch cfg.AuthPolicy {
+	case config.EnabledAuthPolicy:
+		fallthrough
+	case config.OcmConfigAuthPolicy:
 		authnMiddleware = auth.NewAuthMiddleware(logger)
 
 		roles, err := auth.LoadRoles(cfg.RolesConfigPath)
@@ -109,12 +113,37 @@ func runServer(cmd *cobra.Command, args []string) error {
 			logger.WithError(err).Fatal("Failed to load role configuration")
 		}
 
-		ocmClient, err := ocm.NewClient(ocm.Config{
-			BaseURL:      cfg.OCMBaseURL,
-			ClientID:     cfg.OCMClientID,
-			ClientSecret: cfg.OCMClientSecret,
-			SelfToken:    cfg.OCMToken,
-		})
+		appendIfNotEmpty := func(l []string, s string) []string {
+			if s != "" {
+				l = append(l, s)
+			}
+			return l
+		}
+		var ocmClient *ocm.Client
+
+		if cfg.AuthPolicy == config.EnabledAuthPolicy {
+			ocmClient, err = ocm.NewClient(ocm.Config{
+				BaseURL:      cfg.OCMBaseURL,
+				ClientID:     cfg.OCMClientID,
+				ClientSecret: cfg.OCMClientSecret,
+				Tokens:       appendIfNotEmpty([]string{}, cfg.OCMToken),
+			})
+		} else {
+			var ocmConfig *ocmconfig.Config
+
+			ocmConfig, err = ocmconfig.Load()
+			if err == nil {
+				ocmClient, err = ocm.NewClient(ocm.Config{
+					BaseURL:      ocmConfig.URL,
+					ClientID:     ocmConfig.ClientID,
+					ClientSecret: ocmConfig.ClientSecret,
+					Tokens: appendIfNotEmpty(
+						appendIfNotEmpty([]string{}, ocmConfig.AccessToken),
+						ocmConfig.RefreshToken,
+					),
+				})
+			}
+		}
 		if err != nil {
 			logger.WithError(err).Fatal("Failed to create OCM client")
 		}
@@ -125,19 +154,21 @@ func runServer(cmd *cobra.Command, args []string) error {
 		}()
 
 		authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
-	} else {
+	case config.DisabledAuthPolicy:
 		logger.Warn("Auth disabled — using mock identity 'dev-user' with SREP role. Do not use in production.")
 		authnMiddleware = auth.NewMockAuthMiddleware()
 		authzMiddleware = auth.NewMockAuthzMiddleware(logger)
-	}
 
-	// Safety guard: mock auth + real backplane is a dangerous misconfiguration.
-	// An unauthenticated request would receive the hardcoded SREP role and reach
-	// production cluster infrastructure via the backplane provider. Require an
-	// explicit kubeconfig so the real backplane is never reached without auth.
-	if !cfg.EnableAuth && cfg.Kubeconfig == "" {
-		logger.Fatal("ROSA_TA_ENABLE_AUTH=false requires ROSA_TA_KUBECONFIG to be set; " +
-			"running mock auth against the real backplane is not permitted")
+		// Safety guard: mock auth + real backplane is a dangerous misconfiguration.
+		// An unauthenticated request would receive the hardcoded SREP role and reach
+		// production cluster infrastructure via the backplane provider. Require an
+		// explicit kubeconfig so the real backplane is never reached without auth.
+		if cfg.Kubeconfig == "" {
+			logger.Fatal("ROSA_TA_AUTH=disabled requires ROSA_TA_KUBECONFIG to be set; " +
+				"running mock auth against the real backplane is not permitted")
+		}
+	default:
+		logger.WithField("ROSA_TA_AUTH", cfg.AuthPolicy).Fatal("Unknown auth policy")
 	}
 
 	// -------------------------------------------------------------------------
@@ -231,7 +262,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// -------------------------------------------------------------------------
 	var mainHandler http.Handler = router
 
-	if cfg.EnableAuth {
+	if cfg.AuthPolicy != config.DisabledAuthPolicy {
 		authnLogger, err := sdk.NewStdLoggerBuilder().
 			Debug(logger.Level >= logrus.DebugLevel).
 			Build()

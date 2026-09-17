@@ -73,7 +73,10 @@ The `config.Config` struct separates:
 
 - `AWS_*`: Standard AWS SDK environment variables for authentication
 - `ROSA_TA_S3_BUCKET`: S3 bucket for storing execution outputs and logs
-- `ROSA_TA_ENABLE_AUTH`: Enable/disable authentication enforcement
+- `ROSA_TA_AUTH`: Enable/disable authentication enforcement. Valid values:
+  - `disabled`
+  - `enabled`: OCM settings are taken from TA (Trusted Action) config file
+  - `ocmconfig`: OCM settings are taken from your OCM config file. Development only, probably requires you to run `ocm login` first.
 - `ROSA_TA_ALLOWED_ACCOUNTS`: Comma-separated list of allowed AWS account IDs
 - `DATABASE_URL`: Database connection string
 - `ROSA_TA_WORKER_CONCURRENCY`: Number of execution workers

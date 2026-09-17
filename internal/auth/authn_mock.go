@@ -6,7 +6,7 @@ import "net/http"
 // It injects a hardcoded identity into every request context — it reads
 // nothing from request headers and cannot be used to impersonate another user.
 //
-// WARNING: never enable in production. Use ROSA_TA_ENABLE_AUTH=false only in
+// WARNING: never enable in production. Use ROSA_TA_AUTH=disabled only in
 // local or CI environments where real OCM credentials are unavailable.
 type MockMiddleware struct{}
 

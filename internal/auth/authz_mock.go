@@ -10,7 +10,7 @@ import (
 // It grants the highest-privilege role (SREP) unconditionally so that all
 // action-level checks pass without an AMS AccessReview call.
 //
-// WARNING: never enable in production. Use ROSA_TA_ENABLE_AUTH=false only in
+// WARNING: never enable in production. Use ROSA_TA_AUTH=disabled only in
 // local or CI environments where real OCM credentials are unavailable.
 type MockAuthzMiddleware struct{ logger *logrus.Logger }
 

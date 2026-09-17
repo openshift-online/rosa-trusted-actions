@@ -17,28 +17,55 @@ var _ Authorization = &authorization{}
 
 func (a authorization) AccessReview(ctx context.Context, username, action, resourceType string) (allowed bool, err error) {
 	con := a.client.connection
-	accessReview := con.Authorizations().V1().AccessReview()
 
-	request, err := azv1.NewAccessReviewRequest().
-		AccountUsername(username).
-		Action(action).
-		ResourceType(resourceType).
-		Build()
-	if err != nil {
-		return false, err
+	if username == a.client.connUsername {
+		selfAccessReview := con.Authorizations().V1().SelfAccessReview()
+
+		request, err := azv1.NewSelfAccessReviewRequest().
+			Action(action).
+			ResourceType(resourceType).
+			Build()
+		if err != nil {
+			return false, err
+		}
+
+		postResp, err := selfAccessReview.Post().
+			Request(request).
+			SendContext(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		response, ok := postResp.GetResponse()
+		if !ok {
+			return false, fmt.Errorf("empty response from authorization post request (self access review)")
+		}
+
+		return response.Allowed(), nil
+	} else {
+		accessReview := con.Authorizations().V1().AccessReview()
+
+		request, err := azv1.NewAccessReviewRequest().
+			AccountUsername(username).
+			Action(action).
+			ResourceType(resourceType).
+			Build()
+		if err != nil {
+			return false, err
+		}
+
+		postResp, err := accessReview.Post().
+			Request(request).
+			SendContext(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		response, ok := postResp.GetResponse()
+		if !ok {
+			return false, fmt.Errorf("empty response from authorization post request")
+		}
+
+		return response.Allowed(), nil
 	}
-
-	postResp, err := accessReview.Post().
-		Request(request).
-		SendContext(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	response, ok := postResp.GetResponse()
-	if !ok {
-		return false, fmt.Errorf("empty response from authorization post request")
-	}
-
-	return response.Allowed(), nil
 }
