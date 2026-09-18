@@ -254,9 +254,23 @@ if (!granted) {
     errorResponse(403, "the trusted action did not request " + verb + " on " +
       (target.apiGroup ? target.apiGroup + "/" : "") + target.resource +
       (target.name ? "/" + target.name : "") + " " + scope);
-  } else if (verb !== "list" && verb !== "get") {
-    // permitted, but the fixture is a read model: say so rather than answer a write with content
-    errorResponse(501, "the mock does not implement " + verb);
+  } else if (verb === "create") {
+    // Echo the request body back as the created object; real K8s would return 201.
+    var created = {};
+    try { created = JSON.parse(String(context.request.body)); } catch (e) {}
+    if (!created.apiVersion) { created.apiVersion = entry.apiVersion; }
+    var singularKind = entry.kind ? entry.kind.replace(/List$/, "") : "Unknown";
+    if (!created.kind) { created.kind = singularKind; }
+    respond()
+      .withStatusCode(201)
+      .withContent(JSON.stringify(created))
+      .withHeader("Content-Type", "application/json");
+  } else if (verb === "patch" || verb === "update") {
+    // Return the stored fixture object; the mock does not apply the diff.
+    var stored = entry.object ? withDeclaredType(entry.object, entry) : { apiVersion: entry.apiVersion, kind: entry.kind };
+    jsonResponse(200, stored);
+  } else if (verb === "delete" || verb === "deletecollection") {
+    jsonResponse(200, { apiVersion: "v1", kind: "Status", metadata: {}, status: "Success", code: 200 });
   } else if (isCollection) {
     jsonResponse(200, {
       apiVersion: entry.apiVersion,
