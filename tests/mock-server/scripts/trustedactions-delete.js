@@ -9,13 +9,14 @@ var compositeKey = clusterId + ":" + instanceId;
 if (!actionStore.load(compositeKey)) {
   respond()
     .withStatusCode(404)
-    .withContent("ClusterId or trustedActionId not found in store")
-    .withHeader("Content-Type", "text/plain");
+    .withContent(JSON.stringify({ statusCode: 404, message: "trusted action instance not found: " + instanceId }))
+    .withHeader("Content-Type", "application/json");
 } else {
   actionStore.delete(compositeKey);
 
+  // contract: 200 with Content-Type application/json and a JSON string body
   respond()
     .withStatusCode(200)
-    .withContent("Deleted clusterId and trustedActionId from store")
-    .withHeader("Content-Type", "text/plain");
+    .withContent(JSON.stringify("Trusted action resources deleted"))
+    .withHeader("Content-Type", "application/json");
 }
