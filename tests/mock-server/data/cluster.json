@@ -255,6 +255,66 @@
       }
     ]
   },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces": {
+    "kind": "Namespace",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "namespaces"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Namespace",
+        "metadata": {
+          "name": "default"
+        },
+        "status": {
+          "phase": "Active"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Namespace",
+        "metadata": {
+          "name": "ns-a"
+        },
+        "status": {
+          "phase": "Active"
+        }
+      }
+    ]
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/default/configmaps": {
+    "kind": "ConfigMap",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "configmaps",
+      "namespace": "default"
+    },
+    "items": []
+  },
+  "00000000-0000-0000-0000-000000000001:/api/v1/namespaces/default/configmaps/test-proxy-mutation": {
+    "kind": "ConfigMap",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "configmaps",
+      "namespace": "default"
+    },
+    "object": {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "test-proxy-mutation",
+        "namespace": "default"
+      },
+      "data": {
+        "key1": "value1"
+      }
+    }
+  },
   "00000000-0000-0000-0000-000000000001:/api/v1/nodes/node-1": {
     "kind": "Node",
     "apiVersion": "v1",
