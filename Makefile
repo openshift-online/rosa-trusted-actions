@@ -7,6 +7,10 @@ BUILD_DIR=./bin
 GENERATED_DIR=./internal/openapi
 API_SPEC_PATH=./openapi/openapi.yaml
 BUNDLED_SPEC_PATH=./api-spec.yaml
+MOCK_SERVER_DIR=./tests/mock-server
+MOCK_SERVER_ENGINE_VERSION=5
+# Same default as `make run`; override to run the mock alongside the real server
+MOCK_SERVER_PORT ?= 8080
 
 # Tools
 OAPI_CODEGEN=go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
@@ -121,6 +125,16 @@ test-integration: ## Run integration tests (starts server, runs tests, stops ser
 	./scripts/test-api.sh || (pkill -f rosa-trusted-actions-server && exit 1)
 	@pkill -f rosa-trusted-actions-server || true
 	@echo "Integration tests completed"
+
+# Mock server
+.PHONY: mock-server
+mock-server: ## Start the backplane mock server (imposter Go engine)
+	@which imposter > /dev/null || (echo "imposter not found. See tests/mock-server/README.md for install instructions." && exit 1)
+	imposter up $(MOCK_SERVER_DIR) \
+		--engine-type native \
+		--version $(MOCK_SERVER_ENGINE_VERSION) \
+		--auto-restart=false \
+		--port $(MOCK_SERVER_PORT)
 
 # Linting
 .PHONY: lint
