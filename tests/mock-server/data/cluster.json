@@ -280,5 +280,72 @@
         ]
       }
     }
+  },
+
+  "00000000-0000-0000-0000-000000000002:_flags": {},
+
+  "00000000-0000-0000-0000-000000000002:/api/v1/namespaces/ns-b/pods": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods",
+      "namespace": "ns-b"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "pod-2",
+          "namespace": "ns-b",
+          "labels": {
+            "app": "demo"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "registry.example.com/demo:2"
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      }
+    ]
+  },
+  "00000000-0000-0000-0000-000000000002:/api/v1/namespaces/ns-b/pods/pod-2": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "pods",
+      "namespace": "ns-b"
+    },
+    "object": {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "pod-2",
+        "namespace": "ns-b",
+        "labels": {
+          "app": "demo"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.example.com/demo:2"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    }
   }
 }
