@@ -10,6 +10,7 @@ type ActionEntry struct {
 	InstanceID         string
 	Name               string
 	CustomerDataAccess string
+	Host               string
 	Transport          *http.Transport
 	Token              string
 }

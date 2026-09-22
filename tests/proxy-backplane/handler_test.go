@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func newTestRouter() *chi.Mux {
+func newTestRouter() (*chi.Mux, *ActionStore) {
 	store := NewActionStore()
 	logger := logrus.New()
 	logger.SetLevel(logrus.WarnLevel)
@@ -29,8 +29,9 @@ func newTestRouter() *chi.Mux {
 	r.Post("/backplane/trustedactions/{cluster_id}", h.Register)
 	r.Get("/backplane/trustedactions/{cluster_id}/{instanceId}", h.Status)
 	r.Delete("/backplane/trustedactions/{cluster_id}/{instanceId}", h.Delete)
+	r.HandleFunc("/backplane/trustedaction/{cluster_id}/{instanceId}/*", h.Proxy)
 
-	return r
+	return r, store
 }
 
 func makeKubeconfig(serverURL, token string) string {
@@ -92,7 +93,7 @@ func registerAction(t *testing.T, ts *httptest.Server, clusterID, kubeconfig str
 }
 
 func TestRegister_Success(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -117,7 +118,7 @@ func TestRegister_Success(t *testing.T) {
 }
 
 func TestRegister_MissingKubeconfig(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -138,7 +139,7 @@ func TestRegister_MissingKubeconfig(t *testing.T) {
 }
 
 func TestRegister_InvalidBase64(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -159,7 +160,7 @@ func TestRegister_InvalidBase64(t *testing.T) {
 }
 
 func TestRegister_MissingServer(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -189,7 +190,7 @@ users:
 }
 
 func TestRegister_MissingCredentials(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -218,7 +219,7 @@ users:
 }
 
 func TestRegister_InvalidJSON(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -231,7 +232,7 @@ func TestRegister_InvalidJSON(t *testing.T) {
 }
 
 func TestStatus_Found(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -258,7 +259,7 @@ func TestStatus_Found(t *testing.T) {
 }
 
 func TestStatus_NotFound(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -279,7 +280,7 @@ func TestStatus_NotFound(t *testing.T) {
 }
 
 func TestDelete_Success(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -301,7 +302,7 @@ func TestDelete_Success(t *testing.T) {
 }
 
 func TestDelete_NotFound(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -314,7 +315,7 @@ func TestDelete_NotFound(t *testing.T) {
 }
 
 func TestCrossClusterIsolation_HTTP(t *testing.T) {
-	router := newTestRouter()
+	router, _ := newTestRouter()
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
