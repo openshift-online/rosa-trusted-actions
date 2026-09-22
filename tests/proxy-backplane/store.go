@@ -6,11 +6,12 @@ import (
 )
 
 type ActionEntry struct {
-	ClusterID  string
-	InstanceID string
-	Name       string
-	Transport  *http.Transport
-	Token      string
+	ClusterID          string
+	InstanceID         string
+	Name               string
+	CustomerDataAccess string
+	Transport          *http.Transport
+	Token              string
 }
 
 type ActionStore struct {

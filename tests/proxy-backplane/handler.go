@@ -82,11 +82,12 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	instanceID := fmt.Sprintf("%s--%s", req.Name, uuid.New().String())
 
 	h.store.Put(&ActionEntry{
-		ClusterID:  clusterID,
-		InstanceID: instanceID,
-		Name:       req.Name,
-		Transport:  transport,
-		Token:      restCfg.BearerToken,
+		ClusterID:          clusterID,
+		InstanceID:         instanceID,
+		Name:               req.Name,
+		CustomerDataAccess: req.CustomerDataAccess,
+		Transport:          transport,
+		Token:              restCfg.BearerToken,
 	})
 
 	h.logger.WithFields(logrus.Fields{
