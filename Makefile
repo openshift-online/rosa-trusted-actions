@@ -11,6 +11,8 @@ MOCK_BACKPLANE_DIR=./tests/mock-backplane
 MOCK_BACKPLANE_ENGINE_VERSION=5
 # Same default as `make run`; override to run the mock alongside the real server
 MOCK_BACKPLANE_PORT ?= 8080
+PROXY_BACKPLANE_DIR=./tests/proxy-backplane
+PROXY_BACKPLANE_PORT ?= 8080
 
 # Tools
 OAPI_CODEGEN=go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
@@ -135,6 +137,11 @@ mock-backplane: ## Start the backplane mock server (imposter Go engine)
 		--version $(MOCK_BACKPLANE_ENGINE_VERSION) \
 		--auto-restart=false \
 		--port $(MOCK_BACKPLANE_PORT)
+
+# Proxy backplane server
+.PHONY: proxy-backplane
+proxy-backplane: ## Start the proxy backplane server (reverse-proxies to a real cluster)
+	go run $(PROXY_BACKPLANE_DIR) --listen-addr :$(PROXY_BACKPLANE_PORT)
 
 # Linting
 .PHONY: lint
