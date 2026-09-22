@@ -1,3 +1,5 @@
+.scratch/
+docs/agents/
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -20,6 +22,7 @@ go.work
 # Build output
 /bin/
 /dist/
+/proxy-backplane
 
 # IDE files
 .vscode/
