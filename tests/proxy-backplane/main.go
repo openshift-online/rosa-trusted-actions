@@ -60,6 +60,7 @@ func run(cmd *cobra.Command, _ []string) error {
 	router.Post("/backplane/trustedactions/{cluster_id}", handler.Register)
 	router.Get("/backplane/trustedactions/{cluster_id}/{instanceId}", handler.Status)
 	router.Delete("/backplane/trustedactions/{cluster_id}/{instanceId}", handler.Delete)
+	router.HandleFunc("/backplane/trustedaction/{cluster_id}/{instanceId}/*", handler.Proxy)
 
 	srv := &http.Server{
 		Addr:           listenAddr,

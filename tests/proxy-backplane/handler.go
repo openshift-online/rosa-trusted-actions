@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -73,7 +76,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transport, err := buildTransport(restCfg.CAData, restCfg.CertData, restCfg.KeyData)
+	transport, err := buildTransport(restCfg.CAData, restCfg.CertData, restCfg.KeyData, restCfg.TLSClientConfig.Insecure)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "failed to build TLS transport: "+err.Error())
 		return
@@ -86,6 +89,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		InstanceID:         instanceID,
 		Name:               req.Name,
 		CustomerDataAccess: req.CustomerDataAccess,
+		Host:               restCfg.Host,
 		Transport:          transport,
 		Token:              restCfg.BearerToken,
 	})
@@ -137,9 +141,51 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func buildTransport(caData, certData, keyData []byte) (*http.Transport, error) {
+func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
+	clusterID := chi.URLParam(r, "cluster_id")
+	instanceID := chi.URLParam(r, "instanceId")
+
+	entry, ok := h.store.Get(clusterID, instanceID)
+	if !ok {
+		writeJSONError(w, http.StatusNotFound, "trusted action instance not found")
+		return
+	}
+
+	upstream, err := url.Parse(entry.Host)
+	if err != nil {
+		writeJSONError(w, http.StatusBadGateway, "invalid upstream URL: "+err.Error())
+		return
+	}
+
+	prefix := fmt.Sprintf("/backplane/trustedaction/%s/%s", clusterID, instanceID)
+
+	proxy := &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL.Scheme = upstream.Scheme
+			req.URL.Host = upstream.Host
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
+			if req.URL.Path == "" {
+				req.URL.Path = "/"
+			}
+			req.Host = upstream.Host
+			req.Header.Del("Authorization")
+			if entry.Token != "" {
+				req.Header.Set("Authorization", "Bearer "+entry.Token)
+			}
+		},
+		Transport: entry.Transport,
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			writeJSONError(w, http.StatusBadGateway, err.Error())
+		},
+	}
+
+	proxy.ServeHTTP(w, r)
+}
+
+func buildTransport(caData, certData, keyData []byte, insecure bool) (*http.Transport, error) {
 	tlsCfg := &tls.Config{
-		MinVersion: tls.VersionTLS12,
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: insecure,
 	}
 
 	if len(caData) > 0 {
