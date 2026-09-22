@@ -50,9 +50,16 @@ func run(cmd *cobra.Command, _ []string) error {
 	})
 
 	store := NewActionStore()
-	_ = store
+	handler := &Handler{
+		store:      store,
+		logger:     logger,
+		listenAddr: listenAddr,
+	}
 
 	router := chi.NewRouter()
+	router.Post("/backplane/trustedactions/{cluster_id}", handler.Register)
+	router.Get("/backplane/trustedactions/{cluster_id}/{instanceId}", handler.Status)
+	router.Delete("/backplane/trustedactions/{cluster_id}/{instanceId}", handler.Delete)
 
 	srv := &http.Server{
 		Addr:           listenAddr,
