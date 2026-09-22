@@ -1,8 +1,10 @@
 # Variables
 BINARY_NAME=rosa-trusted-actions-server
 CLI_NAME=action-cli
+TEST_CLIENT_NAME=test-client
 MAIN_PATH=./cmd/server
 CLI_PATH=./cmd/action-cli
+TEST_CLIENT_PATH=./cmd/test-client
 BUILD_DIR=./bin
 GENERATED_DIR=./internal/openapi
 API_SPEC_PATH=./openapi/openapi.yaml
@@ -65,6 +67,12 @@ build-cli: ## Build the action-cli binary
 	@echo "Building $(CLI_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(CLI_NAME) $(CLI_PATH)
+
+.PHONY: build-test-client
+build-test-client: ## Build the test-client binary
+	@echo "Building $(TEST_CLIENT_NAME)..."
+	@mkdir -p $(BUILD_DIR)
+	go build -o $(BUILD_DIR)/$(TEST_CLIENT_NAME) $(TEST_CLIENT_PATH)
 
 .PHONY: build-linux
 build-linux: generate ## Build Linux binary

@@ -39,6 +39,7 @@ func (g *GetPullSecretEmailAction) UsesPodExec() bool { return false }
 func (g *GetPullSecretEmailAction) RequiredRBAC(_ ResourceTarget) []backplane.RBACRule {
 	return []backplane.RBACRule{
 		{
+			Namespace:     pullSecretNamespace,
 			APIGroups:     []string{""},
 			Resources:     []string{"secrets"},
 			ResourceNames: []string{pullSecretName},
