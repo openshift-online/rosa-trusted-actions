@@ -43,6 +43,13 @@ type statusResponse struct {
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	clusterID := chi.URLParam(r, "cluster_id")
 
+	h.logger.WithFields(logrus.Fields{
+		"handler":    "Register",
+		"method":     r.Method,
+		"path":       r.URL.Path,
+		"cluster_id": clusterID,
+	}).Info("Handler called")
+
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body: "+err.Error())
@@ -111,6 +118,14 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	clusterID := chi.URLParam(r, "cluster_id")
 	instanceID := chi.URLParam(r, "instanceId")
 
+	h.logger.WithFields(logrus.Fields{
+		"handler":     "Status",
+		"method":      r.Method,
+		"path":        r.URL.Path,
+		"cluster_id":  clusterID,
+		"instance_id": instanceID,
+	}).Info("Handler called")
+
 	entry, ok := h.store.Get(clusterID, instanceID)
 	if !ok {
 		writeJSONError(w, http.StatusNotFound, "trusted action instance not found")
@@ -128,6 +143,14 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	clusterID := chi.URLParam(r, "cluster_id")
 	instanceID := chi.URLParam(r, "instanceId")
 
+	h.logger.WithFields(logrus.Fields{
+		"handler":     "Delete",
+		"method":      r.Method,
+		"path":        r.URL.Path,
+		"cluster_id":  clusterID,
+		"instance_id": instanceID,
+	}).Info("Handler called")
+
 	if !h.store.Delete(clusterID, instanceID) {
 		writeJSONError(w, http.StatusNotFound, "trusted action instance not found")
 		return
@@ -144,6 +167,14 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
 	clusterID := chi.URLParam(r, "cluster_id")
 	instanceID := chi.URLParam(r, "instanceId")
+
+	h.logger.WithFields(logrus.Fields{
+		"handler":     "Proxy",
+		"method":      r.Method,
+		"path":        r.URL.Path,
+		"cluster_id":  clusterID,
+		"instance_id": instanceID,
+	}).Info("Handler called")
 
 	entry, ok := h.store.Get(clusterID, instanceID)
 	if !ok {
