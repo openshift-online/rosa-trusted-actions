@@ -62,15 +62,61 @@ echo "$RESP" | jq .
 PROXY_URI=$(echo "$RESP" | jq -r .proxyUri)
 INSTANCE_ID=$(echo "$RESP" | jq -r .instanceId)
 
-# 4. Proxy a request to the real cluster (proxyUri is already absolute)
+# 4. Proxy a read request (list namespaces)
 curl -s $PROXY_URI/api/v1/namespaces | jq .
 
-# 5. Check action status
+# 5. Proxy a write request (create a pod)
+curl -s -X POST $PROXY_URI/api/v1/namespaces/default/pods \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": { "name": "test-pod" },
+    "spec": {
+      "containers": [{ "name": "nginx", "image": "nginx:latest" }]
+    }
+  }' | jq .
+
+# 6. Proxy a write request (delete the pod)
+curl -s -X DELETE $PROXY_URI/api/v1/namespaces/default/pods/test-pod | jq .
+
+# 7. Check action status
 curl -s http://localhost:8080/backplane/trustedactions/$CLUSTER_ID/$INSTANCE_ID | jq .
 
-# 6. Delete the action
+# 8. Delete the action
 curl -s -X DELETE http://localhost:8080/backplane/trustedactions/$CLUSTER_ID/$INSTANCE_ID
 ```
+
+## Testing write operations
+
+The proxy forwards **any HTTP method** to the upstream cluster, so you can test the full
+Kubernetes API — not just reads. Common write operations:
+
+| Operation | Method | Example path |
+|-----------|--------|-------------|
+| Create a pod | POST | `/api/v1/namespaces/default/pods` |
+| Delete a pod | DELETE | `/api/v1/namespaces/default/pods/my-pod` |
+| Patch a deployment | PATCH | `/apis/apps/v1/namespaces/default/deployments/my-deploy` |
+| Scale a replica set | PUT | `/apis/apps/v1/namespaces/default/replicasets/my-rs/scale` |
+| Create a configmap | POST | `/api/v1/namespaces/default/configmaps` |
+| Delete a namespace | DELETE | `/api/v1/namespaces/my-ns` |
+
+All paths are relative to the `proxyUri` returned at registration. For example, to create a
+configmap:
+
+```bash
+curl -s -X POST $PROXY_URI/api/v1/namespaces/default/configmaps \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": { "name": "test-cm" },
+    "data": { "key": "value" }
+  }' | jq .
+```
+
+The proxy injects the bearer token from the kubeconfig, so the request runs with whatever
+RBAC permissions the kubeconfig's service account has.
 
 ## URL scheme
 
