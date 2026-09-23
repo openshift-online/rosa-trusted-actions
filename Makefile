@@ -7,6 +7,12 @@ BUILD_DIR=./bin
 GENERATED_DIR=./internal/openapi
 API_SPEC_PATH=./openapi/openapi.yaml
 BUNDLED_SPEC_PATH=./api-spec.yaml
+MOCK_BACKPLANE_DIR=./tests/mock-backplane
+MOCK_BACKPLANE_ENGINE_VERSION=5
+# Same default as `make run`; override to run the mock alongside the real server
+MOCK_BACKPLANE_PORT ?= 8080
+PROXY_BACKPLANE_DIR=./tests/proxy-backplane
+PROXY_BACKPLANE_PORT ?= 8080
 
 # Tools
 OAPI_CODEGEN=go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
@@ -121,6 +127,21 @@ test-integration: ## Run integration tests (starts server, runs tests, stops ser
 	./scripts/test-api.sh || (pkill -f rosa-trusted-actions-server && exit 1)
 	@pkill -f rosa-trusted-actions-server || true
 	@echo "Integration tests completed"
+
+# Mock backplane server
+.PHONY: mock-backplane
+mock-backplane: ## Start the backplane mock server (imposter Go engine)
+	@which imposter > /dev/null || (echo "imposter not found. See tests/mock-backplane/README.md for install instructions." && exit 1)
+	imposter up $(MOCK_BACKPLANE_DIR) \
+		--engine-type native \
+		--version $(MOCK_BACKPLANE_ENGINE_VERSION) \
+		--auto-restart=false \
+		--port $(MOCK_BACKPLANE_PORT)
+
+# Proxy backplane server
+.PHONY: proxy-backplane
+proxy-backplane: ## Start the proxy backplane server (reverse-proxies to a real cluster)
+	go run $(PROXY_BACKPLANE_DIR) --listen-addr :$(PROXY_BACKPLANE_PORT)
 
 # Linting
 .PHONY: lint
