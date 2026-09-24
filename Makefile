@@ -73,8 +73,18 @@ build-linux: generate ## Build Linux binary
 
 # Run
 .PHONY: run
-run: generate ## Run the server locally
+run: generate ## Run the server using DATABASE_URL from the environment
 	go run $(MAIN_PATH)
+
+.PHONY: run-postgres
+run-postgres: generate postgres-up ## Run the server backed by the local composed Postgres instance
+	DATABASE_URL="postgres://postgres:postgres@localhost:5432/trusted_actions?sslmode=disable" \
+		go run $(MAIN_PATH)
+
+.PHONY: run-sqlite
+run-sqlite: generate ## Run the server backed by a local SQLite file (trusted_actions.db)
+	DATABASE_URL="trusted_actions.db" \
+		go run $(MAIN_PATH)
 
 .PHONY: dev
 dev: ## Run in development mode with auto-reload (requires air)
@@ -83,7 +93,7 @@ dev: ## Run in development mode with auto-reload (requires air)
 
 # Testing
 .PHONY: test
-test: generate ## Run tests
+test: generate ## Run unit tests (SQLite only; Postgres tests require TEST_POSTGRES_URL)
 	go test -v ./...
 
 .PHONY: test-race
@@ -94,6 +104,36 @@ test-race: generate ## Run tests with race detection
 test-coverage: generate ## Run tests with coverage
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
+
+# Compose binary: prefer podman compose, fall back to docker compose
+COMPOSE ?= $(shell command -v podman-compose 2>/dev/null || echo "docker compose")
+
+.PHONY: postgres-up
+postgres-up: ## Start a local Postgres instance on :5432 (podman/docker compose)
+	$(COMPOSE) -p rosa-ta-postgres -f compose.postgres.yml up -d --wait
+
+.PHONY: postgres-down
+postgres-down: ## Stop and remove the local Postgres instance and its volume
+	$(COMPOSE) -p rosa-ta-postgres -f compose.postgres.yml down -v
+
+.PHONY: postgres-logs
+postgres-logs: ## Tail logs from the local Postgres container
+	$(COMPOSE) -p rosa-ta-postgres -f compose.postgres.yml logs -f
+
+.PHONY: test-postgres-up
+test-postgres-up: ## Start a local Postgres container for store tests
+	$(COMPOSE) -p rosa-ta-postgres-test -f docker-compose.test.yml up -d --wait
+
+.PHONY: test-postgres-down
+test-postgres-down: ## Stop and remove the store-test Postgres container
+	$(COMPOSE) -p rosa-ta-postgres-test -f docker-compose.test.yml down -v
+
+.PHONY: test-postgres
+test-postgres: ## Run store tests against a local Postgres container (starts/stops)
+	$(MAKE) test-postgres-up
+	TEST_POSTGRES_URL="postgres://postgres:postgres@localhost:5433/trusted_actions_test?sslmode=disable" \
+		go test -v -count=1 ./internal/store/... || ($(MAKE) test-postgres-down && exit 1)
+	$(MAKE) test-postgres-down
 
 .PHONY: itest-up
 itest-up: ## Create kind cluster + start ministack, waiting for both to be ready

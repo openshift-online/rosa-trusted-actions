@@ -3,9 +3,11 @@ package store
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/models"
 )
@@ -50,6 +52,16 @@ type AuditListResult struct {
 	Total  int
 	Limit  int
 	Offset int
+}
+
+// New opens the correct Store implementation based on the DATABASE_URL scheme.
+// URLs starting with "postgres://" or "postgresql://" use PostgresStore;
+// everything else (including an empty string) falls back to SQLiteStore.
+func New(ctx context.Context, databaseURL string, cfg PostgresConfig, logger *logrus.Logger) (Store, error) {
+	if strings.HasPrefix(databaseURL, "postgres://") || strings.HasPrefix(databaseURL, "postgresql://") {
+		return NewPostgresStore(ctx, databaseURL, cfg, logger)
+	}
+	return NewSQLiteStore(ctx, databaseURL, logger)
 }
 
 type Store interface {
