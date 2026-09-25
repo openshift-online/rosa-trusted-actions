@@ -203,6 +203,27 @@ func (e ListExecutionsParamsForce) Valid() bool {
 	}
 }
 
+// Defines values for CreateExecutionParamsReplyMode.
+const (
+	Async   CreateExecutionParamsReplyMode = "async"
+	Default CreateExecutionParamsReplyMode = "default"
+	Sync    CreateExecutionParamsReplyMode = "sync"
+)
+
+// Valid indicates whether the value is a known member of the CreateExecutionParamsReplyMode enum.
+func (e CreateExecutionParamsReplyMode) Valid() bool {
+	switch e {
+	case Async:
+		return true
+	case Default:
+		return true
+	case Sync:
+		return true
+	default:
+		return false
+	}
+}
+
 // ActionType Whether the Trusted Action is read-only or mutating
 type ActionType string
 
@@ -482,6 +503,12 @@ type ExecutionRequest struct {
 // ExecutionStatus Lifecycle state of a Trusted Action execution
 type ExecutionStatus string
 
+// ExecutionWithOutput defines model for ExecutionWithOutput.
+type ExecutionWithOutput struct {
+	Execution Execution        `json:"execution"`
+	Output    *ExecutionOutput `json:"output,omitempty"`
+}
+
 // HALLink defines model for HALLink.
 type HALLink struct {
 	// Href Example: /api/users/123
@@ -665,6 +692,15 @@ type ListExecutionsParamsDryRun string
 // ListExecutionsParamsForce defines parameters for ListExecutions.
 type ListExecutionsParamsForce string
 
+// CreateExecutionParams defines parameters for CreateExecution.
+type CreateExecutionParams struct {
+	// ReplyMode Controls how the response is returned. If set to 'sync', the request will block until the execution is complete and the response will contain the execution result; this is only possible for actions which do not require approval and which can run immediately; an error is returned if that's not the case. If set to 'async', the request will return immediately with a 202 Accepted response and the execution ID. If set to 'default', actions not requiring approval and which can run immediately will run synchronously with the output in the response, otherwise actions will run asynchronously.
+	ReplyMode *CreateExecutionParamsReplyMode `form:"replyMode,omitempty" json:"replyMode,omitempty"`
+}
+
+// CreateExecutionParamsReplyMode defines parameters for CreateExecution.
+type CreateExecutionParamsReplyMode string
+
 // CreateExecutionJSONRequestBody defines body for CreateExecution for application/json ContentType.
 type CreateExecutionJSONRequestBody = ExecutionRequest
 
@@ -690,7 +726,7 @@ type ServerInterface interface {
 	Describe(w http.ResponseWriter, r *http.Request, action string)
 	// CreateExecution Execute a Trusted Action
 	// (POST /{action}/run)
-	CreateExecution(w http.ResponseWriter, r *http.Request, action string)
+	CreateExecution(w http.ResponseWriter, r *http.Request, action string, params CreateExecutionParams)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -735,7 +771,7 @@ func (_ Unimplemented) Describe(w http.ResponseWriter, r *http.Request, action s
 
 // CreateExecution Execute a Trusted Action
 // (POST /{action}/run)
-func (_ Unimplemented) CreateExecution(w http.ResponseWriter, r *http.Request, action string) {
+func (_ Unimplemented) CreateExecution(w http.ResponseWriter, r *http.Request, action string, params CreateExecutionParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1155,8 +1191,24 @@ func (siw *ServerInterfaceWrapper) CreateExecution(w http.ResponseWriter, r *htt
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateExecutionParams
+
+	// ------------- Optional query parameter "replyMode" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "replyMode", r.URL.Query(), &params.ReplyMode, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "replyMode"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "replyMode", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateExecution(w, r, action)
+		siw.Handler.CreateExecution(w, r, action, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {

@@ -10,9 +10,9 @@ type ExecutionOutput struct {
 	Resources []map[string]interface{}
 }
 
-func OutputFromActionResult(result *actions.ActionResult) (*ExecutionOutput, error) {
+func OutputFromActionResult(result *actions.ActionResult) *ExecutionOutput {
 	if result == nil {
-		return nil, nil
+		return nil
 	}
 
 	resources := []map[string]interface{}{}
@@ -23,7 +23,7 @@ func OutputFromActionResult(result *actions.ActionResult) (*ExecutionOutput, err
 	return &ExecutionOutput{
 		Message:   result.Message,
 		Resources: resources,
-	}, nil
+	}
 }
 
 func (o *ExecutionOutput) ToOpenAPI() openapi.ExecutionOutput {

@@ -11,12 +11,17 @@ import (
 
 	"github.com/google/uuid"
 	. "github.com/onsi/gomega"
+	acctrspv1 "github.com/openshift-online/ocm-sdk-go/accesstransparency/v1"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/models"
+	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
+	"github.com/openshift-online/rosa-trusted-actions/internal/worker"
 )
 
 // fakeNotifier records Notify calls for assertions.
@@ -37,7 +42,17 @@ func (f *fakeNotifier) callCount() int {
 	return f.calls
 }
 
-func newTestHandler(t *testing.T) *APIHandler {
+type runnerCallback func(ctx context.Context, exec *models.Execution) worker.RunResult
+
+type fakeRunner struct {
+	callback runnerCallback
+}
+
+func (f *fakeRunner) Run(ctx context.Context, exec *models.Execution) worker.RunResult {
+	return f.callback(ctx, exec)
+}
+
+func newTestHandler(t *testing.T, isAccessProtectionEnabled bool, accessRequest *acctrspv1.AccessRequest, runnerCallback runnerCallback) *APIHandler {
 	t.Helper()
 	s, err := store.NewSQLiteStore(context.Background(), ":memory:", logrus.New())
 	if err != nil {
@@ -48,11 +63,21 @@ func newTestHandler(t *testing.T) *APIHandler {
 			t.Errorf("failed to close test store: %v", err)
 		}
 	})
-	return NewAPIHandler(logrus.New(), catalog.New(), s, &fakeNotifier{})
+
+	var runner worker.Runner
+
+	if runnerCallback != nil {
+		runner = &fakeRunner{callback: runnerCallback}
+	}
+
+	return NewAPIHandler(logrus.New(), catalog.New(), &ocm.ConfigurableMockAccessProtection{
+		IsEnabled:     isAccessProtectionEnabled,
+		AccessRequest: accessRequest,
+	}, runner, s, &fakeNotifier{})
 }
 
 func TestAPIHandler_Catalog(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/", nil)
 	w := httptest.NewRecorder()
@@ -78,7 +103,7 @@ func TestAPIHandler_Catalog(t *testing.T) {
 }
 
 func TestAPIHandler_Describe(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/get", nil)
 	w := httptest.NewRecorder()
@@ -104,7 +129,7 @@ func TestAPIHandler_Describe(t *testing.T) {
 }
 
 func TestAPIHandler_CreateExecution(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	requestBody := `{
 		"target_cluster": "test-cluster",
@@ -117,32 +142,263 @@ func TestAPIHandler_CreateExecution(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	handler.CreateExecution(w, req, "get")
+	replyMode := openapi.Async
+	handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 
 	if w.Code != http.StatusAccepted {
 		t.Errorf("Expected status 202, got %d", w.Code)
 	}
 
-	var execution openapi.Execution
-	if err := json.Unmarshal(w.Body.Bytes(), &execution); err != nil {
+	var reply openapi.ExecutionWithOutput
+	if err := json.Unmarshal(w.Body.Bytes(), &reply); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if execution.Action != "get" {
-		t.Errorf("Expected action 'get', got %s", execution.Action)
+	if reply.Execution.Action != "get" {
+		t.Errorf("Expected action 'get', got %s", reply.Execution.Action)
 	}
 
-	if execution.Status != openapi.ExecutionStatusPending {
-		t.Errorf("Expected status 'pending', got %s", execution.Status)
+	if reply.Execution.Status != openapi.ExecutionStatusPending {
+		t.Errorf("Expected status 'pending', got %s", reply.Execution.Status)
 	}
 
-	if execution.TargetCluster != "test-cluster" {
-		t.Errorf("Expected target cluster 'test-cluster', got %s", execution.TargetCluster)
+	if reply.Execution.TargetCluster != "test-cluster" {
+		t.Errorf("Expected target cluster 'test-cluster', got %s", reply.Execution.TargetCluster)
+	}
+}
+
+func TestAPIHandler_CreateAndRunExecution(t *testing.T) {
+	createAccessRequest := func(state acctrspv1.AccessRequestState) *acctrspv1.AccessRequest {
+		g := NewWithT(t)
+		accessRequest, err := acctrspv1.NewAccessRequest().Status(
+			acctrspv1.NewAccessRequestStatus().State(state),
+		).Build()
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(accessRequest).ToNot(BeNil())
+
+		return accessRequest
+	}
+
+	tests := []struct {
+		testName                         string
+		replyMode                        openapi.CreateExecutionParamsReplyMode
+		isAccessProtectionEnabled        bool
+		accessRequest                    *acctrspv1.AccessRequest
+		isExpectedToRun                  bool
+		isRunningInError                 bool
+		expectedResponseStatusCode       int
+		expectedExecutionStatus          openapi.ExecutionStatus
+		isExpectingOutputInResponse      bool
+		expectedStoredNotificationsCount int
+		isExpectingExecutionInStore      bool
+		isExpectingOutputInStore         bool
+	}{
+		// Access protection disabled
+		{
+			testName:                    "When access protection is disabled and the reply mode is default, execution is created and run as well",
+			replyMode:                   openapi.Default,
+			isExpectedToRun:             true,
+			expectedResponseStatusCode:  http.StatusAccepted,
+			expectedExecutionStatus:     openapi.ExecutionStatusSucceeded,
+			isExpectingOutputInResponse: true,
+			isExpectingExecutionInStore: true,
+			isExpectingOutputInStore:    true,
+		},
+		{
+			testName:                    "When access protection is disabled and the reply mode is synchronous, execution is created and run as well",
+			replyMode:                   openapi.Sync,
+			isExpectedToRun:             true,
+			expectedResponseStatusCode:  http.StatusAccepted,
+			expectedExecutionStatus:     openapi.ExecutionStatusSucceeded,
+			isExpectingOutputInResponse: true,
+			isExpectingExecutionInStore: true,
+			isExpectingOutputInStore:    true,
+		},
+		// No active access request
+		{
+			testName:                         "When access protection is enabled but there is no active access request and the reply mode is default, execution is created but will run asynchronously",
+			replyMode:                        openapi.Default,
+			isAccessProtectionEnabled:        true,
+			expectedResponseStatusCode:       http.StatusAccepted,
+			expectedExecutionStatus:          openapi.ExecutionStatusPending,
+			expectedStoredNotificationsCount: 1,
+			isExpectingExecutionInStore:      true,
+		},
+		{
+			testName:                   "When access protection is enabled but there is no active access request and the reply mode is synchronous, execution won't be created",
+			replyMode:                  openapi.Sync,
+			isAccessProtectionEnabled:  true,
+			expectedResponseStatusCode: http.StatusBadRequest,
+		},
+		// Pending access request
+		{
+			testName:                         "When the access request is pending and the reply mode is default, execution is created but will run asynchronously",
+			replyMode:                        openapi.Default,
+			isAccessProtectionEnabled:        true,
+			accessRequest:                    createAccessRequest(acctrspv1.AccessRequestStatePending),
+			expectedResponseStatusCode:       http.StatusAccepted,
+			expectedExecutionStatus:          openapi.ExecutionStatusPending,
+			expectedStoredNotificationsCount: 1,
+			isExpectingExecutionInStore:      true,
+		},
+		{
+			testName:                   "When the access request is pending and the reply mode is synchronous, execution won't be created",
+			replyMode:                  openapi.Sync,
+			isAccessProtectionEnabled:  true,
+			accessRequest:              createAccessRequest(acctrspv1.AccessRequestStatePending),
+			expectedResponseStatusCode: http.StatusBadRequest,
+		},
+		// Approved access request
+		{
+			testName:                    "When the access request is approved and the reply mode is default, execution is created and run as well",
+			replyMode:                   openapi.Default,
+			isAccessProtectionEnabled:   true,
+			accessRequest:               createAccessRequest(acctrspv1.AccessRequestStateApproved),
+			isExpectedToRun:             true,
+			expectedResponseStatusCode:  http.StatusAccepted,
+			expectedExecutionStatus:     openapi.ExecutionStatusSucceeded,
+			isExpectingOutputInResponse: true,
+			isExpectingExecutionInStore: true,
+			isExpectingOutputInStore:    true,
+		},
+		{
+			testName:                    "When the access request is approved and the reply mode is synchronous, execution is created and run as well",
+			replyMode:                   openapi.Sync,
+			isAccessProtectionEnabled:   true,
+			accessRequest:               createAccessRequest(acctrspv1.AccessRequestStateApproved),
+			isExpectedToRun:             true,
+			expectedResponseStatusCode:  http.StatusAccepted,
+			expectedExecutionStatus:     openapi.ExecutionStatusSucceeded,
+			isExpectingOutputInResponse: true,
+			isExpectingExecutionInStore: true,
+			isExpectingOutputInStore:    true,
+		},
+		// Execution run ends up in error
+		{
+			testName:                   "When running the execution returns an error and the reply mode is default, execution will still be created",
+			replyMode:                  openapi.Default,
+			isExpectedToRun:            true,
+			isRunningInError:           true,
+			expectedResponseStatusCode: http.StatusInternalServerError,
+			expectedExecutionStatus:    openapi.ExecutionStatusFailed,
+		},
+		{
+			testName:                   "When running the execution returns an error and the reply mode is synchronous, execution will still be created",
+			replyMode:                  openapi.Sync,
+			isExpectedToRun:            true,
+			isRunningInError:           true,
+			expectedResponseStatusCode: http.StatusInternalServerError,
+			expectedExecutionStatus:    openapi.ExecutionStatusFailed,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.testName, func(t *testing.T) {
+			g := NewWithT(t)
+
+			cm := map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "test-configmap",
+				},
+			}
+
+			hasRun := false
+			handler := newTestHandler(t, test.isAccessProtectionEnabled, test.accessRequest,
+				func(ctx context.Context, exec *models.Execution) worker.RunResult {
+					hasRun = true
+					if test.isRunningInError {
+						return worker.RunResult{
+							Status: "failed",
+							Reason: "Execution failed due to some error",
+						}
+					} else {
+						return worker.RunResult{
+							Status: "succeeded",
+							Output: &actions.ActionResult{
+								Message: "Execution completed successfully",
+								Resources: []unstructured.Unstructured{{
+									Object: cm,
+								}},
+							},
+						}
+					}
+				})
+
+			requestBody := `{
+				"target_cluster": "test-cluster",
+				"jira": "ROSAENG-1234",
+				"params": {"namespace": "default"},
+				"dry_run": true
+			}`
+
+			req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			replyMode := test.replyMode
+			handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
+			var execId uuid.UUID
+
+			g.Expect(hasRun).To(Equal(test.isExpectedToRun), "expected execution to be run: %v, but got %v", test.isExpectedToRun, hasRun)
+			g.Expect(w.Code).To(Equal(test.expectedResponseStatusCode))
+
+			if test.expectedResponseStatusCode == http.StatusAccepted {
+				var reply openapi.ExecutionWithOutput
+				err := json.Unmarshal(w.Body.Bytes(), &reply)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				execId = reply.Execution.Id
+				g.Expect(reply.Execution.Action).To(Equal("get"))
+				g.Expect(reply.Execution.TargetCluster).To(Equal("test-cluster"))
+				g.Expect(reply.Execution.Status).To(Equal(test.expectedExecutionStatus))
+
+				if test.isExpectingOutputInResponse {
+					g.Expect(reply.Output).ToNot(BeNil())
+					g.Expect(reply.Output.Message).To(Equal("Execution completed successfully"))
+					g.Expect(reply.Output.Resources).To(Equal([]map[string]interface{}{cm}))
+				} else {
+					g.Expect(reply.Output).To(BeNil())
+				}
+			}
+
+			notifier, ok := handler.notifier.(*fakeNotifier)
+			g.Expect(ok).To(BeTrue(), "expected notifier to be *fakeNotifier")
+
+			g.Expect(notifier.callCount()).To(Equal(test.expectedStoredNotificationsCount))
+
+			dbExecList, err := handler.store.ListExecutions(t.Context(), store.ExecutionFilter{})
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(dbExecList).ToNot(BeNil())
+
+			if test.isExpectingExecutionInStore {
+				g.Expect(len(dbExecList.Items)).To(Equal(1))
+				dbExec := dbExecList.Items[0]
+				g.Expect(dbExec.ID).To(Equal(execId))
+				g.Expect(dbExec.Action).To(Equal("get"))
+				g.Expect(dbExec.TargetCluster).To(Equal("test-cluster"))
+				g.Expect(dbExec.Status).To(Equal(string(test.expectedExecutionStatus)))
+			} else {
+				g.Expect(dbExecList.Items).To(BeEmpty())
+			}
+
+			dbOutput, err := handler.store.GetExecutionOutput(t.Context(), execId)
+
+			if test.isExpectingOutputInStore {
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(dbOutput).ToNot(BeNil())
+
+			} else {
+				g.Expect(dbOutput).To(BeNil())
+			}
+		})
 	}
 }
 
 func TestAPIHandler_CreateExecution_NotifiesWorker(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 	notifier, ok := handler.notifier.(*fakeNotifier)
 	if !ok {
 		t.Fatalf("expected notifier to be *fakeNotifier, got %T", handler.notifier)
@@ -153,7 +409,8 @@ func TestAPIHandler_CreateExecution_NotifiesWorker(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	handler.CreateExecution(w, req, "get")
+	replyMode := openapi.Async
+	handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 
 	if w.Code != http.StatusAccepted {
 		t.Fatalf("Expected status 202, got %d", w.Code)
@@ -164,33 +421,29 @@ func TestAPIHandler_CreateExecution_NotifiesWorker(t *testing.T) {
 }
 
 func TestAPIHandler_CreateExecution_DoesNotNotifyOnStoreError(t *testing.T) {
-	s, err := store.NewSQLiteStore(context.Background(), ":memory:", logrus.New())
-	if err != nil {
-		t.Fatalf("failed to create test store: %v", err)
-	}
-	if err := s.Close(); err != nil {
+	handler := newTestHandler(t, false, nil, nil)
+	if err := handler.store.Close(); err != nil { // Close the store to simulate a store error
 		t.Fatalf("failed to close test store: %v", err)
 	}
-	notifier := &fakeNotifier{}
-	handler := NewAPIHandler(logrus.New(), catalog.New(), s, notifier)
 
 	requestBody := `{"target_cluster": "test-cluster", "jira": "ROSAENG-1234"}`
 	req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	handler.CreateExecution(w, req, "get")
+	replyMode := openapi.Async
+	handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("Expected status 500, got %d", w.Code)
 	}
-	if got := notifier.callCount(); got != 0 {
+	if got := handler.notifier.(*fakeNotifier).callCount(); got != 0 {
 		t.Errorf("Notify calls: got %d, want 0", got)
 	}
 }
 
 func TestAPIHandler_CreateExecution_InvalidJSON(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	requestBody := `{"invalid": json}`
 
@@ -198,7 +451,8 @@ func TestAPIHandler_CreateExecution_InvalidJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	handler.CreateExecution(w, req, "get")
+	replyMode := openapi.Async
+	handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status 400, got %d", w.Code)
@@ -215,7 +469,7 @@ func TestAPIHandler_CreateExecution_InvalidJSON(t *testing.T) {
 }
 
 func TestAPIHandler_GetExecution_NotFound(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	id := uuid.New()
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+id.String(), nil)
@@ -229,7 +483,7 @@ func TestAPIHandler_GetExecution_NotFound(t *testing.T) {
 }
 
 func TestAPIHandler_GetExecution_Found(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	requestBody := `{
 		"target_cluster": "test-cluster",
@@ -238,20 +492,21 @@ func TestAPIHandler_GetExecution_Found(t *testing.T) {
 	createReq := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	createReq.Header.Set("Content-Type", "application/json")
 	createW := httptest.NewRecorder()
-	handler.CreateExecution(createW, createReq, "get")
+	replyMode := openapi.Async
+	handler.CreateExecution(createW, createReq, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 
 	if createW.Code != http.StatusAccepted {
 		t.Fatalf("CreateExecution: expected status 202, got %d", createW.Code)
 	}
 
-	var created openapi.Execution
+	var created openapi.ExecutionWithOutput
 	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
 		t.Fatalf("Failed to parse create response: %v", err)
 	}
 
-	getReq := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+created.Id.String(), nil)
+	getReq := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+created.Execution.Id.String(), nil)
 	getW := httptest.NewRecorder()
-	handler.GetExecution(getW, getReq, created.Id)
+	handler.GetExecution(getW, getReq, created.Execution.Id)
 
 	if getW.Code != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", getW.Code)
@@ -262,8 +517,8 @@ func TestAPIHandler_GetExecution_Found(t *testing.T) {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if got.Id != created.Id {
-		t.Errorf("Expected ID %s, got %s", created.Id, got.Id)
+	if got.Id != created.Execution.Id {
+		t.Errorf("Expected ID %s, got %s", created.Execution.Id, got.Id)
 	}
 	if got.Action != "get" {
 		t.Errorf("Expected action 'get', got %s", got.Action)
@@ -271,7 +526,7 @@ func TestAPIHandler_GetExecution_Found(t *testing.T) {
 }
 
 func TestAPIHandler_GetExecutionOutput_NotFound(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	id := uuid.New()
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+id.String()+"/output", nil)
@@ -286,7 +541,7 @@ func TestAPIHandler_GetExecutionOutput_NotFound(t *testing.T) {
 
 func TestAPIHandler_GetExecutionOutput_Found(t *testing.T) {
 	g := NewWithT(t)
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	requestBody := `{
 		"target_cluster": "test-cluster",
@@ -295,10 +550,11 @@ func TestAPIHandler_GetExecutionOutput_Found(t *testing.T) {
 	createReq := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(requestBody))
 	createReq.Header.Set("Content-Type", "application/json")
 	createW := httptest.NewRecorder()
-	handler.CreateExecution(createW, createReq, "get")
+	replyMode := openapi.Async
+	handler.CreateExecution(createW, createReq, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 	g.Expect(createW.Code).To(Equal(http.StatusAccepted))
 
-	var created openapi.Execution
+	var created openapi.ExecutionWithOutput
 	err := json.Unmarshal(createW.Body.Bytes(), &created)
 	g.Expect(err).ToNot(HaveOccurred())
 
@@ -315,15 +571,15 @@ func TestAPIHandler_GetExecutionOutput_Found(t *testing.T) {
 			"secret": "can't say",
 		},
 	}
-	err = handler.store.UpdateExecutionWithResult(context.Background(), created.Id, "succeeded", nil, &models.ExecutionOutput{
+	err = handler.store.UpdateExecutionWithResult(context.Background(), created.Execution.Id, "succeeded", nil, &models.ExecutionOutput{
 		Message:   message,
 		Resources: resources,
 	})
 	g.Expect(err).ToNot(HaveOccurred())
 
-	getOutputReq := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+created.Id.String()+"/output", nil)
+	getOutputReq := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs/"+created.Execution.Id.String()+"/output", nil)
 	getOutputW := httptest.NewRecorder()
-	handler.GetExecutionOutput(getOutputW, getOutputReq, created.Id)
+	handler.GetExecutionOutput(getOutputW, getOutputReq, created.Execution.Id)
 	g.Expect(getOutputW.Code).To(Equal(http.StatusOK))
 
 	var got openapi.ExecutionOutput
@@ -334,7 +590,7 @@ func TestAPIHandler_GetExecutionOutput_Found(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_Empty(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs", nil)
 	w := httptest.NewRecorder()
@@ -359,14 +615,15 @@ func TestAPIHandler_ListExecutions_Empty(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_WithResults(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	for _, cluster := range []string{"cluster-1", "cluster-2"} {
 		body := `{"target_cluster": "` + cluster + `", "jira": "ROSAENG-1234"}`
 		req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		handler.CreateExecution(w, req, "get")
+		replyMode := openapi.Async
+		handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 		if w.Code != http.StatusAccepted {
 			t.Fatalf("CreateExecution for %s: expected 202, got %d", cluster, w.Code)
 		}
@@ -394,14 +651,15 @@ func TestAPIHandler_ListExecutions_WithResults(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_Pagination(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	for i := 0; i < 3; i++ {
 		body := `{"target_cluster": "cluster", "jira": "ROSAENG-1234"}`
 		req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		handler.CreateExecution(w, req, "get")
+		replyMode := openapi.Async
+		handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 		if w.Code != http.StatusAccepted {
 			t.Fatalf("CreateExecution[%d]: expected 202, got %d", i, w.Code)
 		}
@@ -462,7 +720,7 @@ func TestAPIHandler_ListExecutions_Pagination(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_PageWithoutLimit(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	// Create 3 executions
 	for i := 0; i < 3; i++ {
@@ -470,7 +728,8 @@ func TestAPIHandler_ListExecutions_PageWithoutLimit(t *testing.T) {
 		req := httptest.NewRequestWithContext(t.Context(), "POST", "/api/v0/trusted-actions/get/run", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		handler.CreateExecution(w, req, "get")
+		replyMode := openapi.Async
+		handler.CreateExecution(w, req, "get", openapi.CreateExecutionParams{ReplyMode: &replyMode})
 		if w.Code != http.StatusAccepted {
 			t.Fatalf("CreateExecution[%d]: expected 202, got %d", i, w.Code)
 		}
@@ -505,7 +764,7 @@ func TestAPIHandler_ListExecutions_PageWithoutLimit(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_InvalidPage(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	// Test page < 1
 	page0 := 0
@@ -530,7 +789,7 @@ func TestAPIHandler_ListExecutions_InvalidPage(t *testing.T) {
 }
 
 func TestAPIHandler_ListAuditEntries_Empty(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/audit", nil)
 	w := httptest.NewRecorder()
@@ -552,7 +811,7 @@ func TestAPIHandler_ListAuditEntries_Empty(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_NegativeSince(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	since := "-24h"
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?since=-24h", nil)
@@ -566,7 +825,7 @@ func TestAPIHandler_ListExecutions_NegativeSince(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_ZeroSince(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	since := "0h"
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs?since=0h", nil)
@@ -580,7 +839,7 @@ func TestAPIHandler_ListExecutions_ZeroSince(t *testing.T) {
 }
 
 func TestAPIHandler_ListExecutions_OverflowSince(t *testing.T) {
-	handler := newTestHandler(t)
+	handler := newTestHandler(t, false, nil, nil)
 
 	since := "999999999999d"
 	req := httptest.NewRequestWithContext(t.Context(), "GET", "/api/v0/trusted-actions/runs", nil)

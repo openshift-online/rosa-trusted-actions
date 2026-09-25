@@ -101,6 +101,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Setup auth middleware
 	var authnMiddleware auth.JWTMiddleware
 	var authzMiddleware auth.AuthorizationMiddleware
+	var accessProtection ocm.AccessProtection
 
 	switch cfg.AuthPolicy {
 	case config.EnabledAuthPolicy:
@@ -154,10 +155,12 @@ func runServer(cmd *cobra.Command, args []string) error {
 		}()
 
 		authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
+		accessProtection = ocmClient.AccessProtection
 	case config.DisabledAuthPolicy:
 		logger.Warn("Auth disabled — using mock identity 'dev-user' with SREP role. Do not use in production.")
 		authnMiddleware = auth.NewMockAuthMiddleware()
 		authzMiddleware = auth.NewMockAuthzMiddleware(logger)
+		accessProtection = &ocm.ConfigurableMockAccessProtection{}
 
 		// Safety guard: mock auth + real backplane is a dangerous misconfiguration.
 		// An unauthenticated request would receive the hardcoded SREP role and reach
@@ -203,12 +206,13 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// background, off the HTTP request path.
 	// -------------------------------------------------------------------------
 	workerCtx, cancelWorkers := context.WithCancel(context.Background())
-	workerPool := worker.New(dataStore, logger, worker.NewExecutorRunner(logger, actionExecutor, cfg.WorkerExecutionTimeout), cfg.WorkerConcurrency, cfg.WorkerPollInterval)
+	runner := worker.NewExecutorRunner(logger, actionExecutor, cfg.WorkerExecutionTimeout)
+	workerPool := worker.New(dataStore, logger, runner, cfg.WorkerConcurrency, cfg.WorkerPollInterval)
 	workerPool.Start(workerCtx)
 
 	// Create handler implementation
 	actionCatalog := catalog.New()
-	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, dataStore, workerPool)
+	apiHandler := handlers.NewAPIHandler(logger, actionCatalog, accessProtection, runner, dataStore, workerPool)
 
 	// -------------------------------------------------------------------------
 	// Handler and router
@@ -294,7 +298,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 		Handler: mainHandler,
 		// Security settings
 		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   30 * time.Second,
+		WriteTimeout:   90 * time.Second,
 		IdleTimeout:    60 * time.Second,
 		MaxHeaderBytes: 1 << 20, // 1 MB
 	}

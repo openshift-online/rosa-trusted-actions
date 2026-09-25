@@ -13,7 +13,8 @@ type Client struct {
 	connection   *sdkClient.Connection
 	connUsername string
 
-	Authorization Authorization
+	Authorization    Authorization
+	AccessProtection AccessProtection
 }
 
 type Config struct {
@@ -41,6 +42,7 @@ func NewClient(config Config) (*Client, error) {
 		return nil, fmt.Errorf("unable to build OCM connection: %s", err.Error())
 	}
 	client.Authorization = &authorization{client: client}
+	client.AccessProtection = &accessProtection{client: client}
 	return client, nil
 }
 

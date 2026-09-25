@@ -14,6 +14,25 @@ post:
       description: Trusted Action name (e.g. get_pods, rollout_restart)
       schema:
         type: string
+    - name: replyMode
+      in: query
+      required: false
+      description: >-
+        Controls how the response is returned. If set to 'sync', the request will
+        block until the execution is complete and the response will contain the
+        execution result; this is only possible for actions which do not require
+        approval and which can run immediately; an error is returned if that's not
+        the case. If set to 'async', the request will return immediately with a 202
+        Accepted response and the execution ID. If set to 'default', actions not
+        requiring approval and which can run immediately will run synchronously with
+        the output in the response, otherwise actions will run asynchronously.
+      schema:
+        type: string
+        enum:
+          - async
+          - sync
+          - default
+        default: default
   requestBody:
     required: true
     content:
@@ -26,7 +45,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/Execution.yaml
+            $ref: ../components/schemas/ExecutionWithOutput.yaml
     '400':
       description: Invalid request
       content:

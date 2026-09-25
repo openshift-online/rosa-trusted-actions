@@ -86,7 +86,13 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) RunRes
 		callerID = *exec.Username
 	}
 
-	execCtx, cancel := context.WithTimeout(ctx, r.executionTimeout)
+	currentDeadline, ok := ctx.Deadline()
+	deadline := time.Now().Add(r.executionTimeout)
+	if ok && currentDeadline.Before(deadline) {
+		deadline = currentDeadline
+	}
+
+	execCtx, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
 
 	result := r.executor.Execute(execCtx, executor.Request{

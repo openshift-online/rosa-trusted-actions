@@ -1,26 +1,33 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-chi/render"
 	"github.com/oapi-codegen/runtime/types"
+	acctrspv1 "github.com/openshift-online/ocm-sdk-go/accesstransparency/v1"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/middleware"
 	"github.com/openshift-online/rosa-trusted-actions/internal/models"
+	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/store"
+	"github.com/openshift-online/rosa-trusted-actions/internal/worker"
 )
+
+var clusterIDRegexp = regexp.MustCompile("^[a-z0-9]+$")
 
 // ExecutionNotifier is notified when a new execution is ready to be
 // dequeued, so a worker can wake immediately instead of waiting for its next
@@ -32,21 +39,25 @@ type ExecutionNotifier interface {
 
 // APIHandler implements the generated ServerInterface
 type APIHandler struct {
-	logger        *logrus.Logger
-	ActionCatalog auth.ActionCatalog
-	catalog       *catalog.Catalog
-	store         store.Store
-	notifier      ExecutionNotifier
+	logger           *logrus.Logger
+	ActionCatalog    auth.ActionCatalog
+	catalog          *catalog.Catalog
+	accessProtection ocm.AccessProtection
+	runner           worker.Runner
+	store            store.Store
+	notifier         ExecutionNotifier
 }
 
 // NewAPIHandler creates a new API handler
-func NewAPIHandler(logger *logrus.Logger, c *catalog.Catalog, s store.Store, notifier ExecutionNotifier) *APIHandler {
+func NewAPIHandler(logger *logrus.Logger, c *catalog.Catalog, a ocm.AccessProtection, r worker.Runner, s store.Store, notifier ExecutionNotifier) *APIHandler {
 	return &APIHandler{
-		logger:        logger,
-		ActionCatalog: c,
-		catalog:       c,
-		store:         s,
-		notifier:      notifier,
+		logger:           logger,
+		ActionCatalog:    c,
+		catalog:          c,
+		accessProtection: a,
+		runner:           r,
+		store:            s,
+		notifier:         notifier,
 	}
 }
 
@@ -84,12 +95,73 @@ func (h *APIHandler) Describe(w http.ResponseWriter, r *http.Request, action str
 	render.JSON(w, r, def.ToOpenAPIDetail())
 }
 
+type runnableReport struct {
+	isRunnable        bool
+	notRunnableReason string
+}
+
+func (h *APIHandler) checkExecutionIsRunnable(ctx context.Context, exec *models.Execution) (runnableReport, error) {
+	if exec.ApprovalState == nil {
+		switch openapi.ApprovalState(*exec.ApprovalState) {
+		case openapi.ApprovalStateNotRequired:
+		case openapi.ApprovalStateApproved:
+		default:
+			return runnableReport{
+				isRunnable:        false,
+				notRunnableReason: "execution has not yet been approved",
+			}, nil
+		}
+	}
+
+	accessProtectionEnabled, err := h.accessProtection.IsAccessProtectionEnabled(ctx, exec.TargetCluster)
+	if err != nil {
+		return runnableReport{
+			isRunnable:        false,
+			notRunnableReason: "error",
+		}, err
+	}
+	if !accessProtectionEnabled {
+		return runnableReport{
+			isRunnable:        true,
+			notRunnableReason: "",
+		}, nil
+	}
+
+	accessRequest, err := h.accessProtection.GetClusterActiveAccessRequest(ctx, exec.TargetCluster)
+	if err != nil {
+		return runnableReport{
+			isRunnable:        false,
+			notRunnableReason: "error",
+		}, err
+	}
+	if accessRequest == nil {
+		return runnableReport{
+			isRunnable:        false,
+			notRunnableReason: fmt.Sprintf("cluster access is protected but there is no active access request - run `ocm-backplane accessrequest create` to create one"),
+		}, nil
+	}
+
+	accessRequestStatus := accessRequest.Status()
+
+	if accessRequestStatus == nil || accessRequestStatus.State() != acctrspv1.AccessRequestStateApproved {
+		return runnableReport{
+			isRunnable:        false,
+			notRunnableReason: fmt.Sprintf("access request %s is not yet approved", accessRequest.HREF()),
+		}, nil
+	}
+
+	return runnableReport{
+		isRunnable:        true,
+		notRunnableReason: "",
+	}, nil
+}
+
 // CreateExecution implements POST /{action}/run
 // Execute a Trusted Action against a target cluster.
 // The request is persisted as a pending execution and the response returns
 // immediately; a background worker pool (internal/worker) dequeues and runs
 // it asynchronously. Poll GET /runs/{id} for status.
-func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, action string) {
+func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, action string, params openapi.CreateExecutionParams) {
 	h.logger.WithField("action", action).Info("Creating execution for trusted action")
 
 	if _, ok := h.catalog.Get(action); !ok {
@@ -103,6 +175,11 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 		return
 	}
 
+	if !clusterIDRegexp.MatchString(req.TargetCluster) {
+		h.respondError(w, r, http.StatusBadRequest, "Invalid cluster ID", fmt.Errorf("'%s' is not a valid cluster ID", req.TargetCluster))
+		return
+	}
+
 	identity := auth.GetCallerIdentityFromContext(r.Context())
 	username := ""
 	if identity != nil {
@@ -110,13 +187,54 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 	}
 
 	exec := models.ExecutionFromRequest(action, req, username)
+	var output *models.ExecutionOutput
+
+	if params.ReplyMode == nil || *params.ReplyMode != openapi.Async {
+		// We maybe have to run synchronously
+		report, err := h.checkExecutionIsRunnable(r.Context(), exec)
+		if err != nil {
+			h.respondError(w, r, http.StatusInternalServerError, "Failed to check execution runnable status", err)
+			return
+		}
+
+		if report.isRunnable {
+			result := h.runner.Run(r.Context(), exec)
+			if result.Reason != "" {
+				h.respondError(w, r, http.StatusInternalServerError, "Execution failed", errors.New(result.Reason))
+				return
+			}
+
+			exec.Status = result.Status // To be sure the execution does not get consumed by the workers when written in DB
+			output = models.OutputFromActionResult(result.Output)
+		} else {
+			if params.ReplyMode != nil && *params.ReplyMode == openapi.Sync {
+				h.respondError(w, r, http.StatusBadRequest, "Execution is not yet runnable", errors.New(report.notRunnableReason))
+				return
+			} else {
+				h.logger.WithField("reason", report.notRunnableReason).Info("Execution is not runnable yet, gonna be processed asynchronously")
+			}
+		}
+	}
 
 	if err := h.store.CreateExecution(r.Context(), exec); err != nil {
 		h.respondError(w, r, http.StatusInternalServerError, "Failed to create execution", err)
 		return
 	}
 
-	h.notifier.Notify()
+	if output != nil {
+		completedAt := time.Now().UTC()
+		// Detached from ctx's cancellation: if ctx is cancelled (e.g. shutdown)
+		// right as Run finishes, we've already got execution output and want to persist it.
+		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 5*time.Second)
+		defer cancel()
+
+		if err := h.store.UpdateExecutionWithResult(updateCtx, exec.ID, exec.Status, &completedAt, output); err != nil {
+			h.respondError(w, r, http.StatusInternalServerError, "Failed to update execution with its output", err)
+			return
+		}
+	} else {
+		h.notifier.Notify()
+	}
 
 	if ac := middleware.GetAuditContext(r.Context()); ac != nil {
 		ac.ExecutionID = exec.ID.String()
@@ -129,12 +247,36 @@ func (h *APIHandler) CreateExecution(w http.ResponseWriter, r *http.Request, act
 		}
 	}
 
-	result := exec.ToOpenAPI()
-	result.UnderscoreLinks = &openapi.ExecutionLinks{
+	result := openapi.ExecutionWithOutput{
+		Execution: exec.ToOpenAPI(),
+	}
+	baseHref := path.Join(path.Dir(path.Dir(r.URL.Path)), "runs", exec.ID.String())
+
+	result.Execution.UnderscoreLinks = &openapi.ExecutionLinks{
 		Self: openapi.HALLink{
-			Href:   path.Join(path.Dir(path.Dir(r.URL.Path)), "runs", exec.ID.String()),
+			Href:   baseHref,
 			Method: "GET",
 		},
+	}
+
+	if output != nil {
+		result.Execution.UnderscoreLinks.Output = &openapi.HALLink{
+			Href:   path.Join(baseHref, "output"),
+			Method: "GET",
+		}
+
+		resultOutput := output.ToOpenAPI()
+		result.Output = &resultOutput
+		result.Output.UnderscoreLinks = &openapi.ExecutionOutputLinks{
+			Self: openapi.HALLink{
+				Href:   path.Join(baseHref, "output"),
+				Method: "GET",
+			},
+			Execution: openapi.HALLink{
+				Href:   baseHref,
+				Method: "GET",
+			},
+		}
 	}
 
 	w.WriteHeader(http.StatusAccepted)

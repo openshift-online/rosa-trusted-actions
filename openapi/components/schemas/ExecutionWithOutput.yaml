@@ -1,0 +1,8 @@
+type: object
+required:
+  - execution
+properties:
+  execution:
+    $ref: ./Execution.yaml
+  output:
+    $ref: ./ExecutionOutput.yaml
