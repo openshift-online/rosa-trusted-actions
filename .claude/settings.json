@@ -48,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/stop-prek-validation.sh"
+            "command": "bash .claude/hooks/cleanup.sh"
           }
         ]
       }
