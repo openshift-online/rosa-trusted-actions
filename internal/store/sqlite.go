@@ -17,9 +17,12 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/models"
 )
 
-// Fixed-width RFC3339 layout so SQLite TEXT comparisons sort correctly.
+// timeLayout is a fixed-width RFC3339 layout so SQLite TEXT comparisons sort
+// correctly without a native timestamp type.
 const timeLayout = "2006-01-02T15:04:05.000000000Z07:00"
 
+// SQLiteStore implements Store using a SQLite database. Intended for local
+// development and testing; use PostgresStore for production deployments.
 type SQLiteStore struct {
 	db     *sqlx.DB
 	logger *logrus.Logger
@@ -33,7 +36,7 @@ func NewSQLiteStore(ctx context.Context, dsn string, logger *logrus.Logger) (*SQ
 		logger.Warn("DATABASE_URL not set, using local file 'trusted_actions.db' — data will be lost in ephemeral environments")
 	}
 
-	db, err := sqlx.Open("sqlite", withPragmas(dsn, map[string]string{
+	db, err := sqlx.Open("sqlite", withSQLitePragmas(dsn, map[string]string{
 		"_journal_mode": "WAL",
 		"_foreign_keys": "on",
 		"_busy_timeout": "5000",
@@ -43,8 +46,7 @@ func NewSQLiteStore(ctx context.Context, dsn string, logger *logrus.Logger) (*SQ
 	}
 
 	// SQLite: single connection avoids "database is locked" on file-backed DBs
-	// and prevents :memory: from splitting across pool connections. Remove when
-	// migrating to Postgres.
+	// and prevents :memory: from splitting across pool connections.
 	db.SetMaxOpenConns(1)
 
 	if err := db.PingContext(ctx); err != nil {
@@ -54,14 +56,14 @@ func NewSQLiteStore(ctx context.Context, dsn string, logger *logrus.Logger) (*SQ
 		return nil, fmt.Errorf("pinging database: %w", err)
 	}
 
-	if err := runMigrations(ctx, db); err != nil {
+	if err := runMigrations(ctx, db, "sqlite"); err != nil {
 		if closeErr := db.Close(); closeErr != nil {
 			logger.WithError(closeErr).Warn("Failed to close database after migration failure")
 		}
 		return nil, fmt.Errorf("running migrations: %w", err)
 	}
 
-	logger.Info("Database initialized")
+	logger.Info("SQLite database initialized")
 
 	return &SQLiteStore{db: db, logger: logger}, nil
 }
@@ -107,7 +109,7 @@ func (s *SQLiteStore) CreateExecution(ctx context.Context, exec *models.Executio
 func (s *SQLiteStore) GetExecution(ctx context.Context, id uuid.UUID) (*models.Execution, error) {
 	row := s.db.QueryRowxContext(ctx, "SELECT "+executionColumns+" FROM executions WHERE id = ?", id.String())
 
-	var raw executionRow
+	var raw sqliteExecutionRow
 	if err := row.StructScan(&raw); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
@@ -121,12 +123,12 @@ func (s *SQLiteStore) GetExecution(ctx context.Context, id uuid.UUID) (*models.E
 func (s *SQLiteStore) GetExecutionOutput(ctx context.Context, execId uuid.UUID) (*models.ExecutionOutput, error) {
 	row := s.db.QueryRowxContext(ctx, "SELECT "+outputColumns+" FROM executions_output WHERE exec_id = ?", execId.String())
 
-	var raw executionOutputRow
+	var raw sqliteExecutionOutputRow
 	if err := row.StructScan(&raw); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("querying execution: %w", err)
+		return nil, fmt.Errorf("querying execution output: %w", err)
 	}
 
 	return raw.toModel()
@@ -134,6 +136,10 @@ func (s *SQLiteStore) GetExecutionOutput(ctx context.Context, execId uuid.UUID) 
 
 func (s *SQLiteStore) ListExecutions(ctx context.Context, filter ExecutionFilter) (*ExecutionListResult, error) {
 	where, args := buildExecutionWhere(filter)
+	if filter.Since != nil {
+		where = append(where, "created_at >= ?")
+		args = append(args, filter.Since.UTC().Format(timeLayout))
+	}
 
 	whereClause := ""
 	if len(where) > 0 {
@@ -146,23 +152,13 @@ func (s *SQLiteStore) ListExecutions(ctx context.Context, filter ExecutionFilter
 		return nil, fmt.Errorf("counting executions: %w", err)
 	}
 
-	limit := filter.Limit
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 100 {
-		limit = 100
-	}
-
-	offset := filter.Offset
-	if offset < 0 {
-		offset = 0
-	}
+	limit := clampLimit(filter.Limit, 20, 100)
+	offset := clampOffset(filter.Offset)
 
 	query := fmt.Sprintf("SELECT %s FROM executions %s ORDER BY created_at DESC, id ASC LIMIT ? OFFSET ?", executionColumns, whereClause)
 	args = append(args, limit, offset)
 
-	var rows []executionRow
+	var rows []sqliteExecutionRow
 	if err := s.db.SelectContext(ctx, &rows, query, args...); err != nil {
 		return nil, fmt.Errorf("listing executions: %w", err)
 	}
@@ -180,18 +176,14 @@ func (s *SQLiteStore) ListExecutions(ctx context.Context, filter ExecutionFilter
 }
 
 func (s *SQLiteStore) UpdateExecutionWithResult(ctx context.Context, id uuid.UUID, status string, completedAt *time.Time, output *models.ExecutionOutput) error {
-	opts := &sql.TxOptions{
-		Isolation: sql.LevelSerializable,
-		ReadOnly:  false,
-	}
+	opts := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
 	tx, err := s.db.BeginTx(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("initiating transaction: %w", err)
 	}
 	defer func() {
-		err := tx.Rollback() // Always safe to call; does nothing if committed
-		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
 			s.logger.WithError(err).Warn("Failed to rollback transaction")
 		}
 	}()
@@ -201,7 +193,6 @@ func (s *SQLiteStore) UpdateExecutionWithResult(ctx context.Context, id uuid.UUI
 		if err != nil {
 			return fmt.Errorf("updating table: %w", err)
 		}
-
 		if mustAffectRows {
 			n, err := result.RowsAffected()
 			if err != nil {
@@ -214,67 +205,40 @@ func (s *SQLiteStore) UpdateExecutionWithResult(ctx context.Context, id uuid.UUI
 		return nil
 	}
 
-	// Update execution status
-	err = txExec(`
-		UPDATE executions SET status = ?, updated_at = ?, completed_at = ? WHERE id = ?`,
-		true,
-		status,
-		time.Now().UTC().Format(timeLayout),
-		formatTimePtr(completedAt),
-		id.String(),
-	)
+	err = txExec(`UPDATE executions SET status = ?, updated_at = ?, completed_at = ? WHERE id = ?`,
+		true, status, time.Now().UTC().Format(timeLayout), formatTimePtr(completedAt), id.String())
 	if err != nil {
 		return fmt.Errorf("updating execution status: %w", err)
 	}
 
-	// Delete the existing output if any (should not happen)
-	err = txExec(`
-		DELETE FROM executions_output WHERE exec_id = ?`,
-		false,
-		id.String(),
-	)
+	err = txExec(`DELETE FROM executions_output WHERE exec_id = ?`, false, id.String())
 	if err != nil {
 		return fmt.Errorf("deleting execution output: %w", err)
 	}
 
-	// Create a new output
 	if output != nil {
 		resourcesData, err := json.Marshal(output.Resources)
 		if err != nil {
-			return fmt.Errorf("serialising execution ouput resources in DB: %w", err)
+			return fmt.Errorf("serialising execution output resources: %w", err)
 		}
-		resourcesAsJson := string(resourcesData)
 
-		outputId := uuid.New()
-		err = txExec(`
-		INSERT INTO executions_output (
-			`+outputColumns+`
-		) VALUES (
-			?, ?, ?, ?
-		)`,
-			true,
-			outputId.String(),
-			id.String(),
-			output.Message,
-			resourcesAsJson,
-		)
+		err = txExec(`INSERT INTO executions_output (`+outputColumns+`) VALUES (?, ?, ?, ?)`,
+			true, uuid.New().String(), id.String(), output.Message, string(resourcesData))
 		if err != nil {
 			return fmt.Errorf("creating execution output: %w", err)
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("committing transaction: %w", err)
 	}
-
 	return nil
 }
 
-// ClaimNextExecution atomically claims the oldest pending execution and
-// transitions it to running. Safe today because SetMaxOpenConns(1) already
-// serializes all access to this connection; revisit locking semantics if/when
-// this store migrates to Postgres with multiple connections/replicas.
+// ClaimNextExecution atomically claims the oldest pending execution. Safe
+// today because SetMaxOpenConns(1) serializes all DB access; see
+// PostgresStore.ClaimNextExecution for the multi-connection approach using
+// SELECT FOR UPDATE SKIP LOCKED.
 func (s *SQLiteStore) ClaimNextExecution(ctx context.Context) (*models.Execution, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -283,9 +247,6 @@ func (s *SQLiteStore) ClaimNextExecution(ctx context.Context) (*models.Execution
 	defer func() { _ = tx.Rollback() }()
 
 	var id string
-	// TODO: exclude executions whose target already has the maximum number of
-	// active executions (OpenAPI documents a 429 business rule of 10
-	// active/target) once that cap needs enforcing here rather than at write time.
 	err = tx.GetContext(ctx, &id,
 		"SELECT id FROM executions WHERE status = 'pending' ORDER BY created_at ASC, id ASC LIMIT 1")
 	if err != nil {
@@ -303,7 +264,7 @@ func (s *SQLiteStore) ClaimNextExecution(ctx context.Context) (*models.Execution
 	}
 
 	row := tx.QueryRowxContext(ctx, "SELECT "+executionColumns+" FROM executions WHERE id = ?", id)
-	var raw executionRow
+	var raw sqliteExecutionRow
 	if err := row.StructScan(&raw); err != nil {
 		return nil, fmt.Errorf("querying claimed execution: %w", err)
 	}
@@ -334,6 +295,10 @@ func (s *SQLiteStore) CreateAuditEntry(ctx context.Context, entry *models.AuditE
 
 func (s *SQLiteStore) ListAuditEntries(ctx context.Context, filter AuditFilter) (*AuditListResult, error) {
 	where, args := buildAuditWhere(filter)
+	if filter.Since != nil {
+		where = append(where, "timestamp >= ?")
+		args = append(args, filter.Since.UTC().Format(timeLayout))
+	}
 
 	whereClause := ""
 	if len(where) > 0 {
@@ -346,23 +311,13 @@ func (s *SQLiteStore) ListAuditEntries(ctx context.Context, filter AuditFilter) 
 		return nil, fmt.Errorf("counting audit entries: %w", err)
 	}
 
-	limit := filter.Limit
-	if limit <= 0 {
-		limit = 50
-	}
-	if limit > 200 {
-		limit = 200
-	}
-
-	offset := filter.Offset
-	if offset < 0 {
-		offset = 0
-	}
+	limit := clampLimit(filter.Limit, 50, 200)
+	offset := clampOffset(filter.Offset)
 
 	query := fmt.Sprintf("SELECT %s FROM audit_entries %s ORDER BY timestamp DESC, id ASC LIMIT ? OFFSET ?", auditColumns, whereClause)
 	args = append(args, limit, offset)
 
-	var rows []auditRow
+	var rows []sqliteAuditRow
 	if err := s.db.SelectContext(ctx, &rows, query, args...); err != nil {
 		return nil, fmt.Errorf("listing audit entries: %w", err)
 	}
@@ -379,19 +334,11 @@ func (s *SQLiteStore) ListAuditEntries(ctx context.Context, filter AuditFilter) 
 	return &AuditListResult{Items: items, Total: total, Limit: limit, Offset: offset}, nil
 }
 
-const executionColumns = `id, action, status, approval_state, username, target_cluster,
-	jira, dry_run, force, params, scope, type, revision,
-	manifest_work_name,
-	runner_seconds, upload_seconds, duration_seconds,
-	created_at, updated_at, completed_at`
+// ---------------------------------------------------------------------------
+// SQLite-specific row types (timestamps stored as TEXT)
+// ---------------------------------------------------------------------------
 
-const outputColumns = `id, exec_id, message, resources`
-
-const auditColumns = `id, timestamp, method, path, username, status_code,
-	action, execution_id, jira, approval_state, target_cluster`
-
-// executionRow is the raw database representation with TEXT timestamps.
-type executionRow struct {
+type sqliteExecutionRow struct {
 	ID               string  `db:"id"`
 	Action           string  `db:"action"`
 	Status           string  `db:"status"`
@@ -414,7 +361,7 @@ type executionRow struct {
 	CompletedAt      *string `db:"completed_at"`
 }
 
-func (r *executionRow) toModel() (*models.Execution, error) {
+func (r *sqliteExecutionRow) toModel() (*models.Execution, error) {
 	id, err := uuid.Parse(r.ID)
 	if err != nil {
 		return nil, fmt.Errorf("parsing execution id: %w", err)
@@ -467,28 +414,22 @@ func (r *executionRow) toModel() (*models.Execution, error) {
 	return exec, nil
 }
 
-type executionOutputRow struct {
+type sqliteExecutionOutputRow struct {
 	ID        string `db:"id"`
 	ExecId    string `db:"exec_id"`
 	Message   string `db:"message"`
 	Resources string `db:"resources"`
 }
 
-func (r *executionOutputRow) toModel() (*models.ExecutionOutput, error) {
-	resources := []map[string]interface{}{}
-
-	err := json.Unmarshal([]byte(r.Resources), &resources)
-	if err != nil {
+func (r *sqliteExecutionOutputRow) toModel() (*models.ExecutionOutput, error) {
+	var resources []map[string]interface{}
+	if err := json.Unmarshal([]byte(r.Resources), &resources); err != nil {
 		return nil, fmt.Errorf("parsing execution output resources: %w", err)
 	}
-
-	return &models.ExecutionOutput{
-		Message:   r.Message,
-		Resources: resources,
-	}, nil
+	return &models.ExecutionOutput{Message: r.Message, Resources: resources}, nil
 }
 
-type auditRow struct {
+type sqliteAuditRow struct {
 	ID            string  `db:"id"`
 	Timestamp     string  `db:"timestamp"`
 	Method        string  `db:"method"`
@@ -502,7 +443,7 @@ type auditRow struct {
 	TargetCluster *string `db:"target_cluster"`
 }
 
-func (r *auditRow) toModel() (*models.AuditEntry, error) {
+func (r *sqliteAuditRow) toModel() (*models.AuditEntry, error) {
 	id, err := uuid.Parse(r.ID)
 	if err != nil {
 		return nil, fmt.Errorf("parsing audit entry id: %w", err)
@@ -528,87 +469,11 @@ func (r *auditRow) toModel() (*models.AuditEntry, error) {
 	}, nil
 }
 
-func buildExecutionWhere(filter ExecutionFilter) ([]string, []interface{}) {
-	var clauses []string
-	var args []interface{}
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-	if filter.Status != nil {
-		clauses = append(clauses, "status = ?")
-		args = append(args, *filter.Status)
-	}
-	if filter.Action != nil {
-		clauses = append(clauses, "action = ?")
-		args = append(args, *filter.Action)
-	}
-	if filter.Target != nil {
-		clauses = append(clauses, "target_cluster = ?")
-		args = append(args, *filter.Target)
-	}
-	if filter.Operator != nil {
-		clauses = append(clauses, "username = ?")
-		args = append(args, *filter.Operator)
-	}
-	if filter.Scope != nil {
-		clauses = append(clauses, "scope = ?")
-		args = append(args, *filter.Scope)
-	}
-	if filter.Type != nil {
-		clauses = append(clauses, "type = ?")
-		args = append(args, *filter.Type)
-	}
-	if filter.ApprovalState != nil {
-		clauses = append(clauses, "approval_state = ?")
-		args = append(args, *filter.ApprovalState)
-	}
-	if filter.DryRun != nil {
-		clauses = append(clauses, "dry_run = ?")
-		args = append(args, *filter.DryRun)
-	}
-	if filter.Force != nil {
-		clauses = append(clauses, "force = ?")
-		args = append(args, *filter.Force)
-	}
-	if filter.Since != nil {
-		clauses = append(clauses, "created_at >= ?")
-		args = append(args, filter.Since.UTC().Format(timeLayout))
-	}
-
-	return clauses, args
-}
-
-func buildAuditWhere(filter AuditFilter) ([]string, []interface{}) {
-	var clauses []string
-	var args []interface{}
-
-	if filter.Action != nil {
-		clauses = append(clauses, "action = ?")
-		args = append(args, *filter.Action)
-	}
-	if filter.Target != nil {
-		clauses = append(clauses, "target_cluster = ?")
-		args = append(args, *filter.Target)
-	}
-	if filter.Operator != nil {
-		clauses = append(clauses, "username = ?")
-		args = append(args, *filter.Operator)
-	}
-	if filter.Method != nil {
-		clauses = append(clauses, "method = ?")
-		args = append(args, *filter.Method)
-	}
-	if filter.ApprovalState != nil {
-		clauses = append(clauses, "approval_state = ?")
-		args = append(args, *filter.ApprovalState)
-	}
-	if filter.Since != nil {
-		clauses = append(clauses, "timestamp >= ?")
-		args = append(args, filter.Since.UTC().Format(timeLayout))
-	}
-
-	return clauses, args
-}
-
-func withPragmas(dsn string, pragmas map[string]string) string {
+func withSQLitePragmas(dsn string, pragmas map[string]string) string {
 	sep := "?"
 	if strings.ContainsRune(dsn, '?') {
 		sep = "&"
@@ -628,4 +493,21 @@ func formatTimePtr(t *time.Time) *string {
 	}
 	s := t.UTC().Format(timeLayout)
 	return &s
+}
+
+func clampLimit(v, defaultVal, max int) int {
+	if v <= 0 {
+		return defaultVal
+	}
+	if v > max {
+		return max
+	}
+	return v
+}
+
+func clampOffset(v int) int {
+	if v < 0 {
+		return 0
+	}
+	return v
 }

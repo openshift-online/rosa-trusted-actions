@@ -47,8 +47,11 @@ type Config struct {
 	OCMClientSecret string
 	OCMToken        string
 
-	// Database Configuration (environment variables, for future use)
-	DatabaseURL string
+	// Database Configuration (environment variables)
+	DatabaseURL       string
+	DBMaxOpenConns    int
+	DBMaxIdleConns    int
+	DBConnMaxLifetime time.Duration
 
 	// Workers Configuration (environment variables)
 	// WorkerConcurrency is the number of goroutines dequeuing and running
@@ -169,7 +172,10 @@ func Load(configFilePath string) *Config {
 		OCMToken:        getEnv("ROSA_TA_OCM_TOKEN", ""),
 
 		// Database Configuration
-		DatabaseURL: getEnv("DATABASE_URL", ""),
+		DatabaseURL:       getEnv("DATABASE_URL", ""),
+		DBMaxOpenConns:    getPositiveIntEnv("ROSA_TA_DB_MAX_OPEN_CONNS", 10),
+		DBMaxIdleConns:    getPositiveIntEnv("ROSA_TA_DB_MAX_IDLE_CONNS", 5),
+		DBConnMaxLifetime: getPositiveDurationEnv("ROSA_TA_DB_CONN_MAX_LIFETIME", 5*time.Minute),
 
 		// Workers Configuration
 		WorkerConcurrency:      getPositiveIntEnv("ROSA_TA_WORKER_CONCURRENCY", configFile.Workers.Concurrency),

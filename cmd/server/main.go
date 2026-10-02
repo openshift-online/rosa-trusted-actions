@@ -88,7 +88,11 @@ func runServer(cmd *cobra.Command, args []string) error {
 	logger := setupLogging(cfg)
 
 	// Initialize database
-	dataStore, err := store.NewSQLiteStore(cmd.Context(), cfg.DatabaseURL, logger)
+	dataStore, err := store.New(cmd.Context(), cfg.DatabaseURL, store.PostgresConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: cfg.DBConnMaxLifetime,
+	}, logger)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize database")
 	}

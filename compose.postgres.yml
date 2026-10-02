@@ -1,0 +1,39 @@
+# Local PostgreSQL instance for development and manual testing.
+#
+# Works with both Docker Compose and Podman Compose:
+#   podman compose -f compose.postgres.yml up -d
+#   docker compose -f compose.postgres.yml up -d
+#
+# Credentials match the DATABASE_URL in .env.example:
+#   postgres://postgres:postgres@localhost:5432/trusted_actions?sslmode=disable
+#
+# NOTE: port 5432 is intentionally different from the test stack (5433) so both
+# can run simultaneously without a port collision.
+#
+# Makefile shortcuts:
+#   make postgres-up    - start (detached, wait for healthy)
+#   make postgres-down  - stop and remove volumes
+#   make postgres-logs  - tail container logs
+
+services:
+  postgres:
+    image: docker.io/postgres:16
+    container_name: rosa-ta-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: trusted_actions
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - rosa_ta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trusted_actions"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  rosa_ta_pgdata:
