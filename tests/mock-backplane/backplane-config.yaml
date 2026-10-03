@@ -1,0 +1,31 @@
+---
+plugin: openapi
+specFile: backplane.yaml
+
+system:
+  stores:
+    cluster:
+      preloadFile: "data/cluster.json"
+
+resources:
+  - path: /backplane/trustedactions/{clusterId}
+    method: "post"
+    steps:
+      - type: script
+        lang: js
+        file: "scripts/trustedactions-post.js"
+
+  - path: /backplane/trustedactions/{clusterId}/{trustedActionInstanceId}
+    method: "delete"
+    steps:
+      - type: script
+        lang: js
+        file: "scripts/trustedactions-delete.js"
+
+  # No method and a trailing wildcard, so every HTTP verb and any number of trailing Kubernetes
+  # path segments reach the one proxy script.
+  - path: /backplane/trustedaction/{clusterId}/{trustedActionInstanceId}/*
+    steps:
+      - type: script
+        lang: js
+        file: "scripts/trustedaction-proxy.js"
