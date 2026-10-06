@@ -10,9 +10,9 @@ BUNDLED_SPEC_PATH=./api-spec.yaml
 MOCK_BACKPLANE_DIR=./tests/mock-backplane
 MOCK_BACKPLANE_ENGINE_VERSION=5
 # Same default as `make run`; override to run the mock alongside the real server
-MOCK_BACKPLANE_PORT ?= 8080
+MOCK_BACKPLANE_PORT ?= 8087
 PROXY_BACKPLANE_DIR=./tests/proxy-backplane
-PROXY_BACKPLANE_PORT ?= 8080
+PROXY_BACKPLANE_PORT ?= 8088
 
 # Tools
 OAPI_CODEGEN=go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
