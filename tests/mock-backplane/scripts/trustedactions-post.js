@@ -191,7 +191,7 @@ if (rejectionStatus !== null) {
   actionStore.save(compositeKey, body);
 
   var now = new Date();
-  var expiryDate = new Date(now.getTime() + (24 * 60 * 60 * 1000));
+  var expiryDate = new Date(now.getTime() + (720 * 60 * 1000)); 
 
   // proxyURI /backplane/trustedaction/{cluster}/{name}--{uuid}, with the Kubernetes path appended:
   // /backplane/trustedaction/{cluster}/{name}--{uuid}/api/v1/namespaces/foo/pods. No trailing slash,

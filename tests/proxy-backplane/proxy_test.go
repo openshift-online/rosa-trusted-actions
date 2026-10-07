@@ -37,7 +37,9 @@ func TestHandler_Proxy_GET(t *testing.T) {
 	ts, instanceID := setupProxyTest(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Upstream", "true")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"result":"ok"}`))
+		if _, err := w.Write([]byte(`{"result":"ok"}`)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodGet, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/nodes", "")
@@ -62,7 +64,9 @@ func TestHandler_Proxy_POST(t *testing.T) {
 		}
 		body, _ := io.ReadAll(r.Body)
 		w.WriteHeader(http.StatusCreated)
-		w.Write(body)
+		if _, err := w.Write(body); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodPost, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/namespaces", `{"name":"test-ns"}`)
@@ -84,7 +88,9 @@ func TestHandler_Proxy_PUT(t *testing.T) {
 		}
 		body, _ := io.ReadAll(r.Body)
 		w.WriteHeader(http.StatusOK)
-		w.Write(body)
+		if _, err := w.Write(body); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodPut, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/configmaps/test", `{"data":"updated"}`)
@@ -102,7 +108,9 @@ func TestHandler_Proxy_PATCH(t *testing.T) {
 		}
 		body, _ := io.ReadAll(r.Body)
 		w.WriteHeader(http.StatusOK)
-		w.Write(body)
+		if _, err := w.Write(body); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodPatch, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/pods/test", `{"spec":{}}`)
@@ -119,7 +127,9 @@ func TestHandler_Proxy_DELETE(t *testing.T) {
 			t.Errorf("upstream got method %q, want DELETE", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"deleted"}`))
+		if _, err := w.Write([]byte(`{"status":"deleted"}`)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodDelete, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/pods/test", "")
@@ -133,7 +143,9 @@ func TestHandler_Proxy_DELETE(t *testing.T) {
 func TestHandler_Proxy_PathStripping(t *testing.T) {
 	ts, instanceID := setupProxyTest(t, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(r.URL.Path))
+		if _, err := w.Write([]byte(r.URL.Path)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodGet, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/nodes", "")
@@ -149,7 +161,9 @@ func TestHandler_Proxy_AuthHeaderReplacement(t *testing.T) {
 	ts, instanceID := setupProxyTest(t, func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(auth))
+		if _, err := w.Write([]byte(auth)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	req, _ := http.NewRequest(http.MethodGet, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/nodes", nil)
@@ -169,7 +183,9 @@ func TestHandler_Proxy_AuthHeaderReplacement(t *testing.T) {
 func TestHandler_Proxy_QueryParameterForwarding(t *testing.T) {
 	ts, instanceID := setupProxyTest(t, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(r.URL.RawQuery))
+		if _, err := w.Write([]byte(r.URL.RawQuery)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodGet, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/pods?labelSelector=app%3Dtest&limit=10", "")
@@ -185,7 +201,9 @@ func TestHandler_Proxy_QueryParameterForwarding(t *testing.T) {
 func TestHandler_Proxy_Upstream5xxPassthrough(t *testing.T) {
 	ts, instanceID := setupProxyTest(t, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error":"upstream internal error"}`))
+		if _, err := w.Write([]byte(`{"error":"upstream internal error"}`)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	resp := doRequest(t, http.MethodGet, ts.URL+"/backplane/trustedaction/cluster-1/"+instanceID+"/api/v1/nodes", "")
@@ -304,7 +322,9 @@ func TestHandler_Proxy_EndToEnd(t *testing.T) {
 			"method": r.Method,
 			"auth":   auth,
 		}
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	}))
 	defer upstream.Close()
 
@@ -342,7 +362,9 @@ func TestHandler_Proxy_RequestBodyForwarding(t *testing.T) {
 		body, _ := io.ReadAll(r.Body)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(body)
+		if _, err := w.Write(body); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	})
 
 	largeBody := `{"metadata":{"name":"test","namespace":"default"},"spec":{"containers":[{"name":"app","image":"nginx:latest"}]}}`

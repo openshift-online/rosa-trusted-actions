@@ -28,6 +28,7 @@ func TestServerStarts(t *testing.T) {
 		errCh <- cmd.Execute()
 	}()
 
+	client := &http.Client{Timeout: 200 * time.Millisecond}
 	deadline := time.Now().Add(2 * time.Second)
 	var lastErr error
 	for time.Now().Before(deadline) {
@@ -36,7 +37,10 @@ func TestServerStarts(t *testing.T) {
 			t.Fatalf("server exited early: %v", err)
 		default:
 		}
-		resp, err := http.Get("http://" + addr + "/")
+		reqCtx, reqCancel := context.WithDeadline(ctx, deadline)
+		req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, "http://"+addr+"/", nil)
+		resp, err := client.Do(req)
+		reqCancel()
 		if err == nil {
 			resp.Body.Close()
 			return

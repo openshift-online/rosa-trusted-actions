@@ -255,6 +255,12 @@ func buildProxyURI(listenAddr, clusterID, instanceID string) string {
 func writeJSON(w http.ResponseWriter, statusCode int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	b, _ := json.Marshal(v)
-	_, _ = w.Write(b)
+	b, err := json.Marshal(v)
+	if err != nil {
+		logrus.WithError(err).Error("failed to marshal JSON response")
+		return
+	}
+	if _, err := w.Write(b); err != nil {
+		logrus.WithError(err).Error("failed to write JSON response")
+	}
 }

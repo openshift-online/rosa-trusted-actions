@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 type jsonError struct {
@@ -13,6 +15,12 @@ type jsonError struct {
 func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	b, _ := json.Marshal(jsonError{StatusCode: statusCode, Message: message})
-	w.Write(b)
+	b, err := json.Marshal(jsonError{StatusCode: statusCode, Message: message})
+	if err != nil {
+		logrus.WithError(err).Error("failed to marshal JSON error response")
+		return
+	}
+	if _, err := w.Write(b); err != nil {
+		logrus.WithError(err).Error("failed to write JSON error response")
+	}
 }

@@ -255,7 +255,10 @@ if (!granted) {
       (target.apiGroup ? target.apiGroup + "/" : "") + target.resource +
       (target.name ? "/" + target.name : "") + " " + scope);
   } else if (verb === "create") {
-    // Echo the request body back as the created object; real K8s would return 201.
+    // Intentional mock behaviour: the object is not persisted. The request body is echoed back so
+    // that callers receive a decodable typed response and can verify that RBAC was checked. A real
+    // API server would store the object and return 201; this mock cannot, and returning 501 would
+    // mask authorization errors, which are what the tests are actually exercising.
     var created = {};
     try { created = JSON.parse(String(context.request.body)); } catch (e) {}
     if (!created.apiVersion) { created.apiVersion = entry.apiVersion; }
@@ -266,10 +269,14 @@ if (!granted) {
       .withContent(JSON.stringify(created))
       .withHeader("Content-Type", "application/json");
   } else if (verb === "patch" || verb === "update") {
-    // Return the stored fixture object; the mock does not apply the diff.
+    // Intentional mock behaviour: the diff is not applied and the object is not persisted. The
+    // pre-existing fixture object is returned so that callers receive a decodable typed response and
+    // can verify that RBAC was checked. Returning 501 here would mask authorization errors.
     var stored = entry.object ? withDeclaredType(entry.object, entry) : { apiVersion: entry.apiVersion, kind: entry.kind };
     jsonResponse(200, stored);
   } else if (verb === "delete" || verb === "deletecollection") {
+    // Intentional mock behaviour: nothing is removed from the fixture store. A Status success is
+    // returned so that callers can verify that RBAC was checked without 501 masking the result.
     jsonResponse(200, { apiVersion: "v1", kind: "Status", metadata: {}, status: "Success", code: 200 });
   } else if (isCollection) {
     jsonResponse(200, {

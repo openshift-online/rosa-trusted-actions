@@ -19,7 +19,7 @@ curl -L https://raw.githubusercontent.com/imposter-project/imposter-cli/main/ins
 ## Run
 
 ```bash
-make mock-server
+make mock-backplane
 ```
 
 This pins the imposter Go engine (v5, native) and disables config-directory auto-restart. State is
@@ -28,7 +28,7 @@ held in memory, so restarting resets the mock and nothing leaks between runs.
 It listens on 8080, the same port as `make run`. To run both, give the mock another port:
 
 ```bash
-make mock-server MOCK_SERVER_PORT=8081
+make mock-backplane MOCK_BACKPLANE_PORT=8081
 ```
 
 `kubectl` is not a valid client against this mock: it performs API discovery at startup (requests
@@ -205,7 +205,7 @@ transcribed from backplane's unpublished validation logic. Backplane can add, re
 entries without notice; any divergence will be silent and will not be caught without a manual
 comparison against backplane's source.
 
-**Spec sync is not automated.** `tests/mock-server/backplane.yaml` (the vendored spec this mock
+**Spec sync is not automated.** `tests/mock-backplane/backplane.yaml` (the vendored spec this mock
 is built from) and the corresponding spec in the upstream client repository were byte-identical
 when this README was written. An automated check that flags divergence when either file changes
 is planned but not yet implemented; running `diff` manually is the only way to verify they are
