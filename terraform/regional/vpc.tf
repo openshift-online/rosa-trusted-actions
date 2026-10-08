@@ -15,6 +15,16 @@ locals {
     ? aws_subnet.private_b[0].id
     : (length(var.private_subnet_ids) > 1 ? var.private_subnet_ids[1] : var.private_subnet_ids[0])
   )
+
+  # AZ of the primary private subnet — used to co-locate the EBS volume.
+  # When Terraform owns the VPC the AZ comes directly from the managed subnet
+  # resource. When subnets are provided externally it is looked up via
+  # data.aws_subnet.private_a (count=1 only in that case).
+  private_subnet_a_az = (
+    local.create_vpc
+    ? aws_subnet.private_a[0].availability_zone
+    : data.aws_subnet.private_a[0].availability_zone
+  )
 }
 
 data "aws_availability_zones" "available" {
