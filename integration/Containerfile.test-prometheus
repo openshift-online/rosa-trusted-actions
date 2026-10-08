@@ -1,0 +1,6 @@
+FROM quay.io/prometheus/prometheus:v3.4.1 AS prometheus
+FROM alpine:3.21
+RUN apk add --no-cache curl
+COPY --from=prometheus /bin/prometheus /bin/prometheus
+ENTRYPOINT ["/bin/prometheus"]
+CMD ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/tmp/prometheus"]

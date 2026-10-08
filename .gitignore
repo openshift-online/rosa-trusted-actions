@@ -43,8 +43,9 @@ Thumbs.db
 # Bundled OpenAPI spec (generated artifact)
 api-spec.yaml
 
-# Generated kind kubeconfig from integration/itest-up.sh
+# Generated artifacts from integration tests
 integration/.kind-kubeconfig
+integration/.test-prometheus.tar
 
 # Note: Generated code in internal/openapi/ IS committed for build simplicity
 # Run 'make generate' to update when API spec changes
