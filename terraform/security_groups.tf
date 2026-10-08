@@ -1,19 +1,19 @@
 resource "aws_security_group" "alb" {
   name        = "${var.app_name}-alb"
-  description = "ALB: allow inbound HTTP/HTTPS from internet"
+  description = "ALB: allow inbound HTTP/HTTPS from within the VPC only"
   vpc_id      = local.vpc_id
 
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [data.aws_vpc.current.cidr_block]
   }
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [data.aws_vpc.current.cidr_block]
   }
 
   tags = { Name = "${var.app_name}-alb-sg" }

@@ -21,6 +21,21 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+# Resolved at apply time for both managed and externally-provided VPCs.
+# Used by:
+#   - security_groups.tf  — locks ALB ingress to the VPC CIDR
+#   - postcondition       — guards Route 53 PHZ resolution prerequisites
+data "aws_vpc" "current" {
+  id = local.vpc_id
+
+  lifecycle {
+    postcondition {
+      condition     = self.enable_dns_support && self.enable_dns_hostnames
+      error_message = "VPC ${self.id} must have enable_dns_support and enable_dns_hostnames set to true. Route 53 Private Hosted Zone resolution requires both flags."
+    }
+  }
+}
+
 resource "aws_vpc" "main" {
   count                = local.create_vpc ? 1 : 0
   cidr_block           = "10.0.0.0/16"

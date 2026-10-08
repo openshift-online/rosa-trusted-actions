@@ -5,22 +5,22 @@ variable "vpc_id" {
 }
 
 variable "public_subnet_ids" {
-  description = "IDs of two existing public subnets (used by the ALB). Required when vpc_id is set."
+  description = "IDs of two existing public subnets (reserved for future use / NAT gateway placement). Required when vpc_id is set."
   type        = list(string)
   default     = []
   validation {
     condition     = length(var.public_subnet_ids) == 0 || length(var.public_subnet_ids) >= 2
-    error_message = "public_subnet_ids must contain at least two subnet IDs (ALB requires subnets in two AZs)."
+    error_message = "public_subnet_ids must contain at least two subnet IDs."
   }
 }
 
 variable "private_subnet_ids" {
-  description = "IDs of existing private subnets (EC2 host in [0], optional second AZ in [1]). Required when vpc_id is set."
+  description = "IDs of two existing private subnets in different AZs. [0] hosts the ECS EC2 instance; both are used by the internal ALB (AWS requires subnets in at least two AZs). Required when vpc_id is set."
   type        = list(string)
   default     = []
   validation {
-    condition     = length(var.private_subnet_ids) == 0 || length(var.private_subnet_ids) >= 1
-    error_message = "private_subnet_ids must contain at least one subnet ID."
+    condition     = length(var.private_subnet_ids) == 0 || length(var.private_subnet_ids) >= 2
+    error_message = "private_subnet_ids must contain at least two subnet IDs in different AZs (internal ALB requires multi-AZ subnets)."
   }
 }
 
@@ -53,20 +53,26 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "domain_name" {
-  description = "Public domain name for the API (e.g. trusted-actions.example.com). Required for ACM auto-provisioning. Leave empty to skip HTTPS."
+variable "internal_fqdn" {
+  description = "Private FQDN for the API (e.g. rosa-trusted-actions.internal.company.com). Must be a subdomain of a real public domain you control — the apex zone is used only for ACM DNS-01 validation (shadow zone pattern); no A record is published publicly. Leave empty to skip HTTPS."
   type        = string
   default     = ""
 }
 
-variable "route53_zone_id" {
-  description = "Route53 hosted zone ID for var.domain_name. When set, ACM DNS validation records are created automatically. When empty (domain not in Route53), add the CNAME records manually and set var.alb_certificate_arn directly."
+variable "public_zone_id" {
+  description = "Route 53 public hosted zone ID that owns the apex of var.internal_fqdn (e.g. the zone for internal.company.com). Used exclusively to place the ACM DNS-01 validation CNAME — no A record is created here, so the service remains unreachable from the public internet. When empty, ACM validation records must be added manually and var.alb_certificate_arn must be set directly."
   type        = string
   default     = ""
+}
+
+variable "manage_validation_record" {
+  description = "When true, this deployment owns the ACM DNS-01 validation CNAME in the public Route 53 zone. Exactly one regional deployment must set this to true — the one that applies first and whose lifecycle governs the shared record. All other regional deployments set this to false and wait for ACM to validate using the record created by the owning deployment. Setting this to true in more than one deployment simultaneously will cause a state conflict on the shared Route 53 record."
+  type        = bool
+  default     = false
 }
 
 variable "alb_certificate_arn" {
-  description = "ACM certificate ARN for HTTPS listener. Populated automatically when var.domain_name + var.route53_zone_id are set (see acm.tf). Override manually if DNS is not in Route53."
+  description = "ACM certificate ARN for the HTTPS listener. Populated automatically when var.internal_fqdn + var.public_zone_id are set (see acm.tf). Override manually when DNS is not in Route 53."
   type        = string
   default     = ""
 }

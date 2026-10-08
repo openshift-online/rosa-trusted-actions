@@ -79,6 +79,18 @@ module "rosa_trusted_actions" {
           key      = "backplane_client_id"
           value    = "trusted-actions"
           category = "terraform"
+        },
+        {
+          key         = "internal_fqdn"
+          value       = "rosa-trusted-actions.internal.company.com"
+          category    = "terraform"
+          description = "Private FQDN for the API. Resolvable only inside the VPC via the Route 53 Private Hosted Zone. Must be a subdomain of a real public domain you control when also setting public_zone_id for TLS."
+        },
+        {
+          key         = "manage_validation_record"
+          value       = "true"
+          category    = "terraform"
+          description = "This workspace owns the shared ACM DNS-01 validation CNAME in the public Route 53 zone. Exactly one regional deployment must be true. All other regions must be false."
         }
       ]
     }
