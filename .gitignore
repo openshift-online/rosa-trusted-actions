@@ -65,7 +65,17 @@ package-lock.json
 *.db
 *.db-shm
 *.db-wal
-terraform/terraform.tfvars
-terraform/.terraform/
-terraform/.terraform.lock.hcl
-terraform/terraform.tfstate*
+# Global workspace local state and overrides
+terraform/global/.terraform/
+terraform/global/.terraform.lock.hcl
+terraform/global/terraform.tfstate*
+terraform/global/terraform.tfvars
+
+# Regional workspace local state and overrides
+terraform/regional/.terraform/
+terraform/regional/.terraform.lock.hcl
+terraform/regional/terraform.tfstate*
+terraform/regional/terraform.tfvars
+# Override file used to redirect terraform_remote_state to local state
+# during development. See docs/deployment.md — Local Testing section.
+terraform/regional/local_override.tf

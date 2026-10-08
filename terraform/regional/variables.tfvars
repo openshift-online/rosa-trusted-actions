@@ -1,0 +1,9 @@
+aws_region          = "us-east-1"
+environment         = "stage"
+vpc_id              = "vpc-064fa37f6a8893ff9"
+private_subnet_ids  = ["subnet-0897d737f3c11d39a", "subnet-0a132bb990d188693"]
+public_subnet_ids   = ["subnet-0155ff480c3383638", "subnet-09dd7fdf1290eb47f"]
+container_image     = "quay.io/redhat-user-workloads/rosa-tenant/rosa-trusted-actions@sha256:4a4ee539446cc92ae6ed2cc30e99998ca5f5dd4e2ab6904e5a85b734088c7815"
+backplane_url       = "https://api.stage.backplane.openshift.com"
+backplane_client_id = "trusted-actions"
+internal_fqdn       = "rosa-trusted-actions.internal.company.com"

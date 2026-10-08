@@ -1,10 +1,13 @@
 data "aws_ssm_parameter" "ecs_ami" {
-  # Amazon Linux 2023 ECS-optimized, x86_64 — change to arm64 path if using t4g
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
 }
 
+# Looks up the AZ of an externally-provided private subnet so the EBS volume
+# can be placed in the same AZ. Skipped when Terraform manages the VPC —
+# the AZ is read directly from aws_subnet.private_a[0] in that case.
 data "aws_subnet" "private_a" {
-  id = local.private_subnet_a
+  count = local.create_vpc ? 0 : 1
+  id    = var.private_subnet_ids[0]
 }
 
 resource "aws_instance" "ecs_host" {
@@ -12,7 +15,7 @@ resource "aws_instance" "ecs_host" {
   instance_type          = var.instance_type
   subnet_id              = local.private_subnet_a
   vpc_security_group_ids = [aws_security_group.ec2.id]
-  iam_instance_profile   = aws_iam_instance_profile.ecs_instance.name
+  iam_instance_profile   = local.global.iam_instance_profile_name
 
   user_data = templatefile("${path.module}/templates/userdata.sh.tpl", {
     ecs_cluster_name = aws_ecs_cluster.main.name

@@ -1,5 +1,5 @@
 resource "aws_ebs_volume" "sqlite" {
-  availability_zone = data.aws_subnet.private_a.availability_zone
+  availability_zone = local.private_subnet_a_az
   size              = 20
   type              = "gp3"
   encrypted         = true
