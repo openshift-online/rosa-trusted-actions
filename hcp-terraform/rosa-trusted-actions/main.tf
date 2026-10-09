@@ -45,13 +45,15 @@ module "rosa_trusted_actions" {
         },
         {
           key      = "public_subnet_ids"
-          value    = ["subnet-01821c41d92b0f8b1", "subnet-0f52e06526c080dfa"]
+          value    = jsonencode(["subnet-01821c41d92b0f8b1", "subnet-0f52e06526c080dfa"])
           category = "terraform"
+          hcl      = true
         },
         {
           key      = "private_subnet_ids"
-          value    = ["subnet-0042826174855e520", "subnet-0f9392e3159168d6f"]
+          value    = jsonencode(["subnet-0042826174855e520", "subnet-0f9392e3159168d6f"])
           category = "terraform"
+          hcl      = true
         },
         {
           key      = "environment"
