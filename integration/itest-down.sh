@@ -9,7 +9,6 @@ CLUSTER_NAME=${ROSA_TA_KIND_CLUSTER_NAME:-"rosa-ta"}
 KUBECONFIG_PATH="$SCRIPT_DIR/.kind-kubeconfig"
 COMPOSE_FILE="$SCRIPT_DIR/podman-compose.yml"
 LOCALSTACK_CONTAINER="rosa-ta-localstack"
-TEST_PROM_IMAGE="localhost/rosa-ta-test-prometheus:latest"
 DB_PATH="$SCRIPT_DIR/.trusted_actions.db"
 SERVER_LOG="$SCRIPT_DIR/.server.log"
 
@@ -45,17 +44,8 @@ else
     log "kind cluster '$CLUSTER_NAME' not found, nothing to delete"
 fi
 
-# --- test prometheus image ---
-if podman image exists "$TEST_PROM_IMAGE" 2> /dev/null; then
-    log "Removing test prometheus image"
-    podman rmi "$TEST_PROM_IMAGE" 2> /dev/null || true
-    ok "test prometheus image removed"
-else
-    log "test prometheus image not found, nothing to remove"
-fi
-
 # --- generated artifacts ---
-rm -f "$KUBECONFIG_PATH" "$DB_PATH" "$DB_PATH-shm" "$DB_PATH-wal" "$SERVER_LOG" "$SCRIPT_DIR/.test-prometheus.tar"
+rm -f "$KUBECONFIG_PATH" "$DB_PATH" "$DB_PATH-shm" "$DB_PATH-wal" "$SERVER_LOG"
 ok "removed generated local artifacts"
 
 echo

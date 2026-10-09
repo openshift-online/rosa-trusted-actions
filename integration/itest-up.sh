@@ -10,8 +10,6 @@ KIND_IMAGE="kindest/node:v1.33.1"
 KUBECONFIG_PATH="$SCRIPT_DIR/.kind-kubeconfig"
 COMPOSE_FILE="$SCRIPT_DIR/podman-compose.yml"
 LOCALSTACK_CONTAINER="rosa-ta-localstack"
-TEST_PROM_IMAGE="localhost/rosa-ta-test-prometheus:latest"
-TEST_PROM_TAR="$SCRIPT_DIR/.test-prometheus.tar"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 WAIT_TIMEOUT=${ROSA_TA_ITEST_WAIT_TIMEOUT:-120}
 
@@ -63,17 +61,6 @@ while true; do
 done
 ok "localstack is healthy"
 
-# --- test prometheus image ---
-log "Building test prometheus image (prometheus + curl)"
-podman build -t "$TEST_PROM_IMAGE" -f "$SCRIPT_DIR/Containerfile.test-prometheus" "$SCRIPT_DIR"
-ok "test prometheus image built"
-
-log "Loading test prometheus image into kind"
-podman save "$TEST_PROM_IMAGE" -o "$TEST_PROM_TAR"
-kind load image-archive "$TEST_PROM_TAR" --name "$CLUSTER_NAME"
-rm -f "$TEST_PROM_TAR"
-ok "test prometheus image loaded into kind"
-
 # --- fixtures ---
 log "Applying test fixtures"
 kubectl --kubeconfig "$KUBECONFIG_PATH" apply -f "$FIXTURES_DIR/pull-secret.yaml"
@@ -91,7 +78,7 @@ sleep 12
 elapsed=0
 while true; do
     alert_count=$(kubectl --kubeconfig "$KUBECONFIG_PATH" exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- \
-        curl -sf 'http://localhost:9090/api/v1/query?query=ALERTS' 2>/dev/null | \
+        wget -qO- 'http://localhost:9090/api/v1/query?query=ALERTS' 2>/dev/null | \
         jq '.data.result | length' 2>/dev/null || echo "0")
     [ "$alert_count" -ge 2 ] && break
     if [ "$elapsed" -ge "$WAIT_TIMEOUT" ]; then

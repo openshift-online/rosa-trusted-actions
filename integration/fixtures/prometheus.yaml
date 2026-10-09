@@ -44,7 +44,7 @@ metadata:
 spec:
   containers:
   - name: prometheus
-    image: localhost/rosa-ta-test-prometheus:latest
+    image: quay.io/prometheus/prometheus:v3.4.1
     args:
     - --config.file=/etc/prometheus/prometheus.yml
     - --storage.tsdb.path=/tmp/prometheus

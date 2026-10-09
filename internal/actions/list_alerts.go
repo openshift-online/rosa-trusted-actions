@@ -180,7 +180,7 @@ func execCurl(ctx context.Context, executor backplane.PodExecutor, namespace, po
 	execCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	raw, err := executor.Exec(execCtx, namespace, pod, container, []string{"curl", "-sfS", "--max-time", "25", u})
+	raw, err := executor.Exec(execCtx, namespace, pod, container, []string{"wget", "-qO-", "-T", "25", u})
 	if err != nil {
 		return nil, fmt.Errorf("exec failed: %w", err)
 	}
