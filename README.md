@@ -252,8 +252,8 @@ Run `make help` for all available targets.
 
 ### Show the API in a browsable format
 
-If you want to see the current API as a html package you can use [redocly](https://github.com/redocly/redoc) to render
-it into a static HTML page:
+If you want to browse the current API, use [Redocly](https://github.com/redocly/redoc) to render
+it as a static HTML page:
 
 ``` bash
 npx @redocly/cli build-docs api-spec.yaml -o api-spec.html
