@@ -68,7 +68,11 @@ func runServer(cmd *cobra.Command, args []string) error {
 	configFilePath, _ := cmd.Flags().GetString("config-file")
 
 	// Load configuration from environment
-	cfg := config.Load(configFilePath)
+	cfg, err := config.Load(configFilePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 
 	// Override with CLI flags
 	if cmd.Flags().Changed("listen-addr") {

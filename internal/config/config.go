@@ -94,7 +94,7 @@ type configFile struct {
 	} `yaml:"actions"`
 }
 
-func readConfigFile(configFilePath string) *configFile {
+func readConfigFile(configFilePath string) (*configFile, error) {
 	configFile := &configFile{}
 
 	configFile.Workers.Concurrency = 4
@@ -104,21 +104,22 @@ func readConfigFile(configFilePath string) *configFile {
 	if configFilePath != "" {
 		data, err := os.ReadFile(configFilePath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to read '%s' config file: %v\n", configFilePath, err)
-			os.Exit(1)
+			return nil, fmt.Errorf("failed to read '%s' config file: %w", configFilePath, err)
 		}
 		err = yaml.Unmarshal(data, configFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to unmarshal '%s' config file: %v\n", configFilePath, err)
-			os.Exit(1)
+			return nil, fmt.Errorf("failed to unmarshal '%s' config file: %w", configFilePath, err)
 		}
 	}
-	return configFile
+	return configFile, nil
 }
 
 // Load loads configuration from environment variables with defaults
-func Load(configFilePath string) *Config {
-	configFile := readConfigFile(configFilePath)
+func Load(configFilePath string) (*Config, error) {
+	configFile, err := readConfigFile(configFilePath)
+	if err != nil {
+		return nil, err
+	}
 
 	envAuthPolicy := getEnv("ROSA_TA_AUTH", "")
 	authPolicy := EnabledAuthPolicy
@@ -131,8 +132,7 @@ func Load(configFilePath string) *Config {
 		case string(OcmConfigAuthPolicy):
 			authPolicy = OcmConfigAuthPolicy
 		default:
-			fmt.Fprintf(os.Stderr, "Invalid ROSA_TA_AUTH value: %s\n", envAuthPolicy)
-			os.Exit(1)
+			return nil, fmt.Errorf("invalid ROSA_TA_AUTH value: %s", envAuthPolicy)
 		}
 	} else {
 		if !getBoolEnv("ROSA_TA_ENABLE_AUTH", true) {
@@ -190,7 +190,7 @@ func Load(configFilePath string) *Config {
 
 		// Development flags
 		AuthPolicy: authPolicy,
-	}
+	}, nil
 }
 
 // getEnv gets an environment variable with a default value
