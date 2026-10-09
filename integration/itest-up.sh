@@ -10,6 +10,7 @@ KIND_IMAGE="kindest/node:v1.33.1"
 KUBECONFIG_PATH="$SCRIPT_DIR/.kind-kubeconfig"
 COMPOSE_FILE="$SCRIPT_DIR/podman-compose.yml"
 LOCALSTACK_CONTAINER="rosa-ta-localstack"
+FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 WAIT_TIMEOUT=${ROSA_TA_ITEST_WAIT_TIMEOUT:-120}
 
 # Colors for output
@@ -22,7 +23,7 @@ log() { echo -e "${YELLOW}==>${NC} $*"; }
 ok() { echo -e "${GREEN}✓${NC} $*"; }
 fail() { echo -e "${RED}✗ $*${NC}" >&2; exit 1; }
 
-for bin in kind kubectl podman podman-compose; do
+for bin in kind kubectl podman podman-compose jq; do
     command -v "$bin" > /dev/null 2>&1 || fail "'$bin' is required but not found on PATH"
 done
 
@@ -59,6 +60,34 @@ while true; do
     elapsed=$((elapsed + 2))
 done
 ok "localstack is healthy"
+
+# --- fixtures ---
+log "Applying test fixtures"
+kubectl --kubeconfig "$KUBECONFIG_PATH" apply -f "$FIXTURES_DIR/pull-secret.yaml"
+kubectl --kubeconfig "$KUBECONFIG_PATH" apply -f "$FIXTURES_DIR/prometheus.yaml"
+ok "fixtures applied"
+
+log "Waiting for prometheus pod to be ready"
+kubectl --kubeconfig "$KUBECONFIG_PATH" wait --for=condition=Ready pod/prometheus-k8s-0 \
+    -n openshift-monitoring --timeout "${WAIT_TIMEOUT}s"
+ok "prometheus pod is ready"
+
+log "Waiting for alerts to fire (2 evaluation cycles)"
+sleep 12
+
+elapsed=0
+while true; do
+    alert_count=$(kubectl --kubeconfig "$KUBECONFIG_PATH" exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- \
+        wget -qO- 'http://localhost:9090/api/v1/query?query=ALERTS' 2>/dev/null | \
+        jq '.data.result | length' 2>/dev/null || echo "0")
+    [ "$alert_count" -ge 2 ] && break
+    if [ "$elapsed" -ge "$WAIT_TIMEOUT" ]; then
+        fail "alerts did not fire within ${WAIT_TIMEOUT}s (got $alert_count alerts)"
+    fi
+    sleep 2
+    elapsed=$((elapsed + 2))
+done
+ok "prometheus has $alert_count firing alerts"
 
 echo
 ok "Integration environment ready."
