@@ -3,68 +3,125 @@ package backplane
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"sort"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 var _ ClientProvider = (*BackplaneProvider)(nil)
 
-// TODO(ROSAENG-61966): This backplane client is NOT tested against a real backplane instance.
-// Do not trust it in production until ROSAENG-61966 integration tests are complete.
 type BackplaneProvider struct {
-	logger       *logrus.Logger
-	baseURL      string
-	clientID     string
-	clientSecret string
-	httpClient   *http.Client
+	logger     *logrus.Logger
+	baseURL    string
+	tokenFunc  func(ctx context.Context) (string, error)
+	httpClient *http.Client
 }
 
-func NewBackplaneProvider(logger *logrus.Logger, baseURL, clientID, clientSecret string) *BackplaneProvider {
+func NewBackplaneProvider(logger *logrus.Logger, baseURL string, tokenFunc func(ctx context.Context) (string, error)) *BackplaneProvider {
+	parsed, _ := url.Parse(baseURL)
+
 	return &BackplaneProvider{
-		logger:       logger,
-		baseURL:      baseURL,
-		clientID:     clientID,
-		clientSecret: clientSecret,
-		httpClient:   &http.Client{Timeout: 30 * time.Second},
+		logger:    logger,
+		baseURL:   baseURL,
+		tokenFunc: tokenFunc,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if parsed != nil && (req.URL.Scheme != parsed.Scheme || req.URL.Host != parsed.Host) {
+					return fmt.Errorf("refusing redirect to %s (expected %s://%s)", req.URL, parsed.Scheme, parsed.Host)
+				}
+				return nil
+			},
+		},
 	}
 }
 
 type trustedActionRequest struct {
-	RBACRules          []RBACRule `json:"rbacRules"`
-	CustomerDataAccess bool       `json:"customerDataAccess"`
+	Name               string            `json:"name"`
+	CustomerDataAccess bool              `json:"customerDataAccess"`
+	Rbac               trustedActionRbac `json:"rbac"`
+}
+
+type trustedActionRbac struct {
+	ClusterRoleRules []policyRule `json:"clusterRoleRules"`
+	Roles            []roleDecl   `json:"roles"`
+}
+
+type roleDecl struct {
+	Namespace string       `json:"namespace"`
+	Rules     []policyRule `json:"rules"`
+}
+
+type policyRule struct {
+	APIGroups     []string `json:"apiGroups"`
+	Resources     []string `json:"resources"`
+	ResourceNames []string `json:"resourceNames,omitempty"`
+	Verbs         []string `json:"verbs"`
 }
 
 type trustedActionResponse struct {
-	InstanceID string `json:"instanceId"`
+	ProxyUri   string `json:"proxyUri"`
+	InstanceId string `json:"instanceId"`
+	Expiry     string `json:"expiry"`
 }
 
-func (b *BackplaneProvider) GetClient(ctx context.Context, clusterID string, rbacRules []RBACRule) (dynamic.Interface, error) {
-	instanceID, err := b.requestAccess(ctx, clusterID, rbacRules)
+func (b *BackplaneProvider) requestAccessAndConfig(ctx context.Context, clusterID, actionName string, rbacRules []RBACRule) (*rest.Config, error) {
+	resp, err := b.requestAccess(ctx, clusterID, actionName, rbacRules)
 	if err != nil {
 		return nil, fmt.Errorf("failed to request backplane access: %w", err)
 	}
 
-	proxyURL := fmt.Sprintf("%s/backplane/remediate/%s/%s", b.baseURL, clusterID, instanceID)
+	base, err := url.Parse(b.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid base URL: %w", err)
+	}
+	ref, err := url.Parse(resp.ProxyUri)
+	if err != nil {
+		return nil, fmt.Errorf("invalid proxy URI from backplane: %w", err)
+	}
+	resolved := base.ResolveReference(ref)
+	if resolved.Scheme != base.Scheme || resolved.Host != base.Host {
+		return nil, fmt.Errorf("backplane returned proxy URI targeting a different origin: %s", resolved)
+	}
+	proxyURL := resolved.String()
 
 	config := &rest.Config{
 		Host: proxyURL,
 		WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-			return &hmacTransport{
-				base:         rt,
-				clientID:     b.clientID,
-				clientSecret: b.clientSecret,
+			return &bearerTransport{
+				base:        rt,
+				tokenFunc:   b.tokenFunc,
+				trustedHost: resolved.Host,
 			}
 		},
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"cluster_id":  clusterID,
+		"instance_id": resp.InstanceId,
+		"proxy_url":   proxyURL,
+		"expiry":      resp.Expiry,
+	}).Debug("backplane access established")
+
+	return config, nil
+}
+
+func (b *BackplaneProvider) GetClient(ctx context.Context, clusterID, actionName string, rbacRules []RBACRule) (dynamic.Interface, error) {
+	config, err := b.requestAccessAndConfig(ctx, clusterID, actionName, rbacRules)
+	if err != nil {
+		return nil, err
 	}
 
 	client, err := dynamic.NewForConfig(config)
@@ -72,95 +129,153 @@ func (b *BackplaneProvider) GetClient(ctx context.Context, clusterID string, rba
 		return nil, fmt.Errorf("failed to create dynamic client for proxy: %w", err)
 	}
 
-	b.logger.WithFields(logrus.Fields{
-		"cluster_id":  clusterID,
-		"instance_id": instanceID,
-		"proxy_url":   proxyURL,
-	}).Debug("backplane access established")
-
 	return client, nil
 }
 
-// TODO(ROSAENG-62342): Implement backplane pod executor support.
-func (b *BackplaneProvider) GetPodExecutor(_ context.Context, _ string, _ []RBACRule) (PodExecutor, error) {
-	return nil, fmt.Errorf("GetPodExecutor not yet implemented for BackplaneProvider")
+func (b *BackplaneProvider) GetPodExecutor(ctx context.Context, clusterID, actionName string, rbacRules []RBACRule) (PodExecutor, error) {
+	config, err := b.requestAccessAndConfig(ctx, clusterID, actionName, rbacRules)
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create kubernetes clientset for proxy: %w", err)
+	}
+
+	return &backplanePodExecutor{config: config, clientset: clientset}, nil
 }
 
-func (b *BackplaneProvider) requestAccess(ctx context.Context, clusterID string, rbacRules []RBACRule) (string, error) {
-	reqBody := trustedActionRequest{
-		RBACRules:          rbacRules,
-		CustomerDataAccess: false,
-	}
+func (b *BackplaneProvider) requestAccess(ctx context.Context, clusterID, actionName string, rbacRules []RBACRule) (*trustedActionResponse, error) {
+	reqBody := buildTrustedActionRequest(actionName, rbacRules)
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/backplane/trustedaction/%s", b.baseURL, clusterID)
+	url := fmt.Sprintf("%s/backplane/trustedactions/%s", b.baseURL, clusterID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyBytes))
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	signRequest(req, bodyBytes, b.clientID, b.clientSecret)
+
+	token, err := b.tokenFunc(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get auth token: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("backplane request failed: %w", err)
+		return nil, fmt.Errorf("backplane request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", fmt.Errorf("backplane returned status %d: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("backplane returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	var result trustedActionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode backplane response: %w", err)
+		return nil, fmt.Errorf("failed to decode backplane response: %w", err)
 	}
 
-	return result.InstanceID, nil
+	return &result, nil
 }
 
-func signRequest(req *http.Request, body []byte, clientID, secret string) {
-	timestamp := time.Now().UTC().Format(time.RFC3339)
-	tsBytes := []byte(timestamp)
-	payload := make([]byte, 0, len(body)+len(tsBytes))
-	payload = append(payload, body...)
-	payload = append(payload, tsBytes...)
+func buildTrustedActionRequest(actionName string, rbacRules []RBACRule) trustedActionRequest {
+	var clusterRoleRules []policyRule
+	rolesByNS := make(map[string][]policyRule)
 
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write(payload)
-	signature := hex.EncodeToString(mac.Sum(nil))
-
-	req.Header.Set("X-Caller-ID", clientID)
-	req.Header.Set("X-Timestamp", timestamp)
-	req.Header.Set("X-Signature", signature)
-}
-
-type hmacTransport struct {
-	base         http.RoundTripper
-	clientID     string
-	clientSecret string
-}
-
-func (t *hmacTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	clone := req.Clone(req.Context())
-
-	var body []byte
-	if req.Body != nil {
-		var err error
-		body, err = io.ReadAll(io.LimitReader(req.Body, 1<<20))
-		if err != nil {
-			return nil, fmt.Errorf("failed to read request body: %w", err)
+	for _, rule := range rbacRules {
+		pr := policyRule{
+			APIGroups:     rule.APIGroups,
+			Resources:     rule.Resources,
+			ResourceNames: rule.ResourceNames,
+			Verbs:         rule.Verbs,
 		}
-		clone.Body = io.NopCloser(bytes.NewReader(body))
+		if rule.Namespace == "" {
+			clusterRoleRules = append(clusterRoleRules, pr)
+		} else {
+			rolesByNS[rule.Namespace] = append(rolesByNS[rule.Namespace], pr)
+		}
 	}
 
-	signRequest(clone, body, t.clientID, t.clientSecret)
+	// Deterministic ordering so backplane requests are consistent across runs.
+	namespaces := make([]string, 0, len(rolesByNS))
+	for ns := range rolesByNS {
+		namespaces = append(namespaces, ns)
+	}
+	sort.Strings(namespaces)
 
+	roles := make([]roleDecl, 0, len(namespaces))
+	for _, ns := range namespaces {
+		roles = append(roles, roleDecl{Namespace: ns, Rules: rolesByNS[ns]})
+	}
+
+	return trustedActionRequest{
+		Name:               actionName,
+		CustomerDataAccess: false,
+		Rbac: trustedActionRbac{
+			ClusterRoleRules: clusterRoleRules,
+			Roles:            roles,
+		},
+	}
+}
+
+type bearerTransport struct {
+	base       http.RoundTripper
+	tokenFunc  func(ctx context.Context) (string, error)
+	trustedHost string
+}
+
+func (t *bearerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	clone := req.Clone(req.Context())
+	if t.trustedHost == "" || req.URL.Host == "" || req.URL.Host == t.trustedHost {
+		token, err := t.tokenFunc(req.Context())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get auth token: %w", err)
+		}
+		clone.Header.Set("Authorization", "Bearer "+token)
+	}
 	return t.base.RoundTrip(clone)
+}
+
+type backplanePodExecutor struct {
+	config    *rest.Config
+	clientset kubernetes.Interface
+}
+
+func (e *backplanePodExecutor) Exec(ctx context.Context, namespace, pod, container string, command []string) ([]byte, error) {
+	req := e.clientset.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod).
+		Namespace(namespace).
+		SubResource("exec").
+		VersionedParams(&corev1.PodExecOptions{
+			Container: container,
+			Command:   command,
+			Stdout:    true,
+			Stderr:    true,
+		}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(e.config, "POST", req.URL())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SPDY executor: %w", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	err = executor.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("exec failed: %w (stderr: %s)", err, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
 }
