@@ -1,7 +1,0 @@
-roles:
-  - id: "SREP"
-    amsResource: "BackplaneOsdSrepResource"
-  - id: "ConfigurationAnomalyDetection"
-    amsResource: "BackplaneOsdCadResource"
-  - id: "ROSAAiAgent"
-    amsResource: "BackplaneOsdAiAgentResource"

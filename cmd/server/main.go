@@ -92,7 +92,11 @@ func runServer(cmd *cobra.Command, args []string) error {
 	logger := setupLogging(cfg)
 
 	// Initialize database
-	dataStore, err := store.NewSQLiteStore(cmd.Context(), cfg.DatabaseURL, logger)
+	dataStore, err := store.New(cmd.Context(), cfg.DatabaseURL, store.PostgresConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: cfg.DBConnMaxLifetime,
+	}, logger)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize database")
 	}
@@ -112,10 +116,16 @@ func runServer(cmd *cobra.Command, args []string) error {
 	case config.OcmConfigAuthPolicy:
 		authnMiddleware = auth.NewAuthMiddleware(logger)
 
-		roles, err := auth.LoadRoles(cfg.RolesConfigPath)
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to load role configuration")
+		if len(cfg.Roles) == 0 {
+			logger.Fatal("No roles configured — set the 'roles' key in the config file when auth is enabled")
 		}
+		for i, r := range cfg.Roles {
+			if r.ID == "" || r.AMSResource == "" {
+				logger.Fatalf("Role entry %d has empty id or amsResource", i)
+			}
+		}
+
+		authnMiddleware = auth.NewAuthMiddleware(logger)
 
 		appendIfNotEmpty := func(l []string, s string) []string {
 			if s != "" {
@@ -157,7 +167,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 			}
 		}()
 
-		authzMiddleware = auth.NewRoleAuthzMiddleware(roles, ocmClient.Authorization, logger)
+		authzMiddleware = auth.NewRoleAuthzMiddleware(cfg.Roles, ocmClient.Authorization, logger)
 	case config.DisabledAuthPolicy:
 		logger.Warn("Auth disabled — using mock identity 'dev-user' with SREP role. Do not use in production.")
 		authnMiddleware = auth.NewMockAuthMiddleware()

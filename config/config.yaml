@@ -1,0 +1,19 @@
+roles:
+- id: "SREP"
+  amsResource: "BackplaneOsdSrepResource"
+- id: "ConfigurationAnomalyDetection"
+  amsResource: "BackplaneOsdCadResource"
+- id: "ROSAAiAgent"
+  amsResource: "BackplaneOsdAiAgentResource"
+
+# The following parameters serve as fallbacks for undefined environment variables.
+# See internal/config/config.go.
+
+# workers:
+#   concurrency: 4
+#   poll_interval: 5s
+#   execution_timeout: 2m
+
+# actions:
+#   allowed_namespaces: []
+#   allowed_secrets: []

@@ -1,6 +1,6 @@
-resource "aws_s3_object" "role_mapping" {
+resource "aws_s3_object" "config_file" {
   bucket = aws_s3_bucket.app.id
-  key    = "config/role_mapping.yaml"
-  source = "${path.module}/../configs/role_mapping.yaml"
-  etag   = filemd5("${path.module}/../configs/role_mapping.yaml")
+  key    = "config/config.yaml"
+  source = "${path.module}/../config/config.yaml"
+  etag   = filemd5("${path.module}/../config/config.yaml")
 }

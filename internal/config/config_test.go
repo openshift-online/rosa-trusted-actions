@@ -338,8 +338,8 @@ func TestLoad_Defaults(t *testing.T) {
 	if cfg.S3KeyPrefix != "trusted-actions" {
 		t.Errorf("S3KeyPrefix = %q, want %q", cfg.S3KeyPrefix, "trusted-actions")
 	}
-	if cfg.RolesConfigPath != "configs/role_mapping.yaml" {
-		t.Errorf("RolesConfigPath = %q, want %q", cfg.RolesConfigPath, "configs/role_mapping.yaml")
+	if len(cfg.Roles) != 0 {
+		t.Errorf("Roles = %v, want empty", cfg.Roles)
 	}
 	if cfg.OCMBaseURL != "https://api.openshift.com" {
 		t.Errorf("OCMBaseURL = %q, want %q", cfg.OCMBaseURL, "https://api.openshift.com")

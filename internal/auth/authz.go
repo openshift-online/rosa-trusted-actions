@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/config"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 )
 
@@ -19,7 +20,7 @@ type AuthorizationMiddleware interface {
 // role via AMS AccessReview. Substantially reworked from rh-trex's single-check pattern
 // to support the backplane-api role-iteration model.
 type RoleAuthzMiddleware struct {
-	roles  []RoleMapping
+	roles  []config.RoleMapping
 	authz  ocm.Authorization
 	logger *logrus.Logger
 }
@@ -86,7 +87,7 @@ func (m *ActionAuthzMiddleware) CheckActionAccess(next http.Handler) http.Handle
 		next.ServeHTTP(w, r)
 	})
 }
-func NewRoleAuthzMiddleware(roles []RoleMapping, authz ocm.Authorization, logger *logrus.Logger) *RoleAuthzMiddleware {
+func NewRoleAuthzMiddleware(roles []config.RoleMapping, authz ocm.Authorization, logger *logrus.Logger) *RoleAuthzMiddleware {
 	return &RoleAuthzMiddleware{
 		roles:  roles,
 		authz:  authz,

@@ -89,8 +89,12 @@ func getUsernameFromJWT(token string) string {
 
 // sdkConn returns the underlying *sdkClient.Connection.
 // Used by authorization which needs SDK-specific methods not in ocmConnection.
-func (c *Client) sdkConn() *sdkClient.Connection {
-	return c.connection.(*sdkClient.Connection)
+func (c *Client) sdkConn() (*sdkClient.Connection, error) {
+	conn, ok := c.connection.(*sdkClient.Connection)
+	if !ok {
+		return nil, fmt.Errorf("ocm: client connection is not a *sdkClient.Connection")
+	}
+	return conn, nil
 }
 
 func (c *Client) newConnection() error {

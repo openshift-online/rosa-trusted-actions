@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/config"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 )
 
@@ -166,7 +167,7 @@ func TestRoleAuthzMiddleware_GrantsSREP(t *testing.T) {
 		},
 	}
 
-	roles := []RoleMapping{
+	roles := []config.RoleMapping{
 		{ID: "SREP", AMSResource: "BackplaneOsdSrepResource"},
 		{ID: "ConfigurationAnomalyDetection", AMSResource: "BackplaneOsdCadResource"},
 	}
@@ -203,7 +204,7 @@ func TestRoleAuthzMiddleware_GrantsCAD(t *testing.T) {
 		},
 	}
 
-	roles := []RoleMapping{
+	roles := []config.RoleMapping{
 		{ID: "SREP", AMSResource: "BackplaneOsdSrepResource"},
 		{ID: "ConfigurationAnomalyDetection", AMSResource: "BackplaneOsdCadResource"},
 	}
@@ -238,7 +239,7 @@ func TestRoleAuthzMiddleware_DeniesUnknownUser(t *testing.T) {
 		Permissions: map[string][]string{},
 	}
 
-	roles := []RoleMapping{
+	roles := []config.RoleMapping{
 		{ID: "SREP", AMSResource: "BackplaneOsdSrepResource"},
 	}
 
@@ -267,7 +268,7 @@ func TestRoleAuthzMiddleware_NoIdentity_Returns401(t *testing.T) {
 		Permissions: map[string][]string{},
 	}
 
-	roles := []RoleMapping{
+	roles := []config.RoleMapping{
 		{ID: "SREP", AMSResource: "BackplaneOsdSrepResource"},
 	}
 

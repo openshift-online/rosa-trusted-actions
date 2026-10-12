@@ -18,6 +18,12 @@ const (
 	OcmConfigAuthPolicy AuthPolicy = "ocmconfig"
 )
 
+// RoleMapping maps a role ID to its AMS resource type for AccessReview checks.
+type RoleMapping struct {
+	ID          string `yaml:"id"`
+	AMSResource string `yaml:"amsResource"`
+}
+
 // Config holds the application configuration
 type Config struct {
 	// Server configuration (CLI flags)
@@ -37,7 +43,7 @@ type Config struct {
 
 	// Security Configuration (environment variables)
 	AllowedAccounts []string
-	RolesConfigPath string
+	Roles           []RoleMapping
 	JWKCertFile     string
 	JWKCertURL      string
 
@@ -47,8 +53,11 @@ type Config struct {
 	OCMClientSecret string
 	OCMToken        string
 
-	// Database Configuration (environment variables, for future use)
-	DatabaseURL string
+	// Database Configuration (environment variables)
+	DatabaseURL       string
+	DBMaxOpenConns    int
+	DBMaxIdleConns    int
+	DBConnMaxLifetime time.Duration
 
 	// Workers Configuration (environment variables)
 	// WorkerConcurrency is the number of goroutines dequeuing and running
@@ -92,6 +101,8 @@ type configFile struct {
 		AllowedNamespaces []string `yaml:"allowed_namespaces"`
 		AllowedSecrets    []string `yaml:"allowed_secrets"`
 	} `yaml:"actions"`
+
+	Roles []RoleMapping `yaml:"roles"`
 }
 
 func readConfigFile(configFilePath string) (*configFile, error) {
@@ -116,6 +127,10 @@ func readConfigFile(configFilePath string) (*configFile, error) {
 
 // Load loads configuration from environment variables with defaults
 func Load(configFilePath string) (*Config, error) {
+	if os.Getenv("ROSA_TA_ROLES_CONFIG") != "" {
+		fmt.Fprintln(os.Stderr, "WARNING: ROSA_TA_ROLES_CONFIG is no longer supported — configure roles in the config file under the 'roles' key instead")
+	}
+
 	configFile, err := readConfigFile(configFilePath)
 	if err != nil {
 		return nil, err
@@ -158,7 +173,7 @@ func Load(configFilePath string) (*Config, error) {
 
 		// Security Configuration
 		AllowedAccounts: getStringSliceEnv("ROSA_TA_ALLOWED_ACCOUNTS", nil),
-		RolesConfigPath: getEnv("ROSA_TA_ROLES_CONFIG", "configs/role_mapping.yaml"),
+		Roles:           configFile.Roles,
 		JWKCertFile:     getEnv("ROSA_TA_JWK_CERT_FILE", ""),
 		JWKCertURL:      getEnv("ROSA_TA_JWK_CERT_URL", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"),
 
@@ -169,7 +184,10 @@ func Load(configFilePath string) (*Config, error) {
 		OCMToken:        getEnv("ROSA_TA_OCM_TOKEN", ""),
 
 		// Database Configuration
-		DatabaseURL: getEnv("DATABASE_URL", ""),
+		DatabaseURL:       getEnv("DATABASE_URL", ""),
+		DBMaxOpenConns:    getPositiveIntEnv("ROSA_TA_DB_MAX_OPEN_CONNS", 10),
+		DBMaxIdleConns:    getPositiveIntEnv("ROSA_TA_DB_MAX_IDLE_CONNS", 5),
+		DBConnMaxLifetime: getPositiveDurationEnv("ROSA_TA_DB_CONN_MAX_LIFETIME", 5*time.Minute),
 
 		// Workers Configuration
 		WorkerConcurrency:      getPositiveIntEnv("ROSA_TA_WORKER_CONCURRENCY", configFile.Workers.Concurrency),

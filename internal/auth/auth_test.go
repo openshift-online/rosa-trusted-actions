@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/config"
 	"github.com/openshift-online/rosa-trusted-actions/internal/ocm"
 )
 
@@ -23,7 +24,7 @@ func setupRouter(t *testing.T, username string) *chi.Mux {
 		},
 	}
 
-	roles := []RoleMapping{
+	roles := []config.RoleMapping{
 		{ID: "SREP", AMSResource: "BackplaneOsdSrepResource"},
 		{ID: "ConfigurationAnomalyDetection", AMSResource: "BackplaneOsdCadResource"},
 		{ID: "ROSAAiAgent", AMSResource: "BackplaneOsdAiAgentResource"},

@@ -185,6 +185,13 @@ make fmt
 ./bin/rosa-trusted-actions-server --listen-addr=":3000" --log-level="debug" --log-json
 ```
 
+### Config File
+
+Use `--config-file` to pass a YAML config file with workers, actions, and role mappings.
+See [`config.yaml`](./config/config.yaml) for the full schema.
+
+When auth is enabled (the default), the `roles` key is required.
+
 ### Environment Variables (Application Config)
 
 ```bash
@@ -198,7 +205,6 @@ export ROSA_TA_S3_BUCKET="trusted-actions-bucket"
 export ROSA_TA_ALLOWED_ACCOUNTS="123456789012,987654321098"
 
 # Security Configuration
-export ROSA_TA_ROLES_CONFIG="configs/role_mapping.yaml"
 export ROSA_TA_JWK_CERT_FILE=""  # optional
 export ROSA_TA_JWK_CERT_URL="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 # OCM Client Configuration

@@ -27,7 +27,6 @@ locals {
     { name = "ROSA_TA_WORKER_POLL_INTERVAL", value = var.worker_poll_interval },
     { name = "ROSA_TA_WORKER_EXECUTION_TIMEOUT", value = var.worker_execution_timeout },
     { name = "AWS_REGION", value = var.aws_region },
-    { name = "ROSA_TA_ROLES_CONFIG", value = "/config/role_mapping.yaml" },
     { name = "DATABASE_URL", value = "/data/trusted_actions.db" },
     # Phase 2: remove DATABASE_URL from here; move to container_secrets
   ]
@@ -65,7 +64,7 @@ resource "aws_ecs_task_definition" "app" {
       image     = "public.ecr.aws/aws-cli/aws-cli:latest"
       essential = false
 
-      command = ["s3", "cp", "s3://${var.s3_bucket_name}/config/role_mapping.yaml", "/config/role_mapping.yaml", "--region", var.aws_region]
+      command = ["s3", "cp", "s3://${var.s3_bucket_name}/config/config.yaml", "/config/config.yaml", "--region", var.aws_region]
 
       mountPoints = [{ sourceVolume = "config-data", containerPath = "/config", readOnly = false }]
 
@@ -85,6 +84,7 @@ resource "aws_ecs_task_definition" "app" {
       name      = var.app_name
       image     = var.container_image
       essential = true
+      command   = ["--config-file", "/config/config.yaml"]
 
       dependsOn = [{ containerName = "config-init", condition = "SUCCESS" }]
 
