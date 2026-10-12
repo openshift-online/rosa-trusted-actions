@@ -9,6 +9,8 @@ import (
 )
 
 // ocmConnection defines the OCM connection methods used directly by Client.
+// It exists so tests can substitute a fake connection via Client.buildConn
+// instead of talking to a real OCM backend.
 // *sdkClient.Connection satisfies this interface.
 type ocmConnection interface {
 	Tokens(expiresIn ...time.Duration) (string, string, error)
@@ -81,8 +83,9 @@ func getUsernameFromJWT(token string) string {
 	return username
 }
 
-// sdkConn returns the underlying *sdkClient.Connection.
-// Used by authorization which needs SDK-specific methods not in ocmConnection.
+// sdkConn returns the underlying *sdkClient.Connection needed by authorization.
+// c.connection is replaced in tests by a fake connection.
+// Otherwise, c.connection is always a *sdkClient.Connection.
 func (c *Client) sdkConn() (*sdkClient.Connection, error) {
 	conn, ok := c.connection.(*sdkClient.Connection)
 	if !ok {
