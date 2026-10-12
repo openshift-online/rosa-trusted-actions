@@ -16,7 +16,7 @@ type authorization service
 var _ Authorization = &authorization{}
 
 func (a authorization) AccessReview(ctx context.Context, username, action, resourceType string) (allowed bool, err error) {
-	con := a.client.connection
+	con := a.client.sdkConn()
 
 	if username == a.client.connUsername {
 		selfAccessReview := con.Authorizations().V1().SelfAccessReview()
