@@ -28,15 +28,6 @@ func (m *mockConnection) Close() error {
 	return m.closeErr
 }
 
-// withMockConn returns a clientOption that injects a mock connection builder.
-func withMockConn(conn ocmConnection, err error) clientOption {
-	return func(c *Client) {
-		c.buildConn = func(*Config) (ocmConnection, error) {
-			return conn, err
-		}
-	}
-}
-
 func makeToken(t *testing.T, claims jwt.MapClaims) string {
 	t.Helper()
 	s, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte("test-secret"))
@@ -91,41 +82,91 @@ func TestGetUsernameFromJWT(t *testing.T) {
 	}
 }
 
+func TestClient_newConnection(t *testing.T) {
+	accessToken := makeAccessToken(t, jwt.MapClaims{"username": "alice"})
+
+	tests := []struct {
+		name         string
+		buildConn    func(*Config) (ocmConnection, error)
+		wantErr      string // substring; empty means success expected
+		wantUsername string // checked only on success
+	}{
+		{
+			name: "valid token extracts username",
+			buildConn: func(*Config) (ocmConnection, error) {
+				return &mockConnection{
+					tokensFn: func(...time.Duration) (string, string, error) {
+						return accessToken, "", nil
+					},
+				}, nil
+			},
+			wantUsername: "alice",
+		},
+		{
+			name: "tokens error falls back to anonymous",
+			buildConn: func(*Config) (ocmConnection, error) {
+				return &mockConnection{
+					tokensFn: func(...time.Duration) (string, string, error) {
+						return "", "", errors.New("token expired")
+					},
+				}, nil
+			},
+			wantUsername: "anonymous",
+		},
+		{
+			name: "builder returns error",
+			buildConn: func(*Config) (ocmConnection, error) {
+				return nil, errors.New("connection refused")
+			},
+			wantErr: "connection refused",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{
+				config:    &Config{BaseURL: "https://api.example.com"},
+				buildConn: tt.buildConn,
+			}
+			err := client.newConnection()
+
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatal("newConnection() expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Errorf("newConnection() error = %q, want it to contain %q", err.Error(), tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("newConnection() unexpected error: %v", err)
+			}
+
+			if client.connUsername != tt.wantUsername {
+				t.Errorf("connUsername = %q, want %q", client.connUsername, tt.wantUsername)
+			}
+		})
+	}
+}
+
 func TestNewClient(t *testing.T) {
 	accessToken := makeAccessToken(t, jwt.MapClaims{"username": "alice"})
 
 	tests := []struct {
 		name         string
 		config       Config
-		opts         []clientOption
 		wantErr      string // substring; empty means success expected
 		wantUsername string // checked only on success
 	}{
 		{
-			name:   "mock connection with valid token",
-			config: Config{BaseURL: "https://api.example.com"},
-			opts: []clientOption{withMockConn(&mockConnection{
-				tokensFn: func(...time.Duration) (string, string, error) {
-					return accessToken, "", nil
-				},
-			}, nil)},
+			name: "success with token",
+			config: Config{
+				BaseURL: "https://api.example.com",
+				Tokens:  []string{accessToken},
+			},
 			wantUsername: "alice",
-		},
-		{
-			name:   "tokens error falls back to anonymous",
-			config: Config{BaseURL: "https://api.example.com"},
-			opts: []clientOption{withMockConn(&mockConnection{
-				tokensFn: func(...time.Duration) (string, string, error) {
-					return "", "", errors.New("token expired")
-				},
-			}, nil)},
-			wantUsername: "anonymous",
-		},
-		{
-			name:    "builder returns error",
-			config:  Config{BaseURL: "https://api.example.com"},
-			opts:    []clientOption{withMockConn(nil, errors.New("connection refused"))},
-			wantErr: "connection refused",
 		},
 		{
 			name:    "no credentials",
@@ -141,7 +182,7 @@ func TestNewClient(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewClient(tt.config, tt.opts...)
+			client, err := NewClient(tt.config)
 
 			if tt.wantErr != "" {
 				if err == nil {

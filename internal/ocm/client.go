@@ -35,10 +35,7 @@ type Config struct {
 	Debug        bool
 }
 
-// clientOption configures a Client during construction.
-type clientOption func(*Client)
-
-func NewClient(config Config, opts ...clientOption) (*Client, error) {
+func NewClient(config Config) (*Client, error) {
 	logger, err := sdkClient.NewGoLoggerBuilder().
 		Debug(config.Debug).
 		Build()
@@ -49,9 +46,6 @@ func NewClient(config Config, opts ...clientOption) (*Client, error) {
 	client := &Client{
 		config: &config,
 		logger: logger,
-	}
-	for _, opt := range opts {
-		opt(client)
 	}
 	err = client.newConnection()
 	if err != nil {
