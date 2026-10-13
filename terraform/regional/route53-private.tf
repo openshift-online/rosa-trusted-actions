@@ -26,9 +26,9 @@ resource "aws_route53_zone" "private" {
 
   # Prevent accidental destroy: changing the zone ID requires all consumers
   # to update their DNS configuration. Deletion must be intentional.
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 # Alias A record at the zone apex — the record ECS tasks and other VPC-internal

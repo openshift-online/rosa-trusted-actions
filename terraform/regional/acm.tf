@@ -10,7 +10,14 @@ resource "aws_acm_certificate" "app" {
   count             = var.internal_fqdn != "" && var.public_zone_id != "" ? 1 : 0
   domain_name       = var.internal_fqdn
   validation_method = "DNS"
-  lifecycle { create_before_destroy = true }
+  lifecycle {
+    create_before_destroy = true
+
+    precondition {
+      condition     = var.internal_fqdn == local.global.internal_fqdn
+      error_message = "regional internal_fqdn must match the global workspace internal_fqdn."
+    }
+  }
   tags = { Environment = var.environment }
 }
 

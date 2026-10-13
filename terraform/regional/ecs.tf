@@ -57,7 +57,7 @@ locals {
 
 resource "aws_s3_object" "config" {
   bucket       = local.global.s3_bucket_name
-  key          = "config/config.yaml"
+  key          = "config/${var.aws_region}/config.yaml"
   content      = local.config_yaml
   content_type = "application/yaml"
 
@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "app" {
       image     = "public.ecr.aws/aws-cli/aws-cli:latest"
       essential = false
 
-      command = ["s3", "cp", "s3://${local.global.s3_bucket_name}/config/config.yaml", "/config/config.yaml", "--region", var.aws_region]
+      command = ["s3", "cp", "s3://${local.global.s3_bucket_name}/${aws_s3_object.config.key}", "/config/config.yaml", "--region", var.aws_region]
 
       mountPoints = [{ sourceVolume = "config-data", containerPath = "/config", readOnly = false }]
 

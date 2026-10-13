@@ -37,3 +37,8 @@ output "iam_role_firehose_audit_logs_arn" {
   description = "Firehose → S3 role ARN — pass to regional workspaces as var.iam_role_firehose_audit_logs_arn."
   value       = aws_iam_role.firehose_audit_logs.arn
 }
+
+output "internal_fqdn" {
+  description = "FQDN used by the global ACM validation anchor."
+  value       = var.internal_fqdn
+}

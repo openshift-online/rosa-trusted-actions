@@ -1,6 +1,6 @@
 output "internal_fqdn" {
   description = "Private FQDN for the API — resolvable only inside the associated VPC."
-  value       = var.internal_fqdn != "" ? "https://${var.internal_fqdn}" : null
+  value       = var.internal_fqdn != "" ? format("%s://%s", local.https_enabled ? "https" : "http", var.internal_fqdn) : null
 }
 
 output "alb_dns_name" {

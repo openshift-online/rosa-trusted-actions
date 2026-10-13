@@ -236,7 +236,7 @@ aws ecs list-tasks \
   --query 'taskArns'
 
 # Health check — must be run from inside the VPC (bastion, SSM session, or ECS exec)
-curl https://$(terraform output -raw internal_fqdn)/health
+curl $(terraform output -raw internal_fqdn)/health
 # {"status":"healthy","version":"..."}
 
 # Container logs
