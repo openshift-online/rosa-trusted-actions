@@ -145,6 +145,19 @@ variable "worker_execution_timeout" {
   default     = "2m"
 }
 
+variable "roles" {
+  description = "Role mappings written into config.yaml and uploaded to S3. Each entry requires 'id' (role identifier) and 'ams_resource' (AMS resource type)."
+  type = list(object({
+    id           = string
+    ams_resource = string
+  }))
+  default = [
+    { id = "SREP", ams_resource = "BackplaneOsdSrepResource" },
+    { id = "ConfigurationAnomalyDetection", ams_resource = "BackplaneOsdCadResource" },
+    { id = "ROSAAiAgent", ams_resource = "BackplaneOsdAiAgentResource" },
+  ]
+}
+
 # ── Phase 2 placeholders ──────────────────────────────────────────────────────
 
 variable "db_username" {

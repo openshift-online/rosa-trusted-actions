@@ -8,6 +8,24 @@ resource "aws_ecs_cluster" "main" {
 }
 
 locals {
+  # Rendered config.yaml content — uploaded to S3 so the init container can
+  # fetch it at task start. The 'roles' block is the only configuration that
+  # cannot be expressed as environment variables, which is why we need this
+  # file rather than relying purely on env vars.
+  config_yaml = yamlencode({
+    roles = [
+      for r in var.roles : {
+        id          = r.id
+        amsResource = r.ams_resource
+      }
+    ]
+    workers = {
+      concurrency       = var.worker_concurrency
+      poll_interval     = var.worker_poll_interval
+      execution_timeout = var.worker_execution_timeout
+    }
+  })
+
   container_environment = [
     { name = "ROSA_TA_LISTEN_ADDR", value = ":8080" },
     { name = "ROSA_TA_LOG_JSON", value = "true" },
@@ -37,6 +55,15 @@ locals {
   ]
 }
 
+resource "aws_s3_object" "config" {
+  bucket       = local.global.s3_bucket_name
+  key          = "config/config.yaml"
+  content      = local.config_yaml
+  content_type = "application/yaml"
+
+  tags = { Environment = var.environment }
+}
+
 resource "aws_ecs_task_definition" "app" {
   family             = var.app_name
   task_role_arn      = local.global.iam_role_task_arn
@@ -58,7 +85,7 @@ resource "aws_ecs_task_definition" "app" {
       image     = "public.ecr.aws/aws-cli/aws-cli:latest"
       essential = false
 
-      command = ["s3", "cp", "s3://${var.s3_bucket_name}/config/config.yaml", "/config/config.yaml", "--region", var.aws_region]
+      command = ["s3", "cp", "s3://${local.global.s3_bucket_name}/config/config.yaml", "/config/config.yaml", "--region", var.aws_region]
 
       mountPoints = [{ sourceVolume = "config-data", containerPath = "/config", readOnly = false }]
 
@@ -105,6 +132,9 @@ resource "aws_ecs_task_definition" "app" {
       memory = 512
     }
   ])
+  depends_on = [
+    aws_s3_object.config,
+  ]
 }
 
 resource "aws_ecs_service" "app" {
