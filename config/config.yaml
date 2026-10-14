@@ -17,3 +17,14 @@ roles:
 # actions:
 #   allowed_namespaces: []
 #   allowed_secrets: []
+#   # Which AWS regions actions may read from. Unlike the two above, this one
+#   # has no permissive mode: leave it out and the server uses the built-in
+#   # default below rather than allowing everything. Widen it only after
+#   # deciding the reads are safe in the added regions.
+#   aws_allowed_regions: [us-east-1]
+#   # Which AWS mutations actions may perform: "reboot", "terminate". This one
+#   # has no built-in default to fall back to — leave it out and the server
+#   # permits no writes at all, while still permitting reads. Naming an
+#   # operation here is how a deployment acquires the ability to change a
+#   # cluster's cloud infrastructure, and the list below enables nothing.
+#   aws_allowed_operations: []

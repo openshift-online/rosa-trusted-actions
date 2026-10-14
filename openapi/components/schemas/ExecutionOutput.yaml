@@ -15,4 +15,3 @@ properties:
     example: []
   _links:
     $ref: ./ExecutionOutputLinks.yaml
-
