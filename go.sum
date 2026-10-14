@@ -230,6 +230,8 @@ github.com/openshift-online/ocm-cli v1.0.17 h1:LdRjqjAJ31hEu9a+Lwk3nRPzkUTHCQMJw
 github.com/openshift-online/ocm-cli v1.0.17/go.mod h1:2Oyc1y92Rq2sPS143n2IB8T2ItGZCAb/bH/t/1psqIc=
 github.com/openshift-online/ocm-sdk-go v0.1.511 h1:TNCk8OJ46MAoRrJi/+abamMX7NPMakQPOmQSgh+3mCw=
 github.com/openshift-online/ocm-sdk-go v0.1.511/go.mod h1:ek++9SX2vT44xZTHLH9tCH6INxQW2ebQtPsb63STGPM=
+github.com/openshift/backplane-api v0.0.0-20260903072756-97a69f906884 h1:CePwwoymTo1VUlyAc8srFJF9kurhajwyqn2JeRHtKjg=
+github.com/openshift/backplane-api v0.0.0-20260903072756-97a69f906884/go.mod h1:0+HQ/Ujo/hRKpBFePq2Zitrk6sc5viJNrDtbBTx1uh0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

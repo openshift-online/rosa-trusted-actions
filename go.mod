@@ -15,6 +15,7 @@ require (
 	github.com/onsi/gomega v1.43.0
 	github.com/openshift-online/ocm-cli v1.0.17
 	github.com/openshift-online/ocm-sdk-go v0.1.511
+	github.com/openshift/backplane-api v0.0.0-20260903072756-97a69f906884
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
