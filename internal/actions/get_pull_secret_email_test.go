@@ -88,7 +88,7 @@ func TestGetPullSecretEmailAction_Execute_Success(t *testing.T) {
 	client := newPullSecretFakeClient(newPullSecret("user@example.com"))
 	action := NewGetPullSecretEmailAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestGetPullSecretEmailAction_Execute_Success(t *testing.T) {
 		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
 	}
 
-	email, ok := result.Resources[0].Object["email"].(string)
+	email, ok := result.Resources[0]["email"].(string)
 	if !ok {
 		t.Fatal("expected email to be a string")
 	}
@@ -114,7 +114,7 @@ func TestGetPullSecretEmailAction_Execute_SecretNotFound(t *testing.T) {
 	client := newPullSecretFakeClient()
 	action := NewGetPullSecretEmailAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for missing secret, got nil")
 	}
@@ -137,7 +137,7 @@ func TestGetPullSecretEmailAction_Execute_NoDockerConfigJSON(t *testing.T) {
 	client := newPullSecretFakeClient(secret)
 	action := NewGetPullSecretEmailAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for missing .dockerconfigjson, got nil")
 	}
@@ -174,7 +174,7 @@ func TestGetPullSecretEmailAction_Execute_NoCloudOpenShiftEntry(t *testing.T) {
 	client := newPullSecretFakeClient(secret)
 	action := NewGetPullSecretEmailAction()
 
-	_, err = action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err = action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for missing cloud.openshift.com entry, got nil")
 	}
@@ -211,7 +211,7 @@ func TestGetPullSecretEmailAction_Execute_EmptyEmail(t *testing.T) {
 	client := newPullSecretFakeClient(secret)
 	action := NewGetPullSecretEmailAction()
 
-	_, err = action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err = action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for empty email, got nil")
 	}
@@ -234,7 +234,7 @@ func TestGetPullSecretEmailAction_Execute_InvalidBase64(t *testing.T) {
 	client := newPullSecretFakeClient(secret)
 	action := NewGetPullSecretEmailAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for invalid base64, got nil")
 	}
@@ -259,7 +259,7 @@ func TestGetPullSecretEmailAction_Execute_InvalidJSON(t *testing.T) {
 	client := newPullSecretFakeClient(secret)
 	action := NewGetPullSecretEmailAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for invalid JSON, got nil")
 	}
@@ -279,7 +279,7 @@ func TestGetPullSecretEmailAction_Execute_NoDataField(t *testing.T) {
 	client := newPullSecretFakeClient(secret)
 	action := NewGetPullSecretEmailAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err == nil {
 		t.Fatal("expected error for missing data field, got nil")
 	}

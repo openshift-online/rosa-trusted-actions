@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
 )
 
 type AuthPolicy string
@@ -36,6 +38,14 @@ type Config struct {
 	AWSAccessKeyID     string
 	AWSSecretAccessKey string
 	AWSSessionToken    string
+	// AWSEndpointURL overrides the AWS service endpoint. Set it to point at a
+	// local AWS emulator (LocalStack) instead of real AWS. Setting it also
+	// selects the static AWS client provider over the backplane one, because a
+	// single emulator is the only thing a single fixed endpoint can mean.
+	AWSEndpointURL string
+	// AWSProxyURL is the proxy AWS traffic goes through. Empty falls back to
+	// BackplaneProxyURL, matching backplane-cli.
+	AWSProxyURL string
 
 	// Storage Configuration (environment variables)
 	S3Bucket    string
@@ -71,10 +81,21 @@ type Config struct {
 	// block a worker indefinitely.
 	WorkerExecutionTimeout time.Duration
 
-	// Backplane Configuration
+	// Backplane Configuration. BackplaneURL is shared by two distinct flows
+	// against the same service: the HMAC-signed trusted-action endpoint in
+	// internal/backplane, and backplane-cli's cloud-credential flow used by
+	// awsapi.CloudCredentialsProvider. The settings below belong only to the
+	// latter.
 	BackplaneURL          string
 	BackplaneClientID     string
 	BackplaneClientSecret string
+	// BackplaneAssumeInitialARN overrides the payer-account role the AWS
+	// assume-role chain starts from. Normally left empty: backplane-cli infers
+	// it from the OCM URL, and rejects anything that is not one of the three
+	// known SRE support roles.
+	BackplaneAssumeInitialARN string
+	// BackplaneProxyURL is the proxy used to reach the backplane API.
+	BackplaneProxyURL string
 
 	// Kubernetes Configuration (local testing only)
 	Kubeconfig string
@@ -82,6 +103,17 @@ type Config struct {
 	// Actions Configuration
 	AllowedNamespaces []string
 	AllowedSecrets    []string
+	// AWSAllowedRegions restricts which AWS regions actions may read from, the
+	// AWS counterpart of AllowedNamespaces. Unlike that one, empty denies
+	// everything rather than allowing it; left unconfigured it defaults to
+	// authorization.DefaultAllowedRegions.
+	AWSAllowedRegions []string
+	// AWSAllowedOperations names the AWS mutations actions may perform
+	// ("reboot", "terminate"). It has no default to fall back to: unset means
+	// empty, and empty refuses every write while still permitting reads. A
+	// deployment acquires the ability to change a cluster's cloud
+	// infrastructure by naming the operations, not by omitting the setting.
+	AWSAllowedOperations []string
 
 	// Development / local-testing flags
 	// EnableAuth controls whether OCM JWT validation and AMS role checks are
@@ -98,9 +130,26 @@ type configFile struct {
 	} `yaml:"workers"`
 
 	Actions struct {
-		AllowedNamespaces []string `yaml:"allowed_namespaces"`
-		AllowedSecrets    []string `yaml:"allowed_secrets"`
+		AllowedNamespaces    []string `yaml:"allowed_namespaces"`
+		AllowedSecrets       []string `yaml:"allowed_secrets"`
+		AWSAllowedRegions    []string `yaml:"aws_allowed_regions"`
+		AWSAllowedOperations []string `yaml:"aws_allowed_operations"`
 	} `yaml:"actions"`
+
+	// AWS and Backplane hold the connection settings for the two AWS client
+	// providers. They are grouped by the thing they configure rather than
+	// listed flat, so which provider a setting belongs to is visible from the
+	// file. Credentials are deliberately absent: those stay environment-only,
+	// because the config file is committed.
+	AWS struct {
+		EndpointURL string `yaml:"endpoint_url"`
+		ProxyURL    string `yaml:"proxy_url"`
+	} `yaml:"aws"`
+
+	Backplane struct {
+		AssumeInitialARN string `yaml:"assume_initial_arn"`
+		ProxyURL         string `yaml:"proxy_url"`
+	} `yaml:"backplane"`
 
 	Roles []RoleMapping `yaml:"roles"`
 }
@@ -136,6 +185,16 @@ func Load(configFilePath string) (*Config, error) {
 		return nil, err
 	}
 
+	// The default lives in the package that enforces the allowlist rather than
+	// here, so config cannot be pointed at a wider set of regions than the
+	// authorizer would permit. It is empty, so configuring nothing yields
+	// nothing — which cmd/server turns into a startup failure rather than a
+	// server that denies every AWS request.
+	awsAllowedRegions := configFile.Actions.AWSAllowedRegions
+	if len(awsAllowedRegions) == 0 {
+		awsAllowedRegions = authorization.DefaultAllowedRegions
+	}
+
 	envAuthPolicy := getEnv("ROSA_TA_AUTH", "")
 	authPolicy := EnabledAuthPolicy
 	if len(envAuthPolicy) > 0 {
@@ -166,6 +225,8 @@ func Load(configFilePath string) (*Config, error) {
 		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
 		AWSSecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
 		AWSSessionToken:    getEnv("AWS_SESSION_TOKEN", ""),
+		AWSEndpointURL:     getEnv("ROSA_TA_AWS_ENDPOINT_URL", configFile.AWS.EndpointURL),
+		AWSProxyURL:        getEnv("ROSA_TA_AWS_PROXY_URL", configFile.AWS.ProxyURL),
 
 		// Storage Configuration
 		S3Bucket:    getEnv("ROSA_TA_S3_BUCKET", ""),
@@ -199,12 +260,19 @@ func Load(configFilePath string) (*Config, error) {
 		BackplaneClientID:     getEnv("ROSA_TA_BACKPLANE_CLIENT_ID", ""),
 		BackplaneClientSecret: getEnv("ROSA_TA_BACKPLANE_CLIENT_SECRET", ""),
 
+		BackplaneAssumeInitialARN: getEnv("ROSA_TA_BACKPLANE_ASSUME_INITIAL_ARN", configFile.Backplane.AssumeInitialARN),
+		BackplaneProxyURL:         getEnv("ROSA_TA_BACKPLANE_PROXY_URL", configFile.Backplane.ProxyURL),
+
 		// Kubernetes Configuration (local testing only)
 		Kubeconfig: getEnv("ROSA_TA_KUBECONFIG", ""),
 
 		// Actions Configuration
 		AllowedNamespaces: getStringSliceEnv("ROSA_TA_ALLOWED_NAMESPACES", configFile.Actions.AllowedNamespaces),
 		AllowedSecrets:    getStringSliceEnv("ROSA_TA_ALLOWED_SECRETS", configFile.Actions.AllowedSecrets),
+		AWSAllowedRegions: getStringSliceEnv("ROSA_TA_AWS_ALLOWED_REGIONS", awsAllowedRegions),
+		// No fallback to a built-in default, unlike the regions above: there is
+		// nothing to fall back to, because the default is to permit no writes.
+		AWSAllowedOperations: getStringSliceEnv("ROSA_TA_AWS_ALLOWED_OPERATIONS", configFile.Actions.AWSAllowedOperations),
 
 		// Development flags
 		AuthPolicy: authPolicy,
