@@ -5,7 +5,7 @@ services:
     # script volume mount is unreadable and LocalStack fails to initialise.
     user: root
     # FIXME: Using a real old image so we don't need the TOKEN as we don't use pro features.
-    image: localstack/localstack:4.14.0
+    image: docker.io/localstack/localstack:4.14.0
     container_name: rosa-ta-localstack
     ports:
       - "4566:4566"
