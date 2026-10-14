@@ -6,7 +6,6 @@ import (
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -35,7 +34,7 @@ func (g *GetAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	return []backplane.RBACRule{rule}
 }
 
-func (g *GetAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
+func (g *GetAction) Execute(ctx context.Context, clients KubeClients, req KubeActionRequest) (*ActionResult, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    req.Target.Group,
 		Version:  req.Target.Version,
@@ -53,7 +52,7 @@ func (g *GetAction) Execute(ctx context.Context, clients Clients, req ActionRequ
 			return nil, fmt.Errorf("failed to list %s in %s: %w", req.Target.Resource, scopeLabel(req.Target.Namespace), err)
 		}
 		return &ActionResult{
-			Resources: list.Items,
+			Resources: resourcesFrom(list.Items...),
 			Message:   fmt.Sprintf("listed %d %s in %s", len(list.Items), req.Target.Resource, scopeLabel(req.Target.Namespace)),
 		}, nil
 	}
@@ -63,7 +62,7 @@ func (g *GetAction) Execute(ctx context.Context, clients Clients, req ActionRequ
 		return nil, fmt.Errorf("failed to get %s/%s in %s: %w", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace), err)
 	}
 	return &ActionResult{
-		Resources: []unstructured.Unstructured{*obj},
+		Resources: resourcesFrom(*obj),
 		Message:   fmt.Sprintf("got %s/%s in %s", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace)),
 	}, nil
 }

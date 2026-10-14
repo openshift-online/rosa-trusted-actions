@@ -15,9 +15,11 @@ func OutputFromActionResult(result *actions.ActionResult) (*ExecutionOutput, err
 		return nil, nil
 	}
 
-	resources := []map[string]interface{}{}
-	for _, unstructured := range result.Resources {
-		resources = append(resources, unstructured.Object)
+	// Actions that return no resources (delete) must still serialize as an
+	// empty list rather than null.
+	resources := result.Resources
+	if resources == nil {
+		resources = []map[string]interface{}{}
 	}
 
 	return &ExecutionOutput{

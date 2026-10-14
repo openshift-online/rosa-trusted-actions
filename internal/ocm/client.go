@@ -24,6 +24,7 @@ type Client struct {
 	connUsername string
 
 	Authorization Authorization
+	Clusters      Clusters
 
 	// buildConn overrides the default connection builder for testing.
 	buildConn func(*Config) (ocmConnection, error)
@@ -54,6 +55,7 @@ func NewClient(config Config) (*Client, error) {
 		return nil, fmt.Errorf("unable to build OCM connection: %s", err.Error())
 	}
 	client.Authorization = &authorization{client: client}
+	client.Clusters = &clusters{client: client}
 	return client, nil
 }
 

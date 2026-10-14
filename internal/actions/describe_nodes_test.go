@@ -201,7 +201,7 @@ func TestDescribeNodesAction_Execute_EmptyCluster(t *testing.T) {
 	client := newDescribeNodesFakeClient()
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -217,7 +217,7 @@ func TestDescribeNodesAction_Execute_SingleNode(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"))
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -225,7 +225,7 @@ func TestDescribeNodesAction_Execute_SingleNode(t *testing.T) {
 		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
 	}
 
-	node := result.Resources[0].Object
+	node := result.Resources[0]
 	if node["name"] != "node-a" {
 		t.Errorf("expected name %q, got %v", "node-a", node["name"])
 	}
@@ -272,7 +272,7 @@ func TestDescribeNodesAction_Execute_MultipleNodes(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -294,15 +294,15 @@ func TestDescribeNodesAction_Execute_PodCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	nodeMap := make(map[string]map[string]interface{})
 	for _, r := range result.Resources {
-		name, _ := r.Object["name"].(string)
-		nodeMap[name] = r.Object
+		name, _ := r["name"].(string)
+		nodeMap[name] = r
 	}
 
 	podsA, ok := nodeMap["node-a"]["pods"].([]interface{})
@@ -361,12 +361,12 @@ func TestDescribeNodesAction_Execute_PodContainerResources(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"), pod)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	pods, ok := result.Resources[0].Object["pods"].([]interface{})
+	pods, ok := result.Resources[0]["pods"].([]interface{})
 	if !ok {
 		t.Fatal("expected pods to be a slice")
 	}
@@ -457,12 +457,12 @@ func TestDescribeNodesAction_Execute_PodStatus(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"), pod)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	pods, ok := result.Resources[0].Object["pods"].([]interface{})
+	pods, ok := result.Resources[0]["pods"].([]interface{})
 	if !ok {
 		t.Fatal("expected pods to be a slice")
 	}
@@ -520,15 +520,15 @@ func TestDescribeNodesAction_Execute_EventCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	nodeMap := make(map[string]map[string]interface{})
 	for _, r := range result.Resources {
-		name, _ := r.Object["name"].(string)
-		nodeMap[name] = r.Object
+		name, _ := r["name"].(string)
+		nodeMap[name] = r
 	}
 
 	eventsA, ok := nodeMap["node-a"]["events"].([]interface{})
@@ -567,15 +567,15 @@ func TestDescribeNodesAction_Execute_LeaseCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	nodeMap := make(map[string]map[string]interface{})
 	for _, r := range result.Resources {
-		name, _ := r.Object["name"].(string)
-		nodeMap[name] = r.Object
+		name, _ := r["name"].(string)
+		nodeMap[name] = r
 	}
 
 	leaseA := nodeMap["node-a"]["lease"]
@@ -608,7 +608,7 @@ func TestDescribeNodesAction_Execute_FullCorrelation(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -618,8 +618,8 @@ func TestDescribeNodesAction_Execute_FullCorrelation(t *testing.T) {
 
 	nodeMap := make(map[string]map[string]interface{})
 	for _, r := range result.Resources {
-		name, _ := r.Object["name"].(string)
-		nodeMap[name] = r.Object
+		name, _ := r["name"].(string)
+		nodeMap[name] = r
 	}
 
 	podsA, ok := nodeMap["node-a"]["pods"].([]interface{})
@@ -676,12 +676,12 @@ func TestDescribeNodesAction_Execute_NodeTaintsAndUnschedulable(t *testing.T) {
 	client := newDescribeNodesFakeClient(node)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{})
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	out := result.Resources[0].Object
+	out := result.Resources[0]
 	taints, ok := out["taints"].([]interface{})
 	if !ok {
 		t.Fatal("expected taints to be a slice")
@@ -734,7 +734,7 @@ func TestDescribeNodesAction_Execute_SingleNodeByName(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{
 		Target: ResourceTarget{Name: "node-a"},
 	})
 	if err != nil {
@@ -747,7 +747,7 @@ func TestDescribeNodesAction_Execute_SingleNodeByName(t *testing.T) {
 		t.Errorf("expected message %q, got %q", "described node node-a", result.Message)
 	}
 
-	node := result.Resources[0].Object
+	node := result.Resources[0]
 	if node["name"] != "node-a" {
 		t.Errorf("expected name %q, got %v", "node-a", node["name"])
 	}
@@ -777,7 +777,7 @@ func TestDescribeNodesAction_Execute_SingleNodeNotFound(t *testing.T) {
 	client := newDescribeNodesFakeClient(newFullNode("node-a"))
 	action := NewDescribeNodesAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{
 		Target: ResourceTarget{Name: "nonexistent"},
 	})
 	if err == nil {
@@ -794,7 +794,7 @@ func TestDescribeNodesAction_Execute_SingleNodeFieldSelectors(t *testing.T) {
 	)
 	action := NewDescribeNodesAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{
 		Target: ResourceTarget{Name: "node-a"},
 	})
 	if err != nil {

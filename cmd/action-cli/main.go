@@ -14,6 +14,7 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
+	"github.com/openshift-online/rosa-trusted-actions/internal/awsapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 	"github.com/openshift-online/rosa-trusted-actions/internal/executor"
 )
@@ -44,6 +45,13 @@ func main() {
 		severity       string
 		alertState     string
 		silences       bool
+
+		awsRegion      string
+		awsEndpointURL string
+		awsInfraID     string
+		awsID          string
+		awsFilters     string
+		awsSince       string
 	)
 
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "debug", "log level (debug, info, warn, error)")
@@ -75,16 +83,7 @@ func main() {
 				return fmt.Errorf("--resource is required for action %q", action)
 			}
 
-			nsList := splitCSV(allowedNS)
-			if len(nsList) == 0 && namespace != "" {
-				nsList = []string{namespace}
-			}
-			secList := splitCSV(allowedSecrets)
-
 			auditor := audit.NewMockLogger(logger)
-			authz := authorization.New(logger, nsList, secList)
-			bp := backplane.NewKubeconfigProvider(logger, kubeconfig)
-			exec := executor.New(logger, authz, auditor, bp)
 
 			params := make(map[string]string)
 			if patchBody != "" {
@@ -100,32 +99,88 @@ func main() {
 				params["silences"] = "true"
 			}
 
-			result := exec.Execute(context.Background(), executor.Request{
-				CallerID:       callerID,
-				ClusterID:      clusterID,
-				ClusterVersion: clusterVersion,
-				Action:         act,
-				Target: actions.ResourceTarget{
+			// Each action's subtype decides which scope can run it, so the CLI
+			// wires up the one that claims this action and nothing else.
+			var (
+				exec   *executor.Executor
+				target actions.Target
+			)
+			if _, isAWS := act.(actions.AWSAction); isAWS {
+				// Neither allowlist is a flag. What may be read, and what may
+				// be changed, is server-side policy; a knob here would mean
+				// this CLI could exercise more than the server ever permits —
+				// so what it tests would stop matching what runs.
+				//
+				// Writes read the same environment variable the server reads,
+				// rather than a CLI-only switch, so enabling them locally
+				// means supplying the same input a deployment would.
+				awsAuthz := authorization.NewAWS(logger, authorization.AWSPolicy{
+					AllowedRegions:    authorization.DefaultAllowedRegions,
+					AllowedOperations: splitCSV(os.Getenv("ROSA_TA_AWS_ALLOWED_OPERATIONS")),
+				})
+				awsProvider := awsapi.NewStaticProvider(logger, awsapi.StaticConfig{
+					Region:      awsRegion,
+					EndpointURL: awsEndpointURL,
+					InfraID:     awsInfraID,
+				})
+				exec = executor.New(logger, auditor, executor.NewAWSScope(awsAuthz, awsProvider))
+
+				// target is left nil so the AWS scope derives it from params,
+				// the same way the server does.
+				// Only flags the caller actually set are passed on: aws-get
+				// rejects a param the resource does not accept, and sending
+				// every flag unset would make the CLI fail on resources that
+				// take no filters.
+				//
+				// --aws-region is not among them. It configures the static
+				// provider above, which is this CLI's stand-in for the region
+				// the server resolves from the cluster; the scope asks the
+				// provider for it rather than reading it from a param.
+				params["resource"] = resource
+				setIfNotEmpty(params, "id", awsID)
+				setIfNotEmpty(params, "filters", awsFilters)
+				setIfNotEmpty(params, "since", awsSince)
+			} else {
+				nsList := splitCSV(allowedNS)
+				if len(nsList) == 0 && namespace != "" {
+					nsList = []string{namespace}
+				}
+				authz := authorization.New(logger, nsList, splitCSV(allowedSecrets))
+				bp := backplane.NewKubeconfigProvider(logger, kubeconfig)
+				exec = executor.New(logger, auditor, executor.NewKubeScope(authz, bp))
+
+				target = actions.ResourceTarget{
 					Group:         group,
 					Version:       version,
 					Resource:      resource,
 					Namespace:     namespace,
 					Name:          name,
 					ClusterScoped: clusterScoped,
-				},
-				Params: params,
+				}
+			}
+
+			result := exec.Execute(context.Background(), executor.Request{
+				CallerID:       callerID,
+				ClusterID:      clusterID,
+				ClusterVersion: clusterVersion,
+				Action:         act,
+				Target:         target,
+				Params:         params,
 			})
 
 			fmt.Println()
 			fmt.Printf("Allowed:  %v\n", result.Allowed)
 			fmt.Printf("Reason:   %s\n", result.Reason)
 
-			if !result.Allowed {
-				return fmt.Errorf("denied: %s", result.Reason)
-			}
-
+			// Error first: a request the executor could not build a target for
+			// carries an error and no decision, and calling that "denied"
+			// would misreport it. A real denial carries no error.
 			if result.Error != nil {
 				return fmt.Errorf("action failed: %w", result.Error)
+			}
+
+			if !result.Allowed {
+				return fmt.Errorf("denied: %s", result.Reason)
 			}
 
 			if result.Output != nil {
@@ -133,7 +188,7 @@ func main() {
 				if len(result.Output.Resources) > 0 {
 					fmt.Printf("Resources (%d):\n", len(result.Output.Resources))
 					for _, r := range result.Output.Resources {
-						data, err := json.MarshalIndent(r.Object, "  ", "  ")
+						data, err := json.MarshalIndent(r, "  ", "  ")
 						if err != nil {
 							fmt.Printf("  (failed to marshal: %v)\n", err)
 							continue
@@ -164,6 +219,16 @@ func main() {
 	runCmd.Flags().StringVar(&severity, "severity", "", "alert severity filter: critical, warning (list-alerts)")
 	runCmd.Flags().StringVar(&alertState, "alert-state", "", "alert state: firing, pending, all (list-alerts)")
 	runCmd.Flags().BoolVar(&silences, "silences", false, "include active silences (list-alerts)")
+	runCmd.Flags().StringVar(&awsRegion, "aws-region", os.Getenv("AWS_REGION"), "AWS region the static provider serves; stands in for the cluster region the server resolves from OCM (aws-get)")
+	runCmd.Flags().StringVar(&awsEndpointURL, "aws-endpoint-url", os.Getenv("ROSA_TA_AWS_ENDPOINT_URL"), "AWS endpoint override, e.g. a local emulator (aws-get)")
+	// A flag, unlike the write allowlist, because this is not policy: it is the
+	// cluster's identity, which the server reads from OCM and this CLI has no
+	// OCM to read. It widens nothing — the ownership check still has to pass,
+	// and naming the wrong infra ID makes it fail, not pass.
+	runCmd.Flags().StringVar(&awsInfraID, "aws-infra-id", "", "cluster infrastructure ID the target instance must be tagged with; stands in for the one the server resolves from OCM (aws-reboot, aws-terminate)")
+	runCmd.Flags().StringVar(&awsID, "aws-id", "", "AWS resource ID (empty to list all) (aws-get)")
+	runCmd.Flags().StringVar(&awsFilters, "aws-filters", "", "comma-separated Name=Value API filters (aws-get)")
+	runCmd.Flags().StringVar(&awsSince, "aws-since", "", "how far back to look, as a Go duration, e.g. 48h (aws-get, cloudtrail-events)")
 
 	_ = runCmd.MarkFlagRequired("action")
 
@@ -171,6 +236,14 @@ func main() {
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
+	}
+}
+
+// setIfNotEmpty records a flag only when it was given a value, so an unset
+// flag reaches the action as an absent param rather than a blank one.
+func setIfNotEmpty(params map[string]string, name, value string) {
+	if value != "" {
+		params[name] = value
 	}
 }
 

@@ -3,8 +3,6 @@ package models
 import (
 	"testing"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 )
 
@@ -22,9 +20,9 @@ func TestOutputFromActionResult_Nil(t *testing.T) {
 func TestOutputFromActionResult_WithResources(t *testing.T) {
 	result := &actions.ActionResult{
 		Message: "ok",
-		Resources: []unstructured.Unstructured{
-			{Object: map[string]interface{}{"a": 1}},
-			{Object: map[string]interface{}{"b": 2}},
+		Resources: []map[string]interface{}{
+			{"a": 1},
+			{"b": 2},
 		},
 	}
 

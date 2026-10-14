@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -37,7 +38,7 @@ func newTestExecutor(namespaces, secrets []string, bp backplane.ClientProvider) 
 	logger := logrus.New()
 	auditor := audit.NewMockLogger(logger)
 	authz := authorization.New(logger, namespaces, secrets)
-	return New(logger, authz, auditor, bp), auditor
+	return New(logger, auditor, NewKubeScope(authz, bp)), auditor
 }
 
 func newFakeClient(objects ...runtime.Object) *dynamicfake.FakeDynamicClient {
@@ -284,13 +285,46 @@ func TestExecutor_AuditRecordFields(t *testing.T) {
 	if rec.Action != "get" {
 		t.Errorf("expected action %q, got %q", "get", rec.Action)
 	}
-	if rec.Target.Resource != "configmaps" {
-		t.Errorf("expected resource type %q, got %q", "configmaps", rec.Target.Resource)
+	target, ok := rec.Target.(actions.ResourceTarget)
+	if !ok {
+		t.Fatalf("expected a Kubernetes resource target, got %T", rec.Target)
 	}
-	if rec.Target.Namespace != "openshift-monitoring" {
-		t.Errorf("expected namespace %q, got %q", "openshift-monitoring", rec.Target.Namespace)
+	if target.Resource != "configmaps" {
+		t.Errorf("expected resource type %q, got %q", "configmaps", target.Resource)
 	}
-	if rec.Target.Name != "cluster-config" {
-		t.Errorf("expected name %q, got %q", "cluster-config", rec.Target.Name)
+	if target.Namespace != "openshift-monitoring" {
+		t.Errorf("expected namespace %q, got %q", "openshift-monitoring", target.Namespace)
+	}
+	if target.Name != "cluster-config" {
+		t.Errorf("expected name %q, got %q", "cluster-config", target.Name)
+	}
+}
+
+// A Failure carrying no cause must render and audit as an error, not panic.
+// Nothing constructs one today, but both Error and auditedCause dereferenced
+// Cause unconditionally, so the first one that did would have taken down the
+// request it was reporting on.
+func TestFailure_WithoutCause(t *testing.T) {
+	failure := &Failure{Message: "refused"}
+
+	if got := failure.Error(); got != "refused" {
+		t.Errorf("Error() = %q, want %q", got, "refused")
+	}
+	if got := auditedCause(failure); got == nil || got.Error() != "refused" {
+		t.Errorf("auditedCause() = %v, want an error reading %q", got, "refused")
+	}
+}
+
+func TestFailure_WithCause(t *testing.T) {
+	cause := errors.New("boom")
+	failure := &Failure{Message: "refused", Cause: cause}
+
+	if got := failure.Error(); got != "refused: boom" {
+		t.Errorf("Error() = %q, want %q", got, "refused: boom")
+	}
+	// The cause is what gets audited, so the record names the underlying
+	// problem rather than the layer that wrapped it.
+	if got := auditedCause(failure); got != cause {
+		t.Errorf("auditedCause() = %v, want the wrapped cause", got)
 	}
 }
