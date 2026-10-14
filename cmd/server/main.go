@@ -21,6 +21,7 @@ import (
 	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
+	"github.com/openshift-online/rosa-trusted-actions/internal/awsapi"
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
 	"github.com/openshift-online/rosa-trusted-actions/internal/catalog"
 	"github.com/openshift-online/rosa-trusted-actions/internal/config"
@@ -111,6 +112,12 @@ func runServer(cmd *cobra.Command, args []string) error {
 	var authnMiddleware auth.JWTMiddleware
 	var authzMiddleware auth.AuthorizationMiddleware
 
+	// Declared out here because the execution pipeline below needs it too: the
+	// backplane AWS provider resolves each request's cluster through OCM and
+	// hands the same connection to backplane-cli's credential flow. It stays
+	// nil when auth is disabled, which is also when that provider is not used.
+	var ocmClient *ocm.Client
+
 	switch cfg.AuthPolicy {
 	case config.EnabledAuthPolicy:
 		fallthrough
@@ -134,7 +141,6 @@ func runServer(cmd *cobra.Command, args []string) error {
 			}
 			return l
 		}
-		var ocmClient *ocm.Client
 
 		if cfg.AuthPolicy == config.EnabledAuthPolicy {
 			ocmClient, err = ocm.NewClient(ocm.Config{
@@ -182,6 +188,15 @@ func runServer(cmd *cobra.Command, args []string) error {
 			logger.Fatal("ROSA_TA_AUTH=disabled requires ROSA_TA_KUBECONFIG to be set; " +
 				"running mock auth against the real backplane is not permitted")
 		}
+
+		// The same hazard by another route: the AWS SDK's default credential
+		// chain picks up whatever ambient credentials the host or pod has, so
+		// an unauthenticated request could read a real AWS account. Require an
+		// endpoint override, which forces AWS traffic at a local emulator.
+		if cfg.AWSEndpointURL == "" {
+			logger.Fatal("ROSA_TA_AUTH=disabled requires ROSA_TA_AWS_ENDPOINT_URL to be set; " +
+				"running mock auth against real AWS is not permitted")
+		}
 	default:
 		logger.WithField("ROSA_TA_AUTH", cfg.AuthPolicy).Fatal("Unknown auth policy")
 	}
@@ -211,7 +226,72 @@ func runServer(cmd *cobra.Command, args []string) error {
 		bp = backplane.NewBackplaneProvider(logger, cfg.BackplaneURL, cfg.BackplaneClientID, cfg.BackplaneClientSecret)
 	}
 
-	actionExecutor := executor.New(logger, actionAuthorizer, actionAuditor, bp)
+	awsAuthorizer := authorization.NewAWS(logger, authorization.AWSPolicy{
+		AllowedRegions:    cfg.AWSAllowedRegions,
+		AllowedOperations: cfg.AWSAllowedOperations,
+	})
+	if len(cfg.AWSAllowedOperations) > 0 {
+		// Logged because it is the one AWS policy decision that widens what the
+		// server can do to a customer's infrastructure. A deployment that has
+		// enabled writes should be able to see that it has, from the startup
+		// log, without reading its own configuration back.
+		logger.WithField("operations", cfg.AWSAllowedOperations).
+			Warn("AWS write operations are enabled")
+	}
+
+	// Two ways to reach AWS, chosen the same way the Kubernetes path chooses
+	// between a kubeconfig and the real backplane. An endpoint override can
+	// only mean a local emulator, so it selects the single-account static
+	// provider; anything else gets the backplane provider, which resolves each
+	// request's cluster to that cluster's own AWS account.
+	var awsProvider awsapi.ClientProvider
+	if cfg.AWSEndpointURL != "" {
+		logger.WithField("endpoint", cfg.AWSEndpointURL).
+			Warn("Using the static AWS provider against an endpoint override — every cluster resolves to one account. Do not use in production.")
+		awsProvider = awsapi.NewStaticProvider(logger, awsapi.StaticConfig{
+			Region:          cfg.AWSRegion,
+			AccessKeyID:     cfg.AWSAccessKeyID,
+			SecretAccessKey: cfg.AWSSecretAccessKey,
+			SessionToken:    cfg.AWSSessionToken,
+			EndpointURL:     cfg.AWSEndpointURL,
+		})
+	} else {
+		// Without OCM there is no cluster to resolve and no token to start the
+		// assume-role chain from, so this cannot be built.
+		//
+		// Unreachable as the guards above stand: reaching here means no
+		// endpoint override, and the disabled-auth branch already refuses
+		// that, so auth is enabled and ocmClient was set. It is kept because
+		// that invariant spans two distant branches — relaxing either one
+		// would otherwise turn this into a nil dereference on the first AWS
+		// request rather than a clear failure at startup.
+		if ocmClient == nil {
+			logger.Fatal("AWS access needs either ROSA_TA_AWS_ENDPOINT_URL (a local emulator) " +
+				"or an OCM client, which requires ROSA_TA_AUTH to be enabled")
+		}
+		// Resolved here rather than inside the provider so a connection the
+		// credential flow cannot use stops the server at startup, instead of
+		// failing every AWS request once it is already serving.
+		ocmConn, err := ocmClient.Connection()
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to get the OCM connection required for AWS credentials")
+		}
+
+		awsProvider = awsapi.NewCloudCredentialsProvider(logger, awsapi.CloudCredentialsConfig{
+			URL:              cfg.BackplaneURL,
+			AssumeInitialARN: cfg.BackplaneAssumeInitialARN,
+			ProxyURL:         cfg.BackplaneProxyURL,
+			AWSProxyURL:      cfg.AWSProxyURL,
+		}, ocmClient.Clusters, ocmConn)
+	}
+
+	// One scope per execution domain; the executor dispatches each action to
+	// the scope that claims it. Every registered action must be claimed by one
+	// of these — see TestScopes_CoverEveryRegisteredAction.
+	actionExecutor := executor.New(logger, actionAuditor,
+		executor.NewKubeScope(actionAuthorizer, bp),
+		executor.NewAWSScope(awsAuthorizer, awsProvider),
+	)
 
 	// -------------------------------------------------------------------------
 	// Worker pool — dequeues pending executions and runs them in the

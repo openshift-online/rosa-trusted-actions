@@ -61,7 +61,7 @@ func (d *DescribeNodesAction) RequiredRBAC(target ResourceTarget) []backplane.RB
 	}
 }
 
-func (d *DescribeNodesAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
+func (d *DescribeNodesAction) Execute(ctx context.Context, clients KubeClients, req KubeActionRequest) (*ActionResult, error) {
 	var nodeItems []unstructured.Unstructured
 	if req.Target.Name != "" {
 		node, err := clients.Dynamic.Resource(nodesGVR).Get(ctx, req.Target.Name, metav1.GetOptions{})
@@ -107,7 +107,7 @@ func (d *DescribeNodesAction) Execute(ctx context.Context, clients Clients, req 
 	podsByNode := groupPodsByNode(pods.Items)
 	eventsByNode := groupEventsByNode(events.Items)
 
-	resources := make([]unstructured.Unstructured, 0, len(nodeItems))
+	resources := make([]map[string]interface{}, 0, len(nodeItems))
 	for _, node := range nodeItems {
 		name := node.GetName()
 		resources = append(resources, reshapeNode(node, podsByNode[name], eventsByNode[name], leaseByNode[name]))
@@ -173,7 +173,7 @@ func indexLeasesByNode(leases []unstructured.Unstructured) map[string]interface{
 }
 
 // reshapeNode correlates the four resources that back `oc describe node` into a single flat object.
-func reshapeNode(node unstructured.Unstructured, pods []interface{}, events []interface{}, lease interface{}) unstructured.Unstructured {
+func reshapeNode(node unstructured.Unstructured, pods []interface{}, events []interface{}, lease interface{}) map[string]interface{} {
 	metadata, _ := node.Object["metadata"].(map[string]interface{})
 	spec, _ := node.Object["spec"].(map[string]interface{})
 	status, _ := node.Object["status"].(map[string]interface{})
@@ -214,7 +214,7 @@ func reshapeNode(node unstructured.Unstructured, pods []interface{}, events []in
 		setIfPresent(out, "systemInfo", status["nodeInfo"])
 	}
 
-	return unstructured.Unstructured{Object: out}
+	return out
 }
 
 func extractPod(pod unstructured.Unstructured) map[string]interface{} {

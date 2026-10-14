@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 )
 
 func TestGetEnv(t *testing.T) {
@@ -312,6 +314,8 @@ func clearLoadEnv(t *testing.T) {
 		"ROSA_TA_KUBECONFIG",
 		"ROSA_TA_ALLOWED_NAMESPACES",
 		"ROSA_TA_ALLOWED_SECRETS",
+		"ROSA_TA_AWS_ALLOWED_REGIONS",
+		"ROSA_TA_AWS_ALLOWED_OPERATIONS",
 	}
 	for _, v := range vars {
 		t.Setenv(v, "")
@@ -355,6 +359,65 @@ func TestLoad_Defaults(t *testing.T) {
 	}
 	if cfg.AuthPolicy != EnabledAuthPolicy {
 		t.Errorf("AuthPolicy = %v, want %v", cfg.AuthPolicy, EnabledAuthPolicy)
+	}
+
+	// An unconfigured server must come up with the narrow allowlist, not with
+	// an empty one. Empty now denies every AWS read, so this is the difference
+	// between a default deployment that works in one region and one that
+	// cannot read AWS at all.
+	if len(cfg.AWSAllowedRegions) != 1 || cfg.AWSAllowedRegions[0] != "us-east-1" {
+		t.Errorf("AWSAllowedRegions = %v, want [us-east-1]", cfg.AWSAllowedRegions)
+	}
+
+	// And it must come up permitting no writes at all. Unlike the regions
+	// above there is no default to fall back to: a server nobody configured
+	// for writes can read a cluster's AWS account but not change it.
+	if len(cfg.AWSAllowedOperations) != 0 {
+		t.Errorf("AWSAllowedOperations = %v, want none", cfg.AWSAllowedOperations)
+	}
+}
+
+// The default is a floor, not a ceiling: a deployment that genuinely runs in
+// other regions has to be able to say so.
+func TestLoad_AWSAllowedRegionsFromEnv(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("ROSA_TA_AWS_ALLOWED_REGIONS", "eu-west-1, ap-south-1")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	want := []string{"eu-west-1", "ap-south-1"}
+	if len(cfg.AWSAllowedRegions) != len(want) {
+		t.Fatalf("AWSAllowedRegions = %v, want %v", cfg.AWSAllowedRegions, want)
+	}
+	for i := range want {
+		if cfg.AWSAllowedRegions[i] != want[i] {
+			t.Errorf("AWSAllowedRegions[%d] = %q, want %q", i, cfg.AWSAllowedRegions[i], want[i])
+		}
+	}
+}
+
+// config/config.yaml documents aws_allowed_regions as the way to widen the
+// allowlist without an environment variable, so the key in that file has to
+// match the one Load actually reads — a typo in either would leave a server
+// silently on the default while its config says otherwise.
+func TestLoad_AWSAllowedRegionsFromFile(t *testing.T) {
+	clearLoadEnv(t)
+	path := filepath.Join(t.TempDir(), "c.yaml")
+	content := "actions:\n  aws_allowed_regions: [eu-west-1]\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if len(cfg.AWSAllowedRegions) != 1 || cfg.AWSAllowedRegions[0] != "eu-west-1" {
+		t.Errorf("AWSAllowedRegions = %v, want [eu-west-1]", cfg.AWSAllowedRegions)
 	}
 }
 
@@ -430,6 +493,74 @@ func TestLoad_EnvOverrides(t *testing.T) {
 	for i := range want {
 		if cfg.AllowedNamespaces[i] != want[i] {
 			t.Errorf("AllowedNamespaces[%d] = %q, want %q", i, cfg.AllowedNamespaces[i], want[i])
+		}
+	}
+}
+
+// Enabling writes is a deliberate act, so it has to be possible — and it has
+// to be per operation, since permitting reboots is a far smaller decision
+// than permitting terminations.
+func TestLoad_AWSAllowedOperationsFromEnv(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("ROSA_TA_AWS_ALLOWED_OPERATIONS", "reboot")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if len(cfg.AWSAllowedOperations) != 1 || cfg.AWSAllowedOperations[0] != "reboot" {
+		t.Errorf("AWSAllowedOperations = %v, want [reboot]", cfg.AWSAllowedOperations)
+	}
+}
+
+// Same check as for the regions: the key documented in config/config.yaml has
+// to be the one Load reads, or a server would sit on the default while its
+// config file says writes are enabled.
+func TestLoad_AWSAllowedOperationsFromFile(t *testing.T) {
+	clearLoadEnv(t)
+	path := filepath.Join(t.TempDir(), "c.yaml")
+	content := "actions:\n  aws_allowed_operations: [reboot, terminate]\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	want := []string{"reboot", "terminate"}
+	if len(cfg.AWSAllowedOperations) != len(want) {
+		t.Fatalf("AWSAllowedOperations = %v, want %v", cfg.AWSAllowedOperations, want)
+	}
+	for i := range want {
+		if cfg.AWSAllowedOperations[i] != want[i] {
+			t.Errorf("AWSAllowedOperations[%d] = %q, want %q", i, cfg.AWSAllowedOperations[i], want[i])
+		}
+	}
+}
+
+// The configured names have to be the ones the actions actually declare. A
+// server configured with "restart" instead of "reboot" would come up looking
+// enabled and refuse every write, which is a failure mode worth a test rather
+// than a support case.
+func TestAWSAllowedOperationNamesMatchTheActions(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("ROSA_TA_AWS_ALLOWED_OPERATIONS", "reboot,terminate")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	declared := map[string]bool{
+		actions.AWSOperationReboot:    true,
+		actions.AWSOperationTerminate: true,
+	}
+	for _, operation := range cfg.AWSAllowedOperations {
+		if !declared[operation] {
+			t.Errorf("configured operation %q is not one any action declares", operation)
 		}
 	}
 }

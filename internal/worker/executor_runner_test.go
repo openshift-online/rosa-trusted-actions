@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 
 	"k8s.io/client-go/dynamic"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
@@ -57,7 +59,7 @@ func newTestRunner(namespaces []string, bp backplane.ClientProvider) *ExecutorRu
 	logger.SetOutput(io.Discard)
 	authz := authorization.New(logger, namespaces, nil)
 	auditor := audit.NewMockLogger(logger)
-	exec := executor.New(logger, authz, auditor, bp)
+	exec := executor.New(logger, auditor, executor.NewKubeScope(authz, bp))
 	return NewExecutorRunner(logger, exec, 5*time.Second)
 }
 
@@ -72,6 +74,52 @@ func testExecution(action string, params map[string]string) *models.Execution {
 		Username:      &username,
 		TargetCluster: "cluster-123",
 		Params:        &rawMsg,
+	}
+}
+
+// failingTargetScope stands in for a scope whose target derivation fails —
+// the AWS scope resolving a cluster's default region from OCM is the real
+// case. A stub rather than that scope itself, because what is under test here
+// is how the runner reports the outcome, not how the region is resolved.
+type failingTargetScope struct {
+	err error
+}
+
+func (s *failingTargetScope) Supports(actions.Action) bool { return true }
+
+func (s *failingTargetScope) DeriveTarget(context.Context, executor.Request) (actions.Target, error) {
+	return nil, s.err
+}
+
+func (s *failingTargetScope) Authorize(executor.Request) authorization.Result {
+	panic("Authorize must not be reached when the target could not be derived")
+}
+
+func (s *failingTargetScope) Run(context.Context, executor.Request) (*actions.ActionResult, error) {
+	panic("Run must not be reached when the target could not be derived")
+}
+
+// A request whose target could not be derived carries an error and no
+// authorization decision. The runner has to report that as the failure it is:
+// checking Allowed first would turn every such error into "denied: ", telling
+// the caller they were refused something they were never refused.
+func TestExecutorRunner_Run_TargetDerivationFailureIsNotReportedAsDenial(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+	exec := executor.New(logger, audit.NewMockLogger(logger),
+		&failingTargetScope{err: fmt.Errorf("failed to resolve the default AWS region")})
+	runner := NewExecutorRunner(logger, exec, 5*time.Second)
+
+	result := runner.Run(context.Background(), testExecution("get", map[string]string{"resource": "ec2-instances"}))
+
+	if result.Status != "failed" {
+		t.Errorf("expected status %q, got %q", "failed", result.Status)
+	}
+	if result.Reason != "failed to resolve the default AWS region" {
+		t.Errorf("expected the underlying failure to be reported, got %q", result.Reason)
+	}
+	if strings.HasPrefix(result.Reason, "denied:") {
+		t.Errorf("expected a failure, not a denial, got %q", result.Reason)
 	}
 }
 
@@ -203,7 +251,7 @@ func TestExecutorRunner_Run_RespectsExecutionTimeout(t *testing.T) {
 	logger.SetOutput(io.Discard)
 	authz := authorization.New(logger, []string{"openshift-monitoring"}, nil)
 	auditor := audit.NewMockLogger(logger)
-	exec := executor.New(logger, authz, auditor, &slowClientProvider{})
+	exec := executor.New(logger, auditor, executor.NewKubeScope(authz, &slowClientProvider{}))
 	runner := NewExecutorRunner(logger, exec, 20*time.Millisecond)
 
 	e := testExecution("get", map[string]string{

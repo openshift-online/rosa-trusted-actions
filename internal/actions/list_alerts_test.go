@@ -102,7 +102,7 @@ func alertmanagerSilencesResponse(silences ...map[string]interface{}) []interfac
 
 func extractAlertCounts(t *testing.T, result *ActionResult) ([]interface{}, []interface{}) {
 	t.Helper()
-	alerts, ok := result.Resources[0].Object["alerts"].(map[string]interface{})
+	alerts, ok := result.Resources[0]["alerts"].(map[string]interface{})
 	if !ok {
 		t.Fatal("expected alerts to be a map")
 	}
@@ -150,7 +150,7 @@ func TestListAlertsAction_Execute_NoPodExecutor(t *testing.T) {
 	client := newAlertsFakeClient(newPrometheusPod())
 	action := NewListAlertsAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 	})
 	if err == nil {
@@ -163,7 +163,7 @@ func TestListAlertsAction_Execute_InvalidSeverity(t *testing.T) {
 	executor := &fakePodExecutor{}
 	action := NewListAlertsAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{"severity": "info"},
 	})
@@ -180,7 +180,7 @@ func TestListAlertsAction_Execute_InvalidState(t *testing.T) {
 	executor := &fakePodExecutor{}
 	action := NewListAlertsAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{"state": "bogus"},
 	})
@@ -197,7 +197,7 @@ func TestListAlertsAction_Execute_NoPrometheusPod(t *testing.T) {
 	executor := &fakePodExecutor{}
 	action := NewListAlertsAction()
 
-	_, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	_, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 	})
 	if err == nil {
@@ -215,7 +215,7 @@ func TestListAlertsAction_Execute_FiringAlerts(t *testing.T) {
 
 	executor := &fakePodExecutor{responses: [][]byte{promResp}}
 	action := NewListAlertsAction()
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{},
 	})
@@ -227,7 +227,7 @@ func TestListAlertsAction_Execute_FiringAlerts(t *testing.T) {
 		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
 	}
 
-	alerts, ok := result.Resources[0].Object["alerts"].(map[string]interface{})
+	alerts, ok := result.Resources[0]["alerts"].(map[string]interface{})
 	if !ok {
 		t.Fatal("expected alerts to be a map")
 	}
@@ -260,7 +260,7 @@ func TestListAlertsAction_Execute_SeverityFilter(t *testing.T) {
 
 	// Critical only
 	executor := &fakePodExecutor{responses: [][]byte{promResp}}
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{"severity": "critical"},
 	})
@@ -278,7 +278,7 @@ func TestListAlertsAction_Execute_SeverityFilter(t *testing.T) {
 
 	// Warning only
 	executor = &fakePodExecutor{responses: [][]byte{promResp}}
-	result, err = action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err = action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{"severity": "warning"},
 	})
@@ -314,7 +314,7 @@ func TestListAlertsAction_Execute_AlertFields(t *testing.T) {
 
 	executor := &fakePodExecutor{responses: [][]byte{promResp}}
 	action := NewListAlertsAction()
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{},
 	})
@@ -375,7 +375,7 @@ func TestListAlertsAction_Execute_WithSilences(t *testing.T) {
 
 	executor := &fakePodExecutor{responses: [][]byte{promResp, silencesResp}}
 	action := NewListAlertsAction()
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{"silences": "true"},
 	})
@@ -383,7 +383,7 @@ func TestListAlertsAction_Execute_WithSilences(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	silences, ok := result.Resources[0].Object["silences"].([]interface{})
+	silences, ok := result.Resources[0]["silences"].([]interface{})
 	if !ok {
 		t.Fatal("expected silences to be a slice")
 	}
@@ -413,7 +413,7 @@ func TestListAlertsAction_Execute_EmptyAlerts(t *testing.T) {
 
 	executor := &fakePodExecutor{responses: [][]byte{promResp}}
 	action := NewListAlertsAction()
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{Namespace: "openshift-monitoring"},
 		Params: map[string]string{},
 	})
@@ -440,7 +440,7 @@ func TestListAlertsAction_Execute_DefaultNamespace(t *testing.T) {
 
 	executor := &fakePodExecutor{responses: [][]byte{promResp}}
 	action := NewListAlertsAction()
-	result, err := action.Execute(context.Background(), Clients{Dynamic: client, PodExecutor: executor}, ActionRequest{
+	result, err := action.Execute(context.Background(), KubeClients{Dynamic: client, PodExecutor: executor}, KubeActionRequest{
 		Target: ResourceTarget{},
 		Params: map[string]string{},
 	})
