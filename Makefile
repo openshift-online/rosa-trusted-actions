@@ -177,6 +177,16 @@ test-integration: ## Run integration tests (starts server, runs tests, stops ser
 	@pkill -f rosa-trusted-actions-server || true
 	@echo "Integration tests completed"
 
+.PHONY: test-actions
+test-actions: ## Run action integration tests against the mock backplane (requires make mock-backplane)
+	MOCK_BACKPLANE_URL=http://localhost:$(MOCK_BACKPLANE_PORT) \
+		go test -v -tags=integration -count=1 ./tests/actions/...
+
+.PHONY: test-actions-proxy
+test-actions-proxy: ## Run action integration tests against the proxy backplane (requires make proxy-backplane + KUBECONFIG)
+	PROXY_BACKPLANE_URL=http://localhost:$(PROXY_BACKPLANE_PORT) \
+		go test -v -tags=integration -count=1 -run Proxy ./tests/actions/...
+
 # Mock backplane server
 .PHONY: mock-backplane
 mock-backplane: ## Start the backplane mock server (imposter Go engine)
