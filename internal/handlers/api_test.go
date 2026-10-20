@@ -63,17 +63,21 @@ func TestAPIHandler_Catalog(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var catalog openapi.TrustedActionCatalog
-	if err := json.Unmarshal(w.Body.Bytes(), &catalog); err != nil {
+	var body openapi.TrustedActionCatalog
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if catalog.Total != 6 {
-		t.Errorf("Expected 6 actions, got %d", catalog.Total)
+	// Derived from the catalog rather than hardcoded: the endpoint's job is to
+	// expose every registered action, so adding one should not fail this test.
+	want := len(catalog.New().All())
+
+	if body.Total != want {
+		t.Errorf("Expected %d actions, got %d", want, body.Total)
 	}
 
-	if len(catalog.Items) != 6 {
-		t.Errorf("Expected 6 items, got %d", len(catalog.Items))
+	if len(body.Items) != want {
+		t.Errorf("Expected %d items, got %d", want, len(body.Items))
 	}
 }
 

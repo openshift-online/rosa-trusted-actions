@@ -1,8 +1,10 @@
 package catalog
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 )
 
@@ -203,5 +205,126 @@ func TestActionDefinition_ToOpenAPIDetail_OptionalMetadata(t *testing.T) {
 	}
 	if zta.Authorization != nil {
 		t.Errorf("zero Authorization = %+v, want nil", zta.Authorization)
+	}
+}
+
+// TestCatalog_CoversEveryRegisteredAction guards the other end of the pipeline
+// from TestScopes_CoverEveryRegisteredAction: the catalog is what the API
+// exposes and what CreateExecution validates against, so an action registered
+// in internal/actions but missing here is simply unreachable over HTTP, with
+// nothing to indicate why.
+func TestCatalog_CoversEveryRegisteredAction(t *testing.T) {
+	c := New()
+
+	names := actions.GetActionsNames()
+	if len(names) == 0 {
+		t.Fatal("no actions registered")
+	}
+
+	for _, name := range names {
+		if _, ok := c.Get(name); !ok {
+			t.Errorf("action %q is registered but absent from the catalog", name)
+		}
+	}
+}
+
+// The catalog is the only place a caller can learn which AWS resources exist,
+// so its list must be the action's list. Deriving it is what keeps the two in
+// step; this fails if someone writes the names out by hand again.
+func TestCatalog_AWSGetListsEveryResource(t *testing.T) {
+	def, ok := New().Get("aws-get")
+	if !ok {
+		t.Fatal("aws-get is absent from the catalog")
+	}
+
+	var description string
+	for _, param := range def.Params {
+		if param.Name == "resource" {
+			description = param.Description
+		}
+	}
+	if description == "" {
+		t.Fatal("aws-get has no resource param")
+	}
+
+	for _, name := range actions.AWSResourceNames() {
+		if !strings.Contains(description, name) {
+			t.Errorf("resource %q is readable but not named in the catalog: %q", name, description)
+		}
+	}
+}
+
+// And the reverse: a catalog entry with no implementation is accepted by the
+// API and then fails in the worker, long after the caller got a 202.
+func TestCatalog_EveryEntryHasAnImplementation(t *testing.T) {
+	for _, def := range New().All() {
+		if actions.CreateAction(def.Name) == nil {
+			t.Errorf("catalog action %q has no registered implementation", def.Name)
+		}
+	}
+}
+
+// The write actions have to be declared as writes. Type is what the API tells
+// callers, and an AWS mutation listed as a Read would misdescribe the most
+// consequential thing about it.
+func TestCatalog_AWSWritesAreTypedAsWrites(t *testing.T) {
+	c := New()
+
+	for _, name := range []string{"aws-reboot", "aws-terminate"} {
+		def, ok := c.Get(name)
+		if !ok {
+			t.Fatalf("Get(%q) not found in the catalog", name)
+		}
+		if def.Type != openapi.Write {
+			t.Errorf("%s Type = %v, want Write", name, def.Type)
+		}
+		if def.Scope != openapi.AwsApi {
+			t.Errorf("%s Scope = %v, want AwsApi", name, def.Scope)
+		}
+		// The instance id is the whole target; without it there is nothing to
+		// act on, and a write that defaulted to "all of them" would be a
+		// catastrophe rather than a convenience.
+		var id *ParamDefinition
+		for i := range def.Params {
+			if def.Params[i].Name == "id" {
+				id = &def.Params[i]
+			}
+		}
+		if id == nil {
+			t.Fatalf("%s has no id param", name)
+		}
+		if !id.Required {
+			t.Errorf("%s id param is optional, want required", name)
+		}
+		// No resource param: the action fixes what it acts on.
+		for _, param := range def.Params {
+			if param.Name == "resource" {
+				t.Errorf("%s exposes a resource param, but a write fixes its own resource", name)
+			}
+		}
+	}
+}
+
+// Terminating an instance cannot be undone, so it is reachable by fewer
+// callers than everything else. This is the one place that distinction is
+// recorded, which makes it the one place it can be lost.
+func TestCatalog_TerminateIsRestrictedToSREP(t *testing.T) {
+	c := New()
+
+	def, ok := c.Get("aws-terminate")
+	if !ok {
+		t.Fatal("aws-terminate not found in the catalog")
+	}
+	if len(def.AllowedRoles) != 1 || def.AllowedRoles[0] != "SREP" {
+		t.Errorf("aws-terminate AllowedRoles = %v, want [SREP]", def.AllowedRoles)
+	}
+
+	// Reboot is reversible and stays available to the automated callers.
+	reboot, ok := c.Get("aws-reboot")
+	if !ok {
+		t.Fatal("aws-reboot not found in the catalog")
+	}
+	if len(reboot.AllowedRoles) <= len(def.AllowedRoles) {
+		t.Errorf("aws-reboot AllowedRoles = %v, want it to be broader than terminate's", reboot.AllowedRoles)
 	}
 }
