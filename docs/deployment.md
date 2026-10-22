@@ -7,7 +7,7 @@ Infrastructure is split into two Terraform roots that must be applied in order:
 | Root         | Path                  | Scope                                                                                                      | Apply cadence    |
 |--------------|-----------------------|------------------------------------------------------------------------------------------------------------|------------------|
 | **global**   | `terraform/global/`   | Account-wide: S3, IAM, Secrets Manager, ACM validation CNAME                                               | Once per account |
-| **regional** | `terraform/regional/` | One deployment per AWS region: VPC, ALB, ECS, EC2, EBS, CloudWatch, Route 53 PHZ, regional ACM certificate (Phase 2: Aurora, no EC2/EBS) | Once per region  |
+| **regional** | `terraform/regional/` | One deployment per AWS region: VPC, ALB, ECS, Aurora, CloudWatch, Route 53 PHZ, regional ACM certificate | Once per region  |
 
 The regional root reads IAM ARNs, the S3 bucket name, and the Secrets Manager
 ARN directly from the global workspace's Terraform state via
@@ -15,11 +15,12 @@ ARN directly from the global workspace's Terraform state via
 
 See [docs/networking.md](networking.md) for the DNS and TLS architecture.
 
-> **Phase 2 in progress.** The EC2/EBS/SQLite parts of the regional root are
-> being replaced by Aurora PostgreSQL on Fargate. See
-> [docs/aurora-migration.md](aurora-migration.md) for the decisions and the
-> change sequence. This page describes the deployment as it stands today and is
-> updated as each change lands.
+> **Not yet deployed.** The regional root has never been applied in any
+> environment. The EC2, EBS and SQLite resources still present in the
+> configuration are being replaced by Aurora PostgreSQL on Fargate before the
+> first apply — see [docs/database-and-compute.md](database-and-compute.md) for
+> the decisions and the build sequence. Sections of this page that describe the
+> EC2 host are stale until that lands.
 
 ---
 

@@ -1,22 +1,27 @@
-# Aurora PostgreSQL Migration
+# Database and Compute
 
-Phase 1 of the ECS deployment runs a single task backed by SQLite on an EBS
-volume. That design pins the task to one availability zone, caps the service at
-`desired_count = 1`, and has no managed backups. Phase 2 replaces it with Aurora
-PostgreSQL on Fargate.
+How the ROSA Trusted Actions service stores its data and where it runs: Aurora
+PostgreSQL behind an ECS service on Fargate.
 
 Tracked by [ROSAENG-67617](https://redhat.atlassian.net/browse/ROSAENG-67617)
 under epic [ROSAENG-59927](https://redhat.atlassian.net/browse/ROSAENG-59927).
-The application-side work (`internal/store/postgres.go`, Postgres migrations)
-landed under [ROSAENG-67173](https://redhat.atlassian.net/browse/ROSAENG-67173)
-and is already merged.
+The application-side store work (`internal/store/postgres.go`, Postgres
+migrations) landed under
+[ROSAENG-67173](https://redhat.atlassian.net/browse/ROSAENG-67173).
+
+> **This is a greenfield build, not a migration.** The deployment was originally
+> designed in two phases — SQLite on an EBS volume first, Aurora second — but
+> Phase 1 was never deployed. The regional Terraform root has never been
+> applied in any environment, so the EBS, EC2 and SQLite resources exist only
+> as HCL. They are deleted as part of writing the target state. There is no
+> volume to drain, no host to retire, and no running service to cut over.
 
 ---
 
 ## Table of Contents
 
 1. [Decisions](#decisions)
-2. [Implementation Sequence](#implementation-sequence)
+2. [Build Sequence](#build-sequence)
 3. [Known Next Steps](#known-next-steps)
 
 ---
@@ -57,19 +62,19 @@ password and stores it in a Secrets Manager secret it owns, named
 `rds!cluster-<uuid>-<suffix>`, holding JSON `{"username": ..., "password": ...}`.
 No password appears in Terraform configuration or state.
 
-The application takes a single `DATABASE_URL` today
+The application takes a single `DATABASE_URL`
 (`internal/config/config.go`, `cmd/server/main.go`), so the DSN has to be
 assembled somewhere. It is assembled **in the application**:
 
 | Source             | Variables                                                                  |
 |--------------------|----------------------------------------------------------------------------|
-| `environment`      | `ROSA_TA_DB_HOST`, `ROSA_TA_DB_PORT`, `ROSA_TA_DB_NAME`, `ROSA_TA_DB_USER`, `ROSA_TA_DB_SSLMODE` |
+| `environment`      | `ROSA_TA_DB_HOST`, `ROSA_TA_DB_PORT`, `ROSA_TA_DB_NAME`, `ROSA_TA_DB_USER`, `ROSA_TA_DB_SSLMODE`, `ROSA_TA_DB_SSLROOTCERT` |
 | `secrets`          | `ROSA_TA_DB_PASSWORD` from `"<master_user_secret_arn>:password::"`           |
 
 `config.go` builds the DSN from these when `DATABASE_URL` is unset, using
-`url.UserPassword()` rather than string concatenation — RDS generates 28-character
-passwords containing punctuation, and a raw `%` or `:` in a hand-built URL
-corrupts the DSN silently.
+`url.UserPassword()` rather than string concatenation — RDS generates
+28-character passwords containing punctuation, and a raw `%` or `:` in a
+hand-built URL corrupts the DSN silently.
 
 Two alternatives were rejected:
 
@@ -91,33 +96,31 @@ re-read. Running tasks therefore hold a dead password, and because
 `ROSA_TA_DB_CONN_MAX_LIFETIME` defaults to 5 minutes the pool recycles and fails
 to reconnect within minutes of every rotation.
 
-An EventBridge rule on the Secrets Manager rotation event forces a new
+Nothing recovers on its own. `/health` (`cmd/server/main.go`) is a static 200
+that never touches the database, so after a rotation both tasks stay healthy to
+the ALB while every request reaching the store fails, and ECS does not replace
+them. Recovery is a human running
+`aws ecs update-service --force-new-deployment`.
+
+The fix is an EventBridge rule on the rotation event driving a forced
 deployment of the ECS service. At `desired_count = 2` that is a rolling restart
-with no downtime. The rotation window is set to a quiet hour.
+with no downtime.
 
 This needs more than a rule. EventBridge has **no native "update ECS service"
-target** — ECS targets run tasks, they do not update services — so a small
-handler (most likely a Lambda calling `ecs:UpdateService` with
-`forceNewDeployment`) sits between the two. Two further details are unconfirmed:
-the exact `detail-type` of the rotation event for an RDS-*managed* master
-secret, and whether the rotation schedule on an RDS-owned secret can be managed
-from Terraform without fighting RDS over ownership. Because of that uncertainty
-the handler is its own ticket rather than part of the cutover.
-
-Nothing recovers on its own in the meantime. `/health` (`cmd/server/main.go`)
-is a static 200 that never touches the database, so after a rotation both tasks
-stay healthy to the ALB while every request reaching the store fails, and ECS
-does not replace them. Recovery is a human running
-`aws ecs update-service --force-new-deployment`.
+target** — ECS targets run tasks, they do not update services — so a handler
+(most likely a Lambda calling `ecs:UpdateService` with `forceNewDeployment`)
+sits between the two. Two further details are unconfirmed: the exact
+`detail-type` of the rotation event for an RDS-*managed* master secret, and
+whether the rotation schedule on an RDS-owned secret can be managed from
+Terraform without fighting RDS over ownership. Because of that uncertainty the
+handler is tracked separately and sequenced to start as soon as the cluster
+exists, so it lands at or near the first apply.
 
 Stretching the rotation schedule to a long interval as a bridge was considered
 and rejected. It is managed rotation in name only, it leaves a scheduled outage
 armed behind a config value that someone will one day tidy up, and it provides
-no feedback that anything is outstanding. Instead the handler is sequenced to
-start as soon as the cluster exists, so it lands at or near the cutover, and
-staging simply absorbs a recoverable blip if a rotation beats it. That trade is
-only acceptable because staging's database is disposable — see the production
-gate below.
+no feedback that anything is outstanding. Staging simply absorbs a recoverable
+blip if a rotation beats the handler.
 
 ### The rotation handler gates production
 
@@ -148,31 +151,31 @@ secret in the account. If the account grows other clusters, tighten it with a
 
 No DSN secret of our own is created — the task reads only the RDS-owned secret.
 
-### EC2 bridge networking becomes Fargate awsvpc
+### Fargate, not EC2
 
-`desired_count = 2` is impossible while the task is pinned to an AZ by an EBS
-volume attached to a single EC2 host. The cutover moves the task definition to
-`network_mode = "awsvpc"` with `launch_type = "FARGATE"`, switches the ALB
-target group to `target_type = "ip"`, and deletes the host.
+The original design put the task on an EC2 host in `bridge` network mode, with
+an EBS volume attached for the SQLite file. That pinned the task to one
+availability zone and capped the service at `desired_count = 1`. With Aurora
+there is no local state, so there is no reason to manage a host.
 
 - **Task sizing**: Fargate requires task-level `cpu` and `memory` from a fixed
   table of valid pairings. `1024` / `2048` is the smallest pairing that fits the
   existing 768 cpu / 768 MB of container reservations with headroom for the
   Postgres connection pool. Exposed as `task_cpu` / `task_memory`.
-- **Deployment**: `minimum_healthy_percent` moves from `0` to `100` and
-  `maximum_percent` from `100` to `200`. The current values mean every deploy is
-  a full outage — correct for one task on one host, wrong at `desired_count = 2`.
+- **Deployment**: `deployment_minimum_healthy_percent = 100` and
+  `deployment_maximum_percent = 200`. The Phase 1 values (`0` / `100`) meant
+  every deploy was a full outage — tolerable for one task on one host, wrong at
+  `desired_count = 2`.
 - **Grace period**: `health_check_grace_period_seconds = 60`, because the task
   runs database migrations before it serves `/health`.
-- **Shell access**: `enable_execute_command = true`. With the EC2 host gone,
-  SSM session access to the box goes with it, and ECS Exec is the only remaining
-  way to get a shell next to the database.
+- **Shell access**: `enable_execute_command = true`. With no EC2 host there is
+  no SSM session into a box, and ECS Exec is the only way to get a shell next to
+  the database.
 - **`config-init` is unaffected.** Fargate supports multi-container tasks,
-  shared volumes, and `dependsOn: SUCCESS` on a non-essential container, and the
-  NAT egress that lets the EC2 host pull from quay.io works identically for
-  `public.ecr.aws`.
-- **The ALB health check is unchanged.** `/health` on port 8080 works against
-  task ENIs exactly as it does against instances.
+  shared volumes, and `dependsOn: SUCCESS` on a non-essential container, and NAT
+  egress works identically for `public.ecr.aws` as for quay.io.
+- **The ALB target group uses `target_type = "ip"`.** The `/health` check on
+  port 8080 works against task ENIs exactly as it would against instances.
 
 ### Concurrent migrations are already safe
 
@@ -180,46 +183,54 @@ target group to `target_type = "ip"`, and deletes the host.
 loop for the Postgres dialect, so two tasks booting simultaneously serialise.
 `desired_count = 2` needs no further application work.
 
-### No data migration
+### TLS is verified end to end
 
-Staging execution history and audit entries are disposable, and the S3
-audit-log path is the record of truth for anything that matters. The EBS volume
-is deleted, not drained. If this is ever repeated in an environment with data
-worth keeping, snapshot the volume first and treat the migration as its own
-ticket.
+The DSN uses `sslmode=verify-full`, which checks that the Aurora server
+certificate is signed by a trusted CA and that the hostname matches. The
+`Containerfile` ships the AWS global RDS trust bundle
+(`https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem`) and
+`ROSA_TA_DB_SSLROOTCERT` points the DSN at it.
 
-### `sslmode=require` now, `verify-full` later
+`sslmode=require` — encrypt but do not verify — was the original plan, on the
+grounds that adding the CA bundle mid-cutover was extra risk. With nothing
+deployed there is no cutover and no reason to ship the weaker setting first.
 
-`require` encrypts the connection but does not verify the server certificate.
-`verify-full` needs the RDS CA bundle present in the container image, which the
-`Containerfile` does not ship today. The connection never leaves the VPC and the
-Aurora security group admits only the ECS task security group, so the exposure
-is an attacker already inside the private subnets. Tracked as its own story.
+AWS rotates these CAs on a published schedule, so the bundle is fetched at build
+time rather than committed, and the renewal path is a rebuild.
 
 ---
 
-## Implementation Sequence
+## Build Sequence
 
-Three pull requests plus a trailing cleanup, each applied and reviewed on its
-own HCP Terraform plan. One PR with three commits would collapse into a single
-plan and a single apply, which defeats the point: a failed apply would leave the
-deployment with neither a working EBS host nor a working Fargate task.
+| # | Change                                          | Scope                                | Blocked by |
+|---|-------------------------------------------------|--------------------------------------|------------|
+| 1 | Application composes a verifying DSN            | `internal/config/`, `Containerfile`  | —          |
+| 2 | Aurora cluster + IAM grant                      | regional + global                    | —          |
+| 3 | Fargate service; delete EC2/EBS configuration   | regional + global                    | 1, 2       |
+| 4 | Rotation → forced ECS redeployment              | regional                             | 2          |
 
-| # | Change                                | Root                  | Blocked by |
-|---|---------------------------------------|-----------------------|------------|
-| 1 | Aurora cluster + IAM grant            | regional + global     | —          |
-| 2 | Application composes the DSN          | `internal/config/`    | —          |
-| 3 | Fargate cutover                       | regional              | 1, 2       |
-| 4 | Regional EC2/EBS teardown             | regional              | 3          |
-| 5 | Global instance-profile teardown      | global                | 4          |
-| 6 | Rotation → forced ECS redeployment    | regional              | 1          |
-| 7 | `sslmode=verify-full`                 | `Containerfile` + regional | 3     |
+Changes 2 and 3 are commits in a single PR and apply together. Applying 2 alone,
+with `ebs.tf` and `ec2.tf` still present, would create an EC2 host and a 20 GB
+EBS volume on the first apply — which 3 would immediately destroy.
 
-Changes 1–5 are sub-tasks of ROSAENG-67617. Changes 6 and 7 are sibling stories
-under epic ROSAENG-59927 — both are follow-ups to the cutover rather than part
-of it.
+Change 1 must merge and produce an image before the first apply, because
+`container_image` is pinned by digest in the HCP workspace variables.
 
-### 1 — Aurora cluster and IAM grant
+Change 4 is a sibling story under the epic rather than part of this one, and
+runs in parallel with 1 and 3.
+
+### 1 — Application composes a verifying DSN
+
+`internal/config/config.go` reads `ROSA_TA_DB_HOST`, `ROSA_TA_DB_PORT`,
+`ROSA_TA_DB_NAME`, `ROSA_TA_DB_USER`, `ROSA_TA_DB_PASSWORD`,
+`ROSA_TA_DB_SSLMODE` and `ROSA_TA_DB_SSLROOTCERT`, and composes a `postgres://`
+DSN with `url.UserPassword()` when `DATABASE_URL` is unset. `DATABASE_URL`, when
+set, continues to win — local development, `compose.postgres.yml`, and the
+existing test setup all depend on it.
+
+The `Containerfile` fetches the RDS CA bundle to a documented path.
+
+### 2 — Aurora cluster and IAM grant
 
 New `terraform/regional/rds.tf`:
 
@@ -241,24 +252,7 @@ The security groups already exist: `aws_security_group.aurora` and
 `aws_security_group.ecs_task` in `terraform/regional/security_groups.tf`, with
 ingress on 5432 from the task security group already wired.
 
-Aurora comes up idle. The application is untouched and still on SQLite, so this
-change is additive and independently applyable.
-
-### 2 — Application composes the DSN
-
-`internal/config/config.go` — read `ROSA_TA_DB_HOST`, `ROSA_TA_DB_PORT`,
-`ROSA_TA_DB_NAME`, `ROSA_TA_DB_USER`, `ROSA_TA_DB_PASSWORD`,
-`ROSA_TA_DB_SSLMODE`, and compose a `postgres://` DSN with `url.UserPassword()`
-when `DATABASE_URL` is unset. `DATABASE_URL`, when set, continues to win —
-local development and the existing test setup depend on it.
-
-Unit tests cover the composed DSN, precedence over `DATABASE_URL`, and
-percent-escaping of a password containing punctuation.
-
-This blocks change 3, not change 1 — Aurora can be provisioned before the
-application knows how to reach it; what it cannot precede is the cutover.
-
-### 3 — Fargate cutover
+### 3 — Fargate service, EC2/EBS configuration deleted
 
 `terraform/regional/ecs.tf`:
 
@@ -266,23 +260,29 @@ application knows how to reach it; what it cannot precede is the cutover.
   task-level `cpu` / `memory` from `var.task_cpu` / `var.task_memory`.
 - `network_configuration` on the service referencing
   `aws_security_group.ecs_task` and both private subnets.
-- `launch_type = "FARGATE"`, `desired_count = 2`,
-  `deployment_minimum_healthy_percent = 100`,
-  `deployment_maximum_percent = 200`,
-  `health_check_grace_period_seconds = 60`, `enable_execute_command = true`.
-  Remove `ordered_placement_strategy` — it is not valid for Fargate.
+- `launch_type = "FARGATE"`, `desired_count = 2`, deployment percentages
+  100/200, 60s health-check grace, `enable_execute_command = true`. Remove
+  `ordered_placement_strategy` — Fargate rejects it.
 - Remove the `sqlite-data` volume and its `/data` mount point.
-- Remove `DATABASE_URL` from `container_environment`; add the `ROSA_TA_DB_*`
-  entries to `container_environment` and `ROSA_TA_DB_PASSWORD` to
-  `container_secrets`.
+- Replace `DATABASE_URL` with the `ROSA_TA_DB_*` environment entries, and add
+  `ROSA_TA_DB_PASSWORD` to `container_secrets`.
 
 `terraform/regional/alb.tf` — `target_type = "ip"`.
 
-Leave the rotation schedule at its default. Change 6 handles rotation and runs
-in parallel with this one; if a rotation lands first, staging is recovered with
-a manual forced deployment.
+Deleted from `terraform/regional/`: `ebs.tf`, `ec2.tf`,
+`templates/userdata.sh.tpl`, `aws_security_group.ec2` and its two rules,
+`var.instance_type`, `local.private_subnet_a_az`.
 
-### 6 — Rotation triggers a forced ECS redeployment
+Deleted from `terraform/global/`: `aws_iam_role.ecs_instance`, its two policy
+attachments, `aws_iam_instance_profile.ecs_instance`,
+`data.aws_iam_policy_document.ec2_assume`, and the `iam_instance_profile_name`
+output. These land in the same commit as the regional deletions, so the output
+and the reference to it disappear together and the two roots cannot be out of
+step.
+
+Leave the rotation schedule at its default.
+
+### 4 — Rotation triggers a forced ECS redeployment
 
 An EventBridge rule on the rotation event and a handler that forces a new
 deployment. Carries real investigation: the event's `detail-type` for
@@ -291,36 +291,9 @@ RDS-owned secret, whether a Lambda is avoidable in a repository that has none,
 and whether the event reliably follows the password change rather than
 preceding it.
 
-**Blocked by change 1, not change 3.** The research needs a cluster whose
-secret can be rotated on demand, not Fargate — so this runs in parallel with
-changes 2 and 3 and should land at or near the cutover. Only the final
-no-downtime verification needs `desired_count = 2`.
-
-A sibling story under the epic, not a sub-item of ROSAENG-67617.
-
-### 4 — Regional EC2/EBS teardown
-
-Delete `ebs.tf`, `ec2.tf`, `templates/userdata.sh.tpl`,
-`aws_security_group.ec2` and its `alb_to_ec2` / `ec2_from_alb` rules,
-`var.instance_type`, `data.aws_subnet.private_a`, and
-`local.private_subnet_a_az` in `vpc.tf`.
-
-Gated on staging running stably on Fargate — this is the irreversible step.
-
-### 5 — Global instance-profile teardown
-
-Delete `aws_iam_role.ecs_instance`, its two policy attachments,
-`aws_iam_instance_profile.ecs_instance`, and the `iam_instance_profile_name`
-output.
-
-**Ordering matters.** Change 4 must land first. Removing that output while the
-regional state still reads `local.global.iam_instance_profile_name` breaks every
-regional plan.
-
-### 7 — `sslmode=verify-full`
-
-Add the RDS CA bundle to the `Containerfile` and `sslrootcert` to the composed
-DSN. A sibling story under the epic, not a sub-item of ROSAENG-67617.
+Blocked by change 2, not change 3 — the research needs a cluster whose secret
+can be rotated on demand, not Fargate. Only the final no-downtime verification
+needs `desired_count = 2`.
 
 ---
 
@@ -334,17 +307,24 @@ hook, plus `rds-db:connect` in IAM and an `rds_iam` grant on the database role.
 No password in the application path at all, and no rotation problem to solve.
 Password authentication works correctly with the design above — this would
 replace a working mechanism, so it belongs to a deliberate security initiative
-rather than this migration.
+rather than this build.
+
+**A database-aware health check.** `/health` is a static 200. A permanent
+database failure therefore leaves both tasks in the load balancer serving
+errors indefinitely, and a password rotation is invisible to ECS. A check that
+fails specifically on Postgres authentication error `28P01` — not on general
+database unavailability, which would cascade every task out of service during
+an Aurora failover — would make rotation self-healing and close that gap.
 
 **Aurora observability.** Nothing in `cloudwatch.tf` watches a database.
 Candidates: CPU, freeable memory, connection count versus pool size, replica
-lag, and storage. Deliberately out of scope here.
+lag, and storage. Deliberately out of scope.
 
 ---
 
 ## Corrections to ROSAENG-67617
 
-Three statements in the ticket description do not match the repository:
+Statements in the original ticket description that do not match the repository:
 
 - There are no `TODO` markers in `ecs.tf`, `iam.tf`, or `variables.tf`, and
   there is no `terraform/regional/iam.tf` — IAM lives in `terraform/global/`.
@@ -352,3 +332,5 @@ Three statements in the ticket description do not match the repository:
 - The `ecs_task` and `aurora` security groups already exist in
   `security_groups.tf`, with Aurora ingress on 5432 from the task security
   group already wired.
+- The note about keeping `enable_worm = false` until the EBS→Aurora migration
+  is validated is moot — there is no migration.
