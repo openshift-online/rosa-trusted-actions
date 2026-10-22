@@ -158,16 +158,70 @@ variable "roles" {
   ]
 }
 
-# ── Phase 2 placeholders ──────────────────────────────────────────────────────
+# ── Database ──────────────────────────────────────────────────────────────────
 
 variable "db_username" {
-  description = "Aurora master username (Phase 2)"
+  description = "Aurora master username"
   type        = string
   default     = "trusted_actions"
 }
 
 variable "db_name" {
-  description = "Aurora database name (Phase 2)"
+  description = "Aurora database name"
   type        = string
   default     = "trusted_actions"
+}
+
+variable "db_instance_class" {
+  description = "Instance class for each Aurora cluster instance."
+  type        = string
+  default     = "db.t4g.medium"
+}
+
+variable "db_instance_count" {
+  description = "Number of Aurora cluster instances (writer + readers)."
+  type        = number
+  default     = 2
+}
+
+variable "db_engine_version" {
+  description = "Aurora PostgreSQL engine version, pinned explicitly (never a floating major-only prefix)."
+  type        = string
+  default     = "16.4"
+}
+
+variable "db_backup_retention_period" {
+  description = "Number of days to retain automated Aurora backups."
+  type        = number
+  default     = 7
+}
+
+variable "db_preferred_backup_window" {
+  description = "Preferred daily window for automated Aurora backups (UTC)."
+  type        = string
+  default     = "03:00-04:00"
+}
+
+variable "db_deletion_protection" {
+  description = "Whether to enable deletion protection on the Aurora cluster. Set true in prod."
+  type        = bool
+  default     = false
+}
+
+variable "db_skip_final_snapshot" {
+  description = "Whether to skip the final snapshot when the Aurora cluster is destroyed. Set false in prod."
+  type        = bool
+  default     = true
+}
+
+variable "db_performance_insights_enabled" {
+  description = "Whether to enable Performance Insights on Aurora cluster instances."
+  type        = bool
+  default     = true
+}
+
+variable "db_kms_key_id" {
+  description = "KMS key ID/ARN for Aurora storage encryption. Empty string uses the default AWS-managed key."
+  type        = string
+  default     = ""
 }
