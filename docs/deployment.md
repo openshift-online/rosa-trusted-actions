@@ -7,13 +7,19 @@ Infrastructure is split into two Terraform roots that must be applied in order:
 | Root         | Path                  | Scope                                                                                                      | Apply cadence    |
 |--------------|-----------------------|------------------------------------------------------------------------------------------------------------|------------------|
 | **global**   | `terraform/global/`   | Account-wide: S3, IAM, Secrets Manager, ACM validation CNAME                                               | Once per account |
-| **regional** | `terraform/regional/` | One deployment per AWS region: VPC, ALB, ECS, EC2, EBS, CloudWatch, Route 53 PHZ, regional ACM certificate | Once per region  |
+| **regional** | `terraform/regional/` | One deployment per AWS region: VPC, ALB, ECS, EC2, EBS, CloudWatch, Route 53 PHZ, regional ACM certificate (Phase 2: Aurora, no EC2/EBS) | Once per region  |
 
 The regional root reads IAM ARNs, the S3 bucket name, and the Secrets Manager
 ARN directly from the global workspace's Terraform state via
 `terraform_remote_state`. No values need to be copied by hand.
 
 See [docs/networking.md](networking.md) for the DNS and TLS architecture.
+
+> **Phase 2 in progress.** The EC2/EBS/SQLite parts of the regional root are
+> being replaced by Aurora PostgreSQL on Fargate. See
+> [docs/aurora-migration.md](aurora-migration.md) for the decisions and the
+> change sequence. This page describes the deployment as it stands today and is
+> updated as each change lands.
 
 ---
 
