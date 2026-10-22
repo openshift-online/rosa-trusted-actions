@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -303,6 +304,13 @@ func clearLoadEnv(t *testing.T) {
 		"ROSA_TA_OCM_CLIENT_SECRET",
 		"ROSA_TA_OCM_TOKEN",
 		"DATABASE_URL",
+		"ROSA_TA_DB_HOST",
+		"ROSA_TA_DB_PORT",
+		"ROSA_TA_DB_NAME",
+		"ROSA_TA_DB_USER",
+		"ROSA_TA_DB_PASSWORD",
+		"ROSA_TA_DB_SSLMODE",
+		"ROSA_TA_DB_SSLROOTCERT",
 		"ROSA_TA_WORKER_CONCURRENCY",
 		"ROSA_TA_WORKER_POLL_INTERVAL",
 		"ROSA_TA_WORKER_EXECUTION_TIMEOUT",
@@ -431,5 +439,134 @@ func TestLoad_EnvOverrides(t *testing.T) {
 		if cfg.AllowedNamespaces[i] != want[i] {
 			t.Errorf("AllowedNamespaces[%d] = %q, want %q", i, cfg.AllowedNamespaces[i], want[i])
 		}
+	}
+}
+
+func TestLoad_ComposedDSN_SkippedWithoutHost(t *testing.T) {
+	clearLoadEnv(t)
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.DatabaseURL != "" {
+		t.Errorf("DatabaseURL = %q, want empty when ROSA_TA_DB_HOST is unset", cfg.DatabaseURL)
+	}
+}
+
+func TestLoad_ComposedDSN_DatabaseURLTakesPrecedence(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("DATABASE_URL", "postgres://explicit/db")
+	t.Setenv("ROSA_TA_DB_HOST", "db.example.com")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.DatabaseURL != "postgres://explicit/db" {
+		t.Errorf("DatabaseURL = %q, want %q", cfg.DatabaseURL, "postgres://explicit/db")
+	}
+}
+
+func TestLoad_ComposedDSN_Defaults(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("ROSA_TA_DB_HOST", "db.example.com")
+	t.Setenv("ROSA_TA_DB_NAME", "rosa")
+	t.Setenv("ROSA_TA_DB_USER", "app")
+	t.Setenv("ROSA_TA_DB_PASSWORD", "secret")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	u, err := url.Parse(cfg.DatabaseURL)
+	if err != nil {
+		t.Fatalf("url.Parse(%q) error = %v", cfg.DatabaseURL, err)
+	}
+	if u.Scheme != "postgres" {
+		t.Errorf("Scheme = %q, want %q", u.Scheme, "postgres")
+	}
+	if u.Hostname() != "db.example.com" {
+		t.Errorf("Hostname = %q, want %q", u.Hostname(), "db.example.com")
+	}
+	if u.Port() != "5432" {
+		t.Errorf("Port = %q, want %q", u.Port(), "5432")
+	}
+	if u.Path != "/rosa" {
+		t.Errorf("Path = %q, want %q", u.Path, "/rosa")
+	}
+	if got := u.Query().Get("sslmode"); got != "verify-full" {
+		t.Errorf("sslmode = %q, want %q", got, "verify-full")
+	}
+	if u.Query().Has("sslrootcert") {
+		t.Errorf("sslrootcert = %q, want absent", u.Query().Get("sslrootcert"))
+	}
+}
+
+func TestLoad_ComposedDSN_SSLRootCertPresentWhenSet(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("ROSA_TA_DB_HOST", "db.example.com")
+	t.Setenv("ROSA_TA_DB_SSLROOTCERT", "/etc/ssl/certs/rds-global-bundle.pem")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	u, err := url.Parse(cfg.DatabaseURL)
+	if err != nil {
+		t.Fatalf("url.Parse(%q) error = %v", cfg.DatabaseURL, err)
+	}
+	if got := u.Query().Get("sslrootcert"); got != "/etc/ssl/certs/rds-global-bundle.pem" {
+		t.Errorf("sslrootcert = %q, want %q", got, "/etc/ssl/certs/rds-global-bundle.pem")
+	}
+}
+
+func TestLoad_ComposedDSN_OverridesApply(t *testing.T) {
+	clearLoadEnv(t)
+	t.Setenv("ROSA_TA_DB_HOST", "db.example.com")
+	t.Setenv("ROSA_TA_DB_PORT", "5433")
+	t.Setenv("ROSA_TA_DB_SSLMODE", "require")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	u, err := url.Parse(cfg.DatabaseURL)
+	if err != nil {
+		t.Fatalf("url.Parse(%q) error = %v", cfg.DatabaseURL, err)
+	}
+	if u.Port() != "5433" {
+		t.Errorf("Port = %q, want %q", u.Port(), "5433")
+	}
+	if got := u.Query().Get("sslmode"); got != "require" {
+		t.Errorf("sslmode = %q, want %q", got, "require")
+	}
+}
+
+func TestLoad_ComposedDSN_SpecialCharactersInPasswordRoundTrip(t *testing.T) {
+	clearLoadEnv(t)
+	const password = `aB3%:/#xyz` // #nosec G101 -- test fixture, not a real credential
+	t.Setenv("ROSA_TA_DB_HOST", "db.example.com")
+	t.Setenv("ROSA_TA_DB_USER", "app")
+	t.Setenv("ROSA_TA_DB_PASSWORD", password)
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	u, err := url.Parse(cfg.DatabaseURL)
+	if err != nil {
+		t.Fatalf("url.Parse(%q) error = %v", cfg.DatabaseURL, err)
+	}
+	got, ok := u.User.Password()
+	if !ok {
+		t.Fatal("u.User.Password() ok = false, want true")
+	}
+	if got != password {
+		t.Errorf("Password = %q, want %q", got, password)
 	}
 }
