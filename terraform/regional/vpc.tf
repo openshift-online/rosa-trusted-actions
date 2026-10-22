@@ -9,21 +9,11 @@ locals {
   public_subnet_a  = local.create_vpc ? aws_subnet.public_a[0].id : var.public_subnet_ids[0]
   public_subnet_b  = local.create_vpc ? aws_subnet.public_b[0].id : var.public_subnet_ids[1]
   private_subnet_a = local.create_vpc ? aws_subnet.private_a[0].id : var.private_subnet_ids[0]
-  # private_subnet_b is only used in Phase 2; fall back to private_subnet_a when only one is supplied.
+  # Falls back to private_subnet_a when only one externally-provided subnet is supplied.
   private_subnet_b = (
     local.create_vpc
     ? aws_subnet.private_b[0].id
     : (length(var.private_subnet_ids) > 1 ? var.private_subnet_ids[1] : var.private_subnet_ids[0])
-  )
-
-  # AZ of the primary private subnet — used to co-locate the EBS volume.
-  # When Terraform owns the VPC the AZ comes directly from the managed subnet
-  # resource. When subnets are provided externally it is looked up via
-  # data.aws_subnet.private_a (count=1 only in that case).
-  private_subnet_a_az = (
-    local.create_vpc
-    ? aws_subnet.private_a[0].availability_zone
-    : data.aws_subnet.private_a[0].availability_zone
   )
 }
 
@@ -79,7 +69,7 @@ resource "aws_subnet" "public_b" {
   tags                    = { Name = "${var.app_name}-public-b" }
 }
 
-# Private subnet — EC2 instance (AZ-a, must match EBS volume AZ)
+# Private subnet — Fargate tasks, Aurora, and the ALB (AZ-a)
 resource "aws_subnet" "private_a" {
   count             = local.create_vpc ? 1 : 0
   vpc_id            = aws_vpc.main[0].id
@@ -88,7 +78,7 @@ resource "aws_subnet" "private_a" {
   tags              = { Name = "${var.app_name}-private-a" }
 }
 
-# Private subnet — Phase 2 Fargate second task (AZ-b); unused in Phase 1
+# Private subnet — Fargate tasks, Aurora, and the ALB (AZ-b)
 resource "aws_subnet" "private_b" {
   count             = local.create_vpc ? 1 : 0
   vpc_id            = aws_vpc.main[0].id

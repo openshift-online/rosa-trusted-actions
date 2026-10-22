@@ -20,38 +20,6 @@
 # principal trust policies (and, for read_secrets, the fixed rds!cluster- prefix
 # AWS assigns to RDS-managed secrets).
 
-# ── EC2 Instance Role ──────────────────────────────────────────────────────────
-
-data "aws_iam_policy_document" "ec2_assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "ecs_instance" {
-  name               = "${var.app_name}-ecs-instance"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_core" {
-  role       = aws_iam_role.ecs_instance.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_ssm" {
-  role       = aws_iam_role.ecs_instance.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_instance_profile" "ecs_instance" {
-  name = "${var.app_name}-ecs-instance"
-  role = aws_iam_role.ecs_instance.name
-}
-
 # ── ECS Task Execution Role ────────────────────────────────────────────────────
 
 data "aws_iam_policy_document" "ecs_assume" {
@@ -122,6 +90,18 @@ resource "aws_iam_policy" "task_app" {
       {
         Effect   = "Allow"
         Action   = ["cloudwatch:PutMetricData"]
+        Resource = "*"
+      },
+      {
+        # Required for ECS Exec — the SSM data channel is opened by the task
+        # role, not the task execution role.
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ]
         Resource = "*"
       }
     ]

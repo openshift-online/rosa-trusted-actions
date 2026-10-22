@@ -23,7 +23,7 @@ variable "public_subnet_ids" {
 }
 
 variable "private_subnet_ids" {
-  description = "IDs of two existing private subnets in different AZs. [0] hosts the ECS EC2 instance; both are used by the internal ALB."
+  description = "IDs of two existing private subnets in different AZs. Used by the internal ALB, the Fargate tasks, and the Aurora subnet group."
   type        = list(string)
   default     = []
   validation {
@@ -53,10 +53,16 @@ variable "container_image" {
   type        = string
 }
 
-variable "instance_type" {
-  description = "EC2 instance type for the ECS host."
-  type        = string
-  default     = "t3.micro"
+variable "task_cpu" {
+  description = "Fargate task-level CPU units."
+  type        = number
+  default     = 1024
+}
+
+variable "task_memory" {
+  description = "Fargate task-level memory, in MiB."
+  type        = number
+  default     = 2048
 }
 
 # ── DNS & TLS ─────────────────────────────────────────────────────────────────
