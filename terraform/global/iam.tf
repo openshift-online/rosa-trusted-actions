@@ -10,15 +10,15 @@
 #   firehose_audit_logs — grants PutLogEvents on the Firehose error log group.
 #                         Wildcarded to arn:aws:logs:*:ACCOUNT:log-group:/aws/kinesisfirehose/APP_NAME-audit-logs:*
 #
-#   read_secrets — grants GetSecretValue on the RDS-managed Aurora master secret.
-#                 Wildcarded to arn:aws:secretsmanager:*:ACCOUNT:secret:rds!cluster-*
-#                 because the secret's cluster UUID is generated in the regional
-#                 workspace, which this global workspace never observes.
+#   read_secrets — grants GetSecretValue on the Aurora credentials secret.
+#                 Wildcarded to arn:aws:secretsmanager:*:ACCOUNT:secret:APP_NAME/db-*
+#                 because the secret is created in the regional workspace, which
+#                 this global workspace never observes, and Secrets Manager
+#                 appends a random six-character suffix to the name.
 #
 # The wildcard scope is narrow: it only covers the predictable resource names
 # this project creates and is further constrained by the Firehose / CWL service
-# principal trust policies (and, for read_secrets, the fixed rds!cluster- prefix
-# AWS assigns to RDS-managed secrets).
+# principal trust policies.
 
 # ── ECS Task Execution Role ────────────────────────────────────────────────────
 
@@ -51,10 +51,11 @@ resource "aws_iam_policy" "read_secrets" {
       Action = ["secretsmanager:GetSecretValue"]
       Resource = [
         aws_secretsmanager_secret.app.arn,
-        # The RDS-managed master secret is named rds!cluster-<uuid>-<suffix>. The UUID
-        # is not knowable here — Aurora lives in the regional root, which is applied
-        # after this one. See docs/database-and-compute.md.
-        "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:rds!cluster-*",
+        # The Aurora credentials secret is created in the regional root, which is
+        # applied after this one, so its full ARN is not knowable here. The name
+        # is ours and predictable; the trailing -* covers the random suffix
+        # Secrets Manager appends. See docs/database-and-compute.md.
+        "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:${var.app_name}/db-*",
       ]
     }]
   })

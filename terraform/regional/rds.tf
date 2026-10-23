@@ -11,8 +11,12 @@ resource "aws_rds_cluster" "main" {
   database_name      = var.db_name
   master_username    = var.db_username
 
-  # RDS generates and owns the password. No password in config or state.
-  manage_master_user_password = true
+  # Deliberately NOT manage_master_user_password. An RDS-managed secret rotates
+  # every seven days and rotation cannot be switched off while keeping it, which
+  # would break every running task — see docs/database-and-compute.md. The
+  # password is authored in Vault and supplied as a sensitive variable instead,
+  # so it never rotates. ROSAENG-74839 tracks a real rotation mechanism.
+  master_password = var.db_password
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.aurora.id]

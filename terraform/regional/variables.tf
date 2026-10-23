@@ -231,3 +231,22 @@ variable "db_kms_key_id" {
   type        = string
   default     = ""
 }
+
+# Sensitive — authored in Vault, stored as an HCP Terraform workspace variable,
+# never in source. No default: a missing value must fail the run loudly.
+# Changing this value rotates the Aurora master password and requires a forced
+# ECS deployment afterwards. See docs/database-and-compute.md.
+variable "db_password" {
+  description = "Aurora master password. Authored in Vault; must be supplied."
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition = (
+      length(var.db_password) >= 8 &&
+      length(var.db_password) <= 128 &&
+      !can(regex("[/\"@' ]", var.db_password))
+    )
+    error_message = "Must be 8-128 characters and must not contain /, \", ', @, or a space — Aurora PostgreSQL rejects these in a master password."
+  }
+}

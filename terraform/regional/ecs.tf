@@ -59,7 +59,7 @@ locals {
     { name = "ROSA_TA_BACKPLANE_CLIENT_SECRET", valueFrom = "${local.global.secretsmanager_secret_arn}:backplane_client_secret::" },
     {
       name      = "ROSA_TA_DB_PASSWORD"
-      valueFrom = "${aws_rds_cluster.main.master_user_secret[0].secret_arn}:password::"
+      valueFrom = "${aws_secretsmanager_secret.db.arn}:password::"
     },
   ]
 }

@@ -55,12 +55,53 @@ deliberate PR.
 >   --engine aurora-postgresql --engine-version <ver> --region us-east-1
 > ```
 
-### RDS manages the master password; the application composes the DSN
+### The password is authored in Vault; the application composes the DSN
 
-The cluster sets `manage_master_user_password = true`. RDS generates the
-password and stores it in a Secrets Manager secret it owns, named
-`rds!cluster-<uuid>-<suffix>`, holding JSON `{"username": ..., "password": ...}`.
-No password appears in Terraform configuration or state.
+The cluster deliberately does **not** set `manage_master_user_password`. RDS
+would generate and own the password — nothing in configuration or state — but
+it also rotates that secret every seven days, and rotation cannot be switched
+off while keeping it. See
+[Rotation is disabled](#rotation-is-disabled-deliberately).
+
+Instead the password is generated and held in our external Vault, supplied to
+the regional workspace as the sensitive variable `db_password`
+(`terraform/regional/variables.tf`), and written to a Secrets Manager secret of
+our own — `<APP_NAME>/db`, in `terraform/regional/secrets.tf` — holding JSON
+`{"username": ..., "password": ...}`. That is the same shape an RDS-managed
+secret produces, so adopting one later changes nothing downstream.
+
+**The password therefore appears in Terraform state**, both in the regional
+workspace and in the local state of the workspace-management root under
+`hcp-terraform/`. This is accepted rather than overlooked; the reasoning is in
+[Rotation is disabled](#rotation-is-disabled-deliberately).
+
+**Generating it.** Nothing ever types this password, so generate it rather than
+choosing one. Aurora PostgreSQL rejects `/`, `"`, `'`, `@` and spaces in a
+master password; `db_password` is validated against exactly those, so a bad
+value fails at plan time rather than at apply time. The set below also omits
+characters that are hazardous to paste into a shell (`$`, `` ` ``, `\`, `!`,
+`&`, `|`, `<`, `>`, parentheses), which `-var="db_password=…"` makes a real
+risk:
+
+```bash
+LC_ALL=C tr -dc 'A-Za-z0-9#%*+,-.:;=?^_~' </dev/urandom | head -c 32; echo
+```
+
+`%` and `:` are safe in the DSN despite their meaning in a URL — `config.go`
+uses `url.UserPassword()`, which escapes them.
+
+**Retrieving it.** Vault is the system of record and the only place a human can
+read this password. The Secrets Manager copy is not reachable by hand: nobody
+holds AWS credentials for the account (see
+[Rotation is disabled](#rotation-is-disabled-deliberately)). Storing it only in
+Terraform state would make it unreadable by anyone, which is why Vault was
+chosen over `random_password`.
+
+> **Vault path: TBD.** Fill in the mount and path before the first apply —
+> a credential whose location is undocumented is not recoverable.
+
+**One password per cluster.** Each region has its own Aurora cluster and must
+get its own generated value; do not reuse one across regions.
 
 The application takes a single `DATABASE_URL`
 (`internal/config/config.go`, `cmd/server/main.go`), so the DSN has to be
@@ -69,87 +110,107 @@ assembled somewhere. It is assembled **in the application**:
 | Source             | Variables                                                                  |
 |--------------------|----------------------------------------------------------------------------|
 | `environment`      | `ROSA_TA_DB_HOST`, `ROSA_TA_DB_PORT`, `ROSA_TA_DB_NAME`, `ROSA_TA_DB_USER`, `ROSA_TA_DB_SSLMODE`, `ROSA_TA_DB_SSLROOTCERT` |
-| `secrets`          | `ROSA_TA_DB_PASSWORD` from `"<master_user_secret_arn>:password::"`           |
+| `secrets`          | `ROSA_TA_DB_PASSWORD` from `"<APP_NAME>/db:password::"`                     |
 
 `config.go` builds the DSN from these when `DATABASE_URL` is unset, using
-`url.UserPassword()` rather than string concatenation — RDS generates
-28-character passwords containing punctuation, and a raw `%` or `:` in a
-hand-built URL corrupts the DSN silently.
+`url.UserPassword()` rather than string concatenation — the password is a long
+random string containing punctuation, and a raw `%` or `:` in a hand-built URL
+corrupts the DSN silently. `db_password` is validated in
+`terraform/regional/variables.tf` against the characters Aurora PostgreSQL
+itself rejects in a master password (`/`, `"`, `'`, `@`, space), so a bad value
+fails at plan time rather than at apply time.
 
 Two alternatives were rejected:
 
-- **Terraform composes the DSN** into a secret of our own, reading the
-  RDS-owned secret through a data source. No application change, but the
-  composed DSN is a *copy* — the first rotation makes it stale and the service
-  cannot connect. It adopts the managed-secret machinery while guaranteeing it
-  breaks.
-- **`random_password` into a Terraform-authored secret**, matching the existing
-  pattern in `terraform/global/secrets.tf`. Consistent and simple, but there is
-  no managed rotation and the password lands in state.
+- **Terraform composes the whole DSN** into a secret, rather than passing only
+  the password. The application already assembles the DSN from components
+  (ROSAENG-67173), and a composed DSN would duplicate the host, port and
+  database name that Terraform already passes as plain environment variables.
+- **`random_password` instead of a Vault-authored value**, matching the
+  existing pattern in `terraform/global/secrets.tf`. It avoids a manual step,
+  but a generated password exists *only* in Terraform state — nobody can
+  retrieve it. Combined with the fact that no human holds credentials for the
+  AWS account, that would leave the database credential unreadable by anyone.
+  Vault keeps it recoverable, which is the whole reason to prefer it.
 
-### Rotation drives an ECS redeployment
+### Rotation is disabled, deliberately
 
-Aurora rotates the managed master secret **every seven days by default**. The
-old password stops working immediately. The ECS agent resolves `secrets` once,
-at task launch, and injects them as process environment — there is no live
-re-read. Running tasks therefore hold a dead password, and because
-`ROSA_TA_DB_CONN_MAX_LIFETIME` defaults to 5 minutes the pool recycles and fails
-to reconnect within minutes of every rotation.
+There is no automatic rotation of the Aurora master password. This is a
+deliberate interim position with a ticket against it:
+[ROSAENG-74839](https://redhat.atlassian.net/browse/ROSAENG-74839).
 
-Nothing recovers on its own. `/health` (`cmd/server/main.go`) is a static 200
-that never touches the database, so after a rotation both tasks stay healthy to
-the ALB while every request reaching the store fails, and ECS does not replace
-them. Recovery is a human running
+**Why rotation had to go.** The ECS agent resolves a task's `secrets` once, at
+launch, and injects them as process environment — there is no live re-read. A
+rotation therefore leaves running tasks holding a dead password, and because
+`ROSA_TA_DB_CONN_MAX_LIFETIME` defaults to 5 minutes the pool recycles and
+fails to reconnect within minutes. Nothing recovers on its own: `/health`
+(`cmd/server/main.go`) is a static 200 that never touches the database, so both
+tasks stay healthy to the ALB while every request reaching the store fails, and
+ECS does not replace them. Recovery would be a human running
 `aws ecs update-service --force-new-deployment`.
 
-The fix is an EventBridge rule on the rotation event driving a forced
-deployment of the ECS service. At `desired_count = 2` that is a rolling restart
-with no downtime.
+**Why it is disabled rather than handled.** Three routes were examined:
 
-This needs more than a rule. EventBridge has **no native "update ECS service"
-target** — ECS targets run tasks, they do not update services — so a handler
-(most likely a Lambda calling `ecs:UpdateService` with `forceNewDeployment`)
-sits between the two. Two further details are unconfirmed: the exact
-`detail-type` of the rotation event for an RDS-*managed* master secret, and
-whether the rotation schedule on an RDS-owned secret can be managed from
-Terraform without fighting RDS over ownership. Because of that uncertainty the
-handler is tracked separately and sequenced to start as soon as the cluster
-exists, so it lands at or near the first apply.
+- **An EventBridge rule driving a forced ECS deployment.** EventBridge has no
+  native "update ECS service" target — ECS targets run tasks, they do not
+  update services — so this needs a Lambda calling `ecs:UpdateService`, the
+  first in this repository. It also cannot close the window: between the
+  password changing and replacement tasks passing health checks there are two
+  to four minutes in which any new connection fails.
+- **Turning rotation off while keeping `manage_master_user_password`.** AWS
+  documents no way to do this. The Terraform-native route —
+  `aws_secretsmanager_secret_rotation` with `rotation_enabled = false` —
+  requires AWS provider **≥ 6.62**, and both roots pin `~> 5.0`. The CLI route,
+  `aws secretsmanager cancel-rotate-secret`, cannot be used at all: the HCP
+  workspaces authenticate with AWS dynamic credentials minted per run and, by
+  design, no human holds credentials for the account. **Anything that is not a
+  Terraform resource cannot be executed against this infrastructure.**
+- **Stretching the rotation schedule** to a long interval. Rejected: it is
+  managed rotation in name only, it leaves a scheduled outage armed behind a
+  config value that someone will one day tidy up, and it provides no feedback
+  that anything is outstanding.
 
-Stretching the rotation schedule to a long interval as a bridge was considered
-and rejected. It is managed rotation in name only, it leaves a scheduled outage
-armed behind a config value that someone will one day tidy up, and it provides
-no feedback that anything is outstanding. Staging simply absorbs a recoverable
-blip if a rotation beats the handler.
+**IAM database authentication is the intended fix.** It removes the password
+from the application path entirely rather than managing its rotation. It is
+deferred because it needs a Go change, the repository's first AWS SDK
+dependency, and a separate application role — AWS documents that granting
+`rds_iam` to a user forces IAM-only login *including for the master user*, so
+the master user cannot also be the IAM user. Tracked on ROSAENG-74839.
 
-### The rotation handler gates production
+**Consequences to know about.**
 
-**This design must not be deployed to production until the rotation handler
-exists.** In staging an unhandled rotation is a two-minute manual fix against
-data nobody depends on. In production the same gap is a seven-day repeating
-outage.
+- **Changing `db_password` rotates the master password** on the next apply and
+  breaks every running task. A forced ECS deployment must follow. The cluster
+  and the Secrets Manager copy are deliberately *not* decoupled with
+  `ignore_changes`: divergence between them would crash-loop every new task on
+  a password the database never accepted, which is worse than a known restart.
+- **No human network path to the database exists.** Aurora is in private
+  subnets, deleting the EC2 configuration removed the only in-VPC host anyone
+  could have reached, and the runtime image (`core-runtime`) ships no `psql`.
+  Knowing the password is not currently enough to reach the database. A
+  one-off `aws ecs run-task` on a `postgres` image in the task security group
+  is the likely answer. Also tracked on ROSAENG-74839.
+- **A production credential that never rotates may be an audit finding.** This
+  was accepted knowingly rather than discovered.
 
 ### The secrets IAM grant uses a wildcard in the global workspace
 
-Secrets Manager and the `read_secrets` policy live in `terraform/global/`;
-Aurora lives in `terraform/regional/`; the dependency runs global → regional via
-`terraform_remote_state` and a run trigger. Global can never see the Aurora
-endpoint or the RDS-owned secret ARN.
+Secrets Manager and the `read_secrets` policy live in `terraform/global/`; the
+Aurora credentials secret lives in `terraform/regional/`; the dependency runs
+global → regional via `terraform_remote_state` and a run trigger. Global can
+never see the regional secret's full ARN.
 
 `read_secrets` in `terraform/global/iam.tf` therefore gains a second Resource
 entry:
 
 ```
-arn:aws:secretsmanager:*:<ACCOUNT>:secret:rds!cluster-*
+arn:aws:secretsmanager:*:<ACCOUNT>:secret:<APP_NAME>/db-*
 ```
 
 This follows the cross-region wildcard pattern already documented in that file's
-header for the Firehose and CloudWatch Logs policies. The cluster UUID is not
-predictable at policy-write time, so the wildcard covers any RDS-managed cluster
-secret in the account. If the account grows other clusters, tighten it with a
-`secretsmanager:ResourceTag` condition.
-
-No DSN secret of our own is created — the task reads only the RDS-owned secret.
+header for the Firehose and CloudWatch Logs policies. The name is ours and
+predictable; the trailing `-*` covers only the random six-character suffix
+Secrets Manager appends when it creates a secret.
 
 ### Fargate, not EC2
 
@@ -207,7 +268,6 @@ time rather than committed, and the renewal path is a rebuild.
 | 1 | Application composes a verifying DSN            | `internal/config/`, `Containerfile`  | —          |
 | 2 | Aurora cluster + IAM grant                      | regional + global                    | —          |
 | 3 | Fargate service; delete EC2/EBS configuration   | regional + global                    | 1, 2       |
-| 4 | Rotation → forced ECS redeployment              | regional                             | 2          |
 
 Changes 2 and 3 are commits in a single PR and apply together. Applying 2 alone,
 with `ebs.tf` and `ec2.tf` still present, would create an EC2 host and a 20 GB
@@ -216,8 +276,10 @@ EBS volume on the first apply — which 3 would immediately destroy.
 Change 1 must merge and produce an image before the first apply, because
 `container_image` is pinned by digest in the HCP workspace variables.
 
-Change 4 is a sibling story under the epic rather than part of this one, and
-runs in parallel with 1 and 3.
+A fourth change — an EventBridge rule and handler forcing an ECS redeployment
+on rotation — was planned and then dropped once rotation was disabled outright.
+See [Rotation is disabled](#rotation-is-disabled-deliberately) and
+ROSAENG-74839.
 
 ### 1 — Application composes a verifying DSN
 
@@ -235,18 +297,26 @@ The `Containerfile` fetches the RDS CA bundle to a documented path.
 New `terraform/regional/rds.tf`:
 
 - `aws_rds_cluster` — `aurora-postgresql`, pinned engine version,
-  `manage_master_user_password = true`, `master_username = var.db_username`,
+  `master_password = var.db_password`, `master_username = var.db_username`,
   `database_name = var.db_name`, `storage_encrypted = true`, backup retention
   and window, deletion protection and final-snapshot flags from variables.
 - `aws_rds_cluster_instance` — `count = var.db_instance_count` (2), spread
   across both private subnets.
 - `aws_db_subnet_group` — both private subnets.
 
-`terraform/regional/variables.tf` gains the `db_*` variables listed under
-[Decisions](#aurora-provisioned-not-serverless-v2).
+New `terraform/regional/secrets.tf` — `aws_secretsmanager_secret` named
+`<APP_NAME>/db` and its version, holding `{username, password}`. No
+`ignore_changes` on the version; it must track `master_password`.
 
-`terraform/global/iam.tf` — add the `rds!cluster-*` Resource to
+`terraform/regional/variables.tf` gains the `db_*` variables listed under
+[Decisions](#aurora-provisioned-not-serverless-v2), plus the sensitive,
+validated `db_password`.
+
+`terraform/global/iam.tf` — add the `<APP_NAME>/db-*` Resource to
 `aws_iam_policy.read_secrets`.
+
+`hcp-terraform/rosa-trusted-actions/` — `db_password` as a sensitive workspace
+variable on the regional workspace, alongside the existing three.
 
 The security groups already exist: `aws_security_group.aurora` and
 `aws_security_group.ecs_task` in `terraform/regional/security_groups.tf`, with
@@ -280,41 +350,29 @@ output. These land in the same commit as the regional deletions, so the output
 and the reference to it disappear together and the two roots cannot be out of
 step.
 
-Leave the rotation schedule at its default.
-
-### 4 — Rotation triggers a forced ECS redeployment
-
-An EventBridge rule on the rotation event and a handler that forces a new
-deployment. Carries real investigation: the event's `detail-type` for
-RDS-managed secrets, whether the schedule is Terraform-manageable against an
-RDS-owned secret, whether a Lambda is avoidable in a repository that has none,
-and whether the event reliably follows the password change rather than
-preceding it.
-
-Blocked by change 2, not change 3 — the research needs a cluster whose secret
-can be rotated on demand, not Fargate. Only the final no-downtime verification
-needs `desired_count = 2`.
-
 ---
 
 ## Known Next Steps
 
-Neither is scheduled.
-
-**IAM database authentication.** The application would mint a 15-minute auth
-token per connection via `rds.GenerateDBAuthToken` in a pgx `BeforeConnect`
-hook, plus `rds-db:connect` in IAM and an `rds_iam` grant on the database role.
-No password in the application path at all, and no rotation problem to solve.
-Password authentication works correctly with the design above — this would
-replace a working mechanism, so it belongs to a deliberate security initiative
-rather than this build.
+**IAM database authentication — scheduled, on
+[ROSAENG-74839](https://redhat.atlassian.net/browse/ROSAENG-74839).** The
+application would mint a 15-minute auth token per connection via
+`feature/rds/auth.BuildAuthToken` (the v2 SDK; `rds.GenerateDBAuthToken` is v1)
+in a pgx `BeforeConnect` hook, plus `rds-db:connect` in IAM and an `rds_iam`
+grant on the database role. No password in the application path at all, and no
+rotation problem to solve — which is why it is now the intended fix rather than
+a someday item. It needs a **separate application role**: AWS documents that
+granting `rds_iam` makes IAM authentication take precedence over password
+authentication *including for the master user*, so the master user cannot also
+be the IAM user.
 
 **A database-aware health check.** `/health` is a static 200. A permanent
 database failure therefore leaves both tasks in the load balancer serving
-errors indefinitely, and a password rotation is invisible to ECS. A check that
-fails specifically on Postgres authentication error `28P01` — not on general
-database unavailability, which would cascade every task out of service during
-an Aurora failover — would make rotation self-healing and close that gap.
+errors indefinitely. A check that fails specifically on Postgres authentication
+error `28P01` — not on general database unavailability, which would cascade
+every task out of service during an Aurora failover — would close that gap and
+would also surface a wrong `db_password` rather than leaving it to crash-loops
+at task start.
 
 **Aurora observability.** Nothing in `cloudwatch.tf` watches a database.
 Candidates: CPU, freeable memory, connection count versus pool size, replica
