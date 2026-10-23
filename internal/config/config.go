@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -155,7 +157,7 @@ func Load(configFilePath string) (*Config, error) {
 		}
 	}
 
-	return &Config{
+	cfg := &Config{
 		// Server config (set via CLI flags, defaults here for reference)
 		ListenAddr: getEnv("ROSA_TA_LISTEN_ADDR", ":8080"),
 		LogLevel:   getEnv("ROSA_TA_LOG_LEVEL", "info"),
@@ -208,7 +210,33 @@ func Load(configFilePath string) (*Config, error) {
 
 		// Development flags
 		AuthPolicy: authPolicy,
-	}, nil
+	}
+
+	// Compose the DSN from components when DATABASE_URL is not set. Used in ECS,
+	// where the password arrives from the RDS-managed Secrets Manager secret and
+	// only the password is secret — host, port, name and user are plain env vars.
+	if cfg.DatabaseURL == "" {
+		if host := getEnv("ROSA_TA_DB_HOST", ""); host != "" {
+			q := url.Values{}
+			q.Set("sslmode", getEnv("ROSA_TA_DB_SSLMODE", "verify-full"))
+			if root := getEnv("ROSA_TA_DB_SSLROOTCERT", ""); root != "" {
+				q.Set("sslrootcert", root)
+			}
+			u := &url.URL{
+				Scheme: "postgres",
+				User: url.UserPassword(
+					getEnv("ROSA_TA_DB_USER", ""),
+					getEnv("ROSA_TA_DB_PASSWORD", ""),
+				),
+				Host:     net.JoinHostPort(host, getEnv("ROSA_TA_DB_PORT", "5432")),
+				Path:     "/" + getEnv("ROSA_TA_DB_NAME", ""),
+				RawQuery: q.Encode(),
+			}
+			cfg.DatabaseURL = u.String()
+		}
+	}
+
+	return cfg, nil
 }
 
 // getEnv gets an environment variable with a default value

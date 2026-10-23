@@ -1,7 +1,7 @@
 # All IAM resources are account-global; role and policy names must be unique
 # per account regardless of region.
 #
-# Two policies reference resources that are per-regional-deployment:
+# Three policies reference resources that are per-regional-deployment:
 #
 #   cwl_to_firehose   — grants PutRecord on the Firehose delivery stream.
 #                       Wildcarded to arn:aws:firehose:*:ACCOUNT:deliverystream/APP_NAME-audit-logs
@@ -10,41 +10,15 @@
 #   firehose_audit_logs — grants PutLogEvents on the Firehose error log group.
 #                         Wildcarded to arn:aws:logs:*:ACCOUNT:log-group:/aws/kinesisfirehose/APP_NAME-audit-logs:*
 #
+#   read_secrets — grants GetSecretValue on the Aurora credentials secret.
+#                 Wildcarded to arn:aws:secretsmanager:*:ACCOUNT:secret:APP_NAME/db-*
+#                 because the secret is created in the regional workspace, which
+#                 this global workspace never observes, and Secrets Manager
+#                 appends a random six-character suffix to the name.
+#
 # The wildcard scope is narrow: it only covers the predictable resource names
 # this project creates and is further constrained by the Firehose / CWL service
 # principal trust policies.
-
-# ── EC2 Instance Role ──────────────────────────────────────────────────────────
-
-data "aws_iam_policy_document" "ec2_assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "ecs_instance" {
-  name               = "${var.app_name}-ecs-instance"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_core" {
-  role       = aws_iam_role.ecs_instance.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_ssm" {
-  role       = aws_iam_role.ecs_instance.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_instance_profile" "ecs_instance" {
-  name = "${var.app_name}-ecs-instance"
-  role = aws_iam_role.ecs_instance.name
-}
 
 # ── ECS Task Execution Role ────────────────────────────────────────────────────
 
@@ -73,9 +47,16 @@ resource "aws_iam_policy" "read_secrets" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["secretsmanager:GetSecretValue"]
-      Resource = [aws_secretsmanager_secret.app.arn]
+      Effect = "Allow"
+      Action = ["secretsmanager:GetSecretValue"]
+      Resource = [
+        aws_secretsmanager_secret.app.arn,
+        # The Aurora credentials secret is created in the regional root, which is
+        # applied after this one, so its full ARN is not knowable here. The name
+        # is ours and predictable; the trailing -* covers the random suffix
+        # Secrets Manager appends. See docs/database-and-compute.md.
+        "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:${var.app_name}/db-*",
+      ]
     }]
   })
 }
@@ -110,6 +91,18 @@ resource "aws_iam_policy" "task_app" {
       {
         Effect   = "Allow"
         Action   = ["cloudwatch:PutMetricData"]
+        Resource = "*"
+      },
+      {
+        # Required for ECS Exec — the SSM data channel is opened by the task
+        # role, not the task execution role.
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ]
         Resource = "*"
       }
     ]

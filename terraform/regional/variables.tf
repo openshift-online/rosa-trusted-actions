@@ -23,7 +23,7 @@ variable "public_subnet_ids" {
 }
 
 variable "private_subnet_ids" {
-  description = "IDs of two existing private subnets in different AZs. [0] hosts the ECS EC2 instance; both are used by the internal ALB."
+  description = "IDs of two existing private subnets in different AZs. Used by the internal ALB, the Fargate tasks, and the Aurora subnet group."
   type        = list(string)
   default     = []
   validation {
@@ -53,10 +53,16 @@ variable "container_image" {
   type        = string
 }
 
-variable "instance_type" {
-  description = "EC2 instance type for the ECS host."
-  type        = string
-  default     = "t3.micro"
+variable "task_cpu" {
+  description = "Fargate task-level CPU units."
+  type        = number
+  default     = 1024
+}
+
+variable "task_memory" {
+  description = "Fargate task-level memory, in MiB."
+  type        = number
+  default     = 2048
 }
 
 # ── DNS & TLS ─────────────────────────────────────────────────────────────────
@@ -158,16 +164,89 @@ variable "roles" {
   ]
 }
 
-# ── Phase 2 placeholders ──────────────────────────────────────────────────────
+# ── Database ──────────────────────────────────────────────────────────────────
 
 variable "db_username" {
-  description = "Aurora master username (Phase 2)"
+  description = "Aurora master username"
   type        = string
   default     = "trusted_actions"
 }
 
 variable "db_name" {
-  description = "Aurora database name (Phase 2)"
+  description = "Aurora database name"
   type        = string
   default     = "trusted_actions"
+}
+
+variable "db_instance_class" {
+  description = "Instance class for each Aurora cluster instance."
+  type        = string
+  default     = "db.t4g.medium"
+}
+
+variable "db_instance_count" {
+  description = "Number of Aurora cluster instances (writer + readers)."
+  type        = number
+  default     = 2
+}
+
+variable "db_engine_version" {
+  description = "Aurora PostgreSQL engine version, pinned explicitly (never a floating major-only prefix)."
+  type        = string
+  default     = "16.4"
+}
+
+variable "db_backup_retention_period" {
+  description = "Number of days to retain automated Aurora backups."
+  type        = number
+  default     = 7
+}
+
+variable "db_preferred_backup_window" {
+  description = "Preferred daily window for automated Aurora backups (UTC)."
+  type        = string
+  default     = "03:00-04:00"
+}
+
+variable "db_deletion_protection" {
+  description = "Whether to enable deletion protection on the Aurora cluster. Set true in prod."
+  type        = bool
+  default     = false
+}
+
+variable "db_skip_final_snapshot" {
+  description = "Whether to skip the final snapshot when the Aurora cluster is destroyed. Set false in prod."
+  type        = bool
+  default     = true
+}
+
+variable "db_performance_insights_enabled" {
+  description = "Whether to enable Performance Insights on Aurora cluster instances."
+  type        = bool
+  default     = true
+}
+
+variable "db_kms_key_id" {
+  description = "KMS key ID/ARN for Aurora storage encryption. Empty string uses the default AWS-managed key."
+  type        = string
+  default     = ""
+}
+
+# Sensitive — authored in Vault, stored as an HCP Terraform workspace variable,
+# never in source. No default: a missing value must fail the run loudly.
+# Changing this value rotates the Aurora master password and requires a forced
+# ECS deployment afterwards. See docs/database-and-compute.md.
+variable "db_password" {
+  description = "Aurora master password. Authored in Vault; must be supplied."
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition = (
+      length(var.db_password) >= 8 &&
+      length(var.db_password) <= 128 &&
+      !can(regex("[/\"@' ]", var.db_password))
+    )
+    error_message = "Must be 8-128 characters and must not contain /, \", ', @, or a space — Aurora PostgreSQL rejects these in a master password."
+  }
 }

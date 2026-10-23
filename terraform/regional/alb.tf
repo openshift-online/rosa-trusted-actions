@@ -1,8 +1,8 @@
 resource "aws_lb" "main" {
-  name                       = var.app_name
-  internal                   = true
-  load_balancer_type         = "application"
-  security_groups            = [aws_security_group.alb.id]
+  name               = var.app_name
+  internal           = true
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
   # Internal ALB sits in private subnets — two AZs required by AWS even for internal ALBs.
   # Ensure var.private_subnet_ids provides at least two subnets in different AZs when
   # bringing your own VPC; the managed VPC always creates private_a (AZ-0) and private_b (AZ-1).
@@ -16,7 +16,7 @@ resource "aws_lb_target_group" "app" {
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = local.vpc_id
-  target_type = "instance" # Phase 1: EC2. Phase 2: change to "ip" for Fargate awsvpc
+  target_type = "ip"
 
   health_check {
     path                = "/health"
