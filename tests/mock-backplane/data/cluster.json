@@ -341,6 +341,54 @@
       }
     }
   },
+  "00000000-0000-0000-0000-000000000001:/api/v1/events": {
+    "kind": "Event",
+    "apiVersion": "v1",
+    "identity": {
+      "apiGroup": "",
+      "resource": "events"
+    },
+    "items": [
+      {
+        "apiVersion": "v1",
+        "kind": "Event",
+        "metadata": {
+          "name": "node-1.ready",
+          "namespace": "default"
+        },
+        "involvedObject": {
+          "kind": "Node",
+          "name": "node-1"
+        },
+        "type": "Normal",
+        "reason": "NodeReady",
+        "message": "Node node-1 status is now: NodeReady"
+      }
+    ]
+  },
+  "00000000-0000-0000-0000-000000000001:/apis/coordination.k8s.io/v1/namespaces/kube-node-lease/leases": {
+    "kind": "Lease",
+    "apiVersion": "coordination.k8s.io/v1",
+    "identity": {
+      "apiGroup": "coordination.k8s.io",
+      "resource": "leases",
+      "namespace": "kube-node-lease"
+    },
+    "items": [
+      {
+        "apiVersion": "coordination.k8s.io/v1",
+        "kind": "Lease",
+        "metadata": {
+          "name": "node-1",
+          "namespace": "kube-node-lease"
+        },
+        "spec": {
+          "holderIdentity": "node-1",
+          "leaseDurationSeconds": 40
+        }
+      }
+    ]
+  },
 
   "00000000-0000-0000-0000-000000000002:_flags": {},
 
