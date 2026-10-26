@@ -239,7 +239,9 @@ Base path: `/api/v0/trusted-actions`
 - `GET /health` - Health check
 
 To add a new Trusted Action, see
-[docs/adding-a-trusted-action.md](./docs/adding-a-trusted-action.md).
+[docs/adding-a-trusted-action.md](./docs/adding-a-trusted-action.md) (or the
+[`add-trusted-action`](./.claude/skills/add-trusted-action/SKILL.md) Claude
+Code skill).
 
 ## Project Structure
 

@@ -8,6 +8,11 @@ If you only need a refresher on the runtime, see
 [DEVELOPMENT.md](../DEVELOPMENT.md), and for testing conventions see
 [TESTING.md](../TESTING.md).
 
+If you're using Claude Code, the
+[`add-trusted-action`](../.claude/skills/add-trusted-action/SKILL.md) skill
+packages this guide into an actionable workflow, including a local
+`kind`-cluster end-to-end testing recipe.
+
 ## What a Trusted Action is
 
 A Trusted Action is a named, auditable operation that the server runs against a

@@ -79,7 +79,9 @@ Lint configuration is in `.golangci.yml`. All PRs must pass linting.
 
 To author a new Trusted Action (implementation, policy/catalog, tests, review,
 and deployment), see
-[docs/adding-a-trusted-action.md](docs/adding-a-trusted-action.md).
+[docs/adding-a-trusted-action.md](docs/adding-a-trusted-action.md). Claude Code
+users can also drive this via the
+[`add-trusted-action`](.claude/skills/add-trusted-action/SKILL.md) skill.
 
 ### Testing
 
