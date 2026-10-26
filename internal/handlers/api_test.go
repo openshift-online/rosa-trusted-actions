@@ -63,17 +63,28 @@ func TestAPIHandler_Catalog(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var catalog openapi.TrustedActionCatalog
-	if err := json.Unmarshal(w.Body.Bytes(), &catalog); err != nil {
+	var resp openapi.TrustedActionCatalog
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if catalog.Total != 6 {
-		t.Errorf("Expected 6 actions, got %d", catalog.Total)
+	want := catalog.New().All()
+	if resp.Total != len(want) {
+		t.Errorf("Expected %d actions, got %d", len(want), resp.Total)
 	}
 
-	if len(catalog.Items) != 6 {
-		t.Errorf("Expected 6 items, got %d", len(catalog.Items))
+	if len(resp.Items) != len(want) {
+		t.Fatalf("Expected %d items, got %d", len(want), len(resp.Items))
+	}
+
+	gotNames := make(map[string]bool, len(resp.Items))
+	for _, item := range resp.Items {
+		gotNames[item.Name] = true
+	}
+	for _, a := range want {
+		if !gotNames[a.Name] {
+			t.Errorf("catalog response missing action %q", a.Name)
+		}
 	}
 }
 
