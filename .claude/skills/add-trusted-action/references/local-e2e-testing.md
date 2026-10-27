@@ -7,6 +7,12 @@ lighter-weight alternative to `integration/itest-up.sh` (skip that script unless
 the action needs localstack or the Prometheus/Alertmanager fixtures it sets up
 for `list-alerts`).
 
+This catches wiring mistakes (catalog/implementation mismatch, bad param
+handling, wrong output shape) but **not** RBAC correctness: the local
+`KubeconfigProvider` ignores `RequiredRBAC` entirely, so an action with
+incorrect or overly broad RBAC will still pass here. Verify RBAC via the unit
+tests and code review instead.
+
 Requires `kind`, `kubectl`, `go`, `curl`, and `jq` on `PATH`. Works with either
 `docker` or `podman` (set `KIND_EXPERIMENTAL_PROVIDER=podman` for the latter).
 
@@ -31,7 +37,7 @@ export ROSA_TA_AUTH=disabled
 export ROSA_TA_KUBECONFIG=/tmp/rosa-ta-test.kubeconfig
 export DATABASE_URL=/tmp/rosa-ta-test.db
 
-nohup ./bin/rosa-trusted-actions-server --log-level debug > /tmp/rosa-ta-test-server.log 2>&1 &
+nohup ./bin/rosa-trusted-actions-server --listen-addr 127.0.0.1:8080 --log-level debug > /tmp/rosa-ta-test-server.log 2>&1 &
 SERVER_PID=$!
 disown
 sleep 2
@@ -42,7 +48,9 @@ Keep `$SERVER_PID` around (don't start a new shell) — it's used for teardown i
 step 6.
 
 `ROSA_TA_AUTH=disabled` injects a hardcoded `dev-user` identity with the SREP
-role — never set this outside local/CI.
+role — never set this outside local/CI. The default listen address (`:8080`)
+binds all interfaces; `--listen-addr 127.0.0.1:8080` keeps this unauthenticated,
+kubeconfig-backed server off the network.
 
 ## 3. Confirm the action is wired up
 
@@ -56,7 +64,7 @@ curl -s http://localhost:8080/api/v0/trusted-actions/<action-name> | jq .    # d
 ```bash
 RESP=$(curl -s -X POST http://localhost:8080/api/v0/trusted-actions/<action-name>/run \
   -H 'Content-Type: application/json' \
-  -d '{"clusterId":"local","params":{"<param>":"<value>"}}')
+  -d '{"target_cluster":"local","params":{"<param>":"<value>"}}')
 EXEC_ID=$(echo "$RESP" | jq -r .id)
 
 sleep 2

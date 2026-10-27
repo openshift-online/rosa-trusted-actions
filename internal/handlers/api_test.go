@@ -86,6 +86,17 @@ func TestAPIHandler_Catalog(t *testing.T) {
 			t.Errorf("catalog response missing action %q", a.Name)
 		}
 	}
+
+	// Independent of catalog.New(): catches accidental deregistration, since
+	// both resp and want are derived from the same catalog above.
+	requiredActions := []string{
+		"get", "patch", "delete", "describe-nodes", "get-pull-secret-email", "list-alerts",
+	}
+	for _, name := range requiredActions {
+		if !gotNames[name] {
+			t.Errorf("catalog response missing required action %q", name)
+		}
+	}
 }
 
 func TestAPIHandler_Describe(t *testing.T) {

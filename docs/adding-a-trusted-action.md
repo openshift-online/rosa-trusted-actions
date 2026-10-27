@@ -123,16 +123,25 @@ Register an `ActionDefinition` in `catalog.New()` in
 API enforces:
 
 ```go
+// Adapted from the real "delete" registration in catalog.go, with the
+// write-safety fields (DryRunAction/WriteCooldownSeconds/Approval) added to
+// show the full struct — "delete" doesn't set them today.
 c.register(&catalog.ActionDefinition{
-	Name:         "get-pull-secret-email",       // MUST match Action.Name()
-	Description:  "Get the registered email from the cluster pull secret",
-	Type:         openapi.Read,                   // Read (read-only) or Write (mutating)
-	Scope:        openapi.KubeApi,                // KubeApi or AwsApi
+	Name:         "delete",                       // MUST match Action.Name()
+	Description:  "Delete a Kubernetes resource",
+	Type:         openapi.Write,                   // Read (read-only) or Write (mutating)
+	Scope:        openapi.KubeApi,                 // KubeApi or AwsApi
 	AllowedRoles: allRoles,                        // caller roles permitted to run it
 	Params: []catalog.ParamDefinition{
-		{Name: "severity", Description: "Filter by severity", Default: ""},
-		{Name: "resource", Description: "Resource type (plural)", Required: true},
+		{Name: "group", Description: "API group (empty for core resources)"},
+		{Name: "version", Description: "API version", Required: true, Default: "v1"},
+		{Name: "resource", Description: "Resource type (plural, e.g. configmaps)", Required: true},
+		{Name: "namespace", Description: "Target namespace (empty for cluster-scoped resources)"},
+		{Name: "name", Description: "Resource name", Required: true},
 	},
+	DryRunAction:         "get",     // read-only counterpart to run when dry_run is set
+	WriteCooldownSeconds: 30,        // throttle repeat mutations (0 = global default)
+	Approval:             "manual",  // require manual approval before executing
 })
 ```
 
@@ -170,10 +179,14 @@ Authorization runs **before** the action executes
   `actions.allowed_namespaces`) in the relevant environments, or the action will
   be denied in production. (With no allowlist configured the authorizer runs in
   permissive mode — local/dev only.)
-- **Secret deny-by-default** — any access to `secrets` is denied unless the
-  exact `namespace/name` is in `ROSA_TA_ALLOWED_SECRETS` /
-  `actions.allowed_secrets`. An action that reads a secret must have that secret
-  allowlisted.
+- **Secret allowlist** — access to `secrets` is denied unless the exact
+  `namespace/name` is in `ROSA_TA_ALLOWED_SECRETS` / `actions.allowed_secrets`.
+  An action that reads a secret must have that secret allowlisted. This is
+  necessary but not sufficient on its own: the check validates the
+  caller-supplied target, not the resources `RequiredRBAC` actually grants, and
+  it is skipped entirely in permissive mode (no namespace allowlist
+  configured). An action whose `RequiredRBAC` can reach a secret other than its
+  declared target bypasses this check.
 - **Cluster-scoped targets** — claimed executions are always treated as
   namespaced (the worker never trusts a caller-supplied cluster-scoped flag; see
   the comment in `worker/executor_runner.go`). Keep this in mind for actions

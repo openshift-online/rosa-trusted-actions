@@ -71,7 +71,10 @@ action runs — code review catches missing allowlist entries, so check these up
 - **New namespace?** Add it to `ROSA_TA_ALLOWED_NAMESPACES` /
   `actions.allowed_namespaces` for the relevant environments.
 - **Reads a secret?** Add the exact `namespace/name` to `ROSA_TA_ALLOWED_SECRETS` /
-  `actions.allowed_secrets` — secrets are deny-by-default.
+  `actions.allowed_secrets`. This checks the caller-supplied target, not what
+  `RequiredRBAC` actually grants, and is skipped entirely in permissive mode
+  (no namespace allowlist configured) — it's not sufficient on its own if the
+  action's RBAC can reach a different resource than the target it was given.
 - **Cluster-scoped target?** Remember claimed executions are always treated as
   namespaced by the worker.
 - If a new required namespace/secret is introduced, update the Configuration
@@ -99,8 +102,10 @@ make lint
 ### 6. Local end-to-end test against a real cluster
 Unit tests mock the cluster; this step runs the action through the real server
 and a disposable `kind` cluster — no mocks in the execution path — and is the
-quickest way to catch wiring mistakes (catalog/implementation mismatch, wrong
-RBAC, bad param handling) before review. Full step-by-step recipe:
+quickest way to catch wiring mistakes (catalog/implementation mismatch, bad
+param handling, wrong output shape) before review. It does **not** verify RBAC
+correctness — the local `KubeconfigProvider` ignores `RequiredRBAC`, so rely on
+unit tests and code review for that. Full step-by-step recipe:
 [`references/local-e2e-testing.md`](references/local-e2e-testing.md).
 
 Summary of the recipe:
