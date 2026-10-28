@@ -15,6 +15,59 @@ values need to be copied by hand. The S3 bucket is created directly in each
 regional workspace — `s3_bucket_name_suffix` must match the value set in the
 global workspace so its IAM wildcard ARN covers the bucket.
 
+### Resource ownership and multi-region fan-out
+
+```mermaid
+flowchart LR
+    subgraph GLOBAL["terraform/global — apply ONCE per AWS account"]
+        direction TB
+        IAM["IAM roles & policies<br/>ecs_instance, task, task_execution,<br/>cwl_to_firehose, firehose_audit_logs<br/><i>(task_app / firehose policies grant S3 access<br/>via wildcard ARN ACCOUNT-ENV-SUFFIX-*)</i>"]
+        SECRETS["Secrets Manager secret<br/>ocm_client_secret, ocm_token,<br/>backplane_client_secret"]
+        DNSG["ACM validation CNAME<br/>(public hosted zone, optional)"]
+    end
+    style GLOBAL fill:#e8f0fe,stroke:#4285f4
+
+    subgraph R1["terraform/regional — workspace #1 (us-east-1)"]
+        direction TB
+        NET1["VPC, subnets, IGW, NAT,<br/>route tables, security groups"]
+        ALB1["ALB + listeners + target group"]
+        ECS1["ECS cluster, EC2 host + EBS volume,<br/>task definition, service"]
+        S31["S3 bucket<br/>ACCOUNT-ENV-SUFFIX-us-east-1"]
+        AUDIT1["CloudWatch log group → Firehose<br/>→ S3 (audit-logs/)"]
+        DNS1["Private Hosted Zone +<br/>regional ACM certificate"]
+    end
+    style R1 fill:#e6f4ea,stroke:#34a853
+
+    subgraph R2["terraform/regional — workspace #2 (eu-central-1)<br/>same code, new HCP workspace + tfvars"]
+        direction TB
+        NET2["VPC, subnets, IGW, NAT,<br/>route tables, security groups"]
+        ALB2["ALB + listeners + target group"]
+        ECS2["ECS cluster, EC2 host + EBS volume,<br/>task definition, service"]
+        S32["S3 bucket<br/>ACCOUNT-ENV-SUFFIX-eu-central-1"]
+        AUDIT2["CloudWatch log group → Firehose<br/>→ S3 (audit-logs/)"]
+        DNS2["Private Hosted Zone +<br/>regional ACM certificate"]
+    end
+    style R2 fill:#e6f4ea,stroke:#34a853
+
+    R3["workspace #N …<br/>new region = new tfvars + HCP workspace,<br/>no global re-apply needed"]
+    style R3 fill:#fef7e0,stroke:#f9ab00
+
+    GLOBAL -. "terraform_remote_state<br/>(IAM ARNs, secret ARN)" .-> R1
+    GLOBAL -. "terraform_remote_state<br/>(IAM ARNs, secret ARN)" .-> R2
+    GLOBAL -. "terraform_remote_state" .-> R3
+    IAM -. "wildcard ARN covers<br/>every region's bucket" .-> S31
+    IAM -. "wildcard ARN covers<br/>every region's bucket" .-> S32
+```
+
+- **Blue (global)** — created once, shared by every region: IAM roles/policies,
+  the app secret, and (optionally) the ACM validation CNAME.
+- **Green (regional)** — created per region: networking, ALB, ECS compute, the
+  region's own S3 bucket, the Firehose audit-log pipeline, and DNS/TLS.
+- **Yellow** — adding region N+1 only touches `terraform/regional`: a new
+  tfvars file / HCP Terraform workspace. `global` is never re-applied — its
+  IAM wildcard ARN (`ACCOUNT-ENVIRONMENT-SUFFIX-*`) already covers any
+  region's bucket by construction.
+
 See [docs/networking.md](networking.md) for the DNS and TLS architecture.
 
 ---
