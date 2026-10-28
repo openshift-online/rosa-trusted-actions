@@ -26,6 +26,17 @@ locals {
   # Matches the bucket name built in terraform/regional/s3.tf:
   # ACCOUNT-ENVIRONMENT-SUFFIX-REGION. The trailing wildcard covers every
   # region's bucket without this workspace knowing which regions exist.
+  #
+  # Known limitation: AWS ARN wildcard matching is not path-aware (`*`
+  # matches `/` like any other character), so statements below that append a
+  # literal key-prefix suffix to this pattern (task_app's .../trusted-actions/*,
+  # firehose_audit_logs' .../audit-logs*/*) can't fully exclude a crafted key
+  # that embeds the suffix as a later path segment (e.g.
+  # audit-logs/trusted-actions/x). Closing this requires enumerating concrete
+  # per-region bucket ARNs, which defeats the point of this wildcard — this
+  # workspace intentionally stays region-count-agnostic. Low risk in practice:
+  # only task_app's own role can craft such a key, and it already has
+  # unrestricted GetObject/ListBucket on the whole bucket.
   s3_bucket_arn_pattern = "arn:aws:s3:::${data.aws_caller_identity.current.account_id}-${var.environment}-${var.s3_bucket_name_suffix}-*"
 }
 
@@ -113,14 +124,16 @@ resource "aws_iam_policy" "task_app" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:ListBucket"]
-        Resource = [local.s3_bucket_arn_pattern, "${local.s3_bucket_arn_pattern}/*"]
+        Effect    = "Allow"
+        Action    = ["s3:GetObject", "s3:ListBucket"]
+        Resource  = [local.s3_bucket_arn_pattern, "${local.s3_bucket_arn_pattern}/*"]
+        Condition = { StringEquals = { "aws:ResourceAccount" = data.aws_caller_identity.current.account_id } }
       },
       {
-        Effect   = "Allow"
-        Action   = ["s3:PutObject"]
-        Resource = ["${local.s3_bucket_arn_pattern}/trusted-actions/*"]
+        Effect    = "Allow"
+        Action    = ["s3:PutObject"]
+        Resource  = ["${local.s3_bucket_arn_pattern}/trusted-actions/*"]
+        Condition = { StringEquals = { "aws:ResourceAccount" = data.aws_caller_identity.current.account_id } }
       },
       {
         Effect   = "Allow"
@@ -220,6 +233,7 @@ resource "aws_iam_policy" "firehose_audit_logs" {
           "${local.s3_bucket_arn_pattern}/audit-logs/*",
           "${local.s3_bucket_arn_pattern}/audit-logs-errors/*",
         ]
+        Condition = { StringEquals = { "aws:ResourceAccount" = data.aws_caller_identity.current.account_id } }
       },
       {
         Effect = "Allow"
@@ -229,7 +243,8 @@ resource "aws_iam_policy" "firehose_audit_logs" {
           "s3:ListBucketMultipartUploads",
           "s3:GetBucketObjectLockConfiguration",
         ]
-        Resource = [local.s3_bucket_arn_pattern]
+        Resource  = [local.s3_bucket_arn_pattern]
+        Condition = { StringEquals = { "aws:ResourceAccount" = data.aws_caller_identity.current.account_id } }
       },
       {
         Effect = "Allow"
