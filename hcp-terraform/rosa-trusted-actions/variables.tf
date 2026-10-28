@@ -27,3 +27,10 @@ variable "_deletion_approvals" {
   }))
   default = []
 }
+
+# Aurora master password. Authored in Vault — this root only passes it through
+# to the regional workspace. See docs/database-and-compute.md.
+variable "db_password" {
+  type      = string
+  sensitive = true
+}

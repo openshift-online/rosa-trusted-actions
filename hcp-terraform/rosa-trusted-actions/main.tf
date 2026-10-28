@@ -153,6 +153,13 @@ module "rosa_trusted_actions" {
           value     = var.backplane_client_secret
           category  = "terraform"
           sensitive = true
+        },
+        {
+          key         = "db_password"
+          value       = var.db_password
+          category    = "terraform"
+          sensitive   = true
+          description = "Aurora master password, authored in Vault. Never rotates; changing it requires a forced ECS deployment."
         }
       ]
     }

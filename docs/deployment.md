@@ -7,13 +7,19 @@ Infrastructure is split into two Terraform roots that must be applied in order:
 | Root         | Path                  | Scope                                                                                                      | Apply cadence    |
 |--------------|-----------------------|------------------------------------------------------------------------------------------------------------|------------------|
 | **global**   | `terraform/global/`   | Account-wide: S3, IAM, Secrets Manager, ACM validation CNAME                                               | Once per account |
-| **regional** | `terraform/regional/` | One deployment per AWS region: VPC, ALB, ECS, EC2, EBS, CloudWatch, Route 53 PHZ, regional ACM certificate | Once per region  |
+| **regional** | `terraform/regional/` | One deployment per AWS region: VPC, ALB, ECS on Fargate, Aurora, CloudWatch, Route 53 PHZ, regional ACM certificate | Once per region  |
 
 The regional root reads IAM ARNs, the S3 bucket name, and the Secrets Manager
 ARN directly from the global workspace's Terraform state via
-`terraform_remote_state`. No values need to be copied by hand.
+`terraform_remote_state`. The only value copied by hand is `db_password`, which
+is authored in Vault — see
+[docs/database-and-compute.md](database-and-compute.md).
 
 See [docs/networking.md](networking.md) for the DNS and TLS architecture.
+
+> **Not yet deployed.** The regional root has never been applied in any
+> environment. See [docs/database-and-compute.md](database-and-compute.md) for
+> the Aurora/Fargate design decisions.
 
 ---
 
@@ -83,6 +89,11 @@ configuration needed.
 | `backplane_client_id` | no        |                                                |
 | `internal_fqdn`       | no        | Must match global workspace value              |
 | `public_zone_id`      | no        | Must match global workspace value              |
+| `db_password`         | **yes**   | Aurora master password; authored in Vault      |
+
+`db_password` never rotates. Changing it rotates the Aurora master password on
+the next apply and breaks every running task, so a forced ECS deployment must
+follow — see [docs/database-and-compute.md](database-and-compute.md).
 
 IAM ARNs, S3 bucket name, and Secrets Manager ARN are **not** workspace
 variables in the regional workspace — they are read automatically from the
@@ -173,10 +184,12 @@ terraform apply \
   -var="container_image=quay.io/redhat-user-workloads/rosa-tenant/rosa-trusted-actions@sha256:<digest>" \
   -var="backplane_url=https://api.stage.backplane.openshift.com" \
   -var="backplane_client_id=trusted-actions" \
-  -var="internal_fqdn=rosa-trusted-actions.internal.company.com"
+  -var="internal_fqdn=rosa-trusted-actions.internal.company.com" \
+  -var="db_password=$ROSA_TA_DB_PASSWORD"
 ```
 
-Or with var-files:
+Or with var-files — keep the password out of the in-repo file, as the global
+root does:
 
 ```hcl
 # terraform/regional/terraform.tfvars  (gitignored)
@@ -191,8 +204,18 @@ backplane_client_id = "trusted-actions"
 internal_fqdn       = "rosa-trusted-actions.internal.company.com"
 ```
 
+```hcl
+# $HOME/.config/rosa-ta/regional-secrets.tfvars  (outside the repo)
+db_password = "..."   # from Vault
+```
+
+A file separate from the global root's `secrets.tfvars`: each root warns about
+variables it does not declare, so sharing one file across both is noisy.
+
 ```bash
-terraform apply -var-file=terraform.tfvars
+terraform apply \
+  -var-file=terraform.tfvars \
+  -var-file=$HOME/.config/rosa-ta/regional-secrets.tfvars
 ```
 
 ### How the override works
@@ -215,7 +238,9 @@ Destroy regional before global (global owns IAM roles that regional's ECS
 tasks depend on at runtime).
 
 ```bash
-cd terraform/regional && terraform destroy -var-file=terraform.tfvars
+cd terraform/regional && terraform destroy \
+  -var-file=terraform.tfvars \
+  -var-file=$HOME/.config/rosa-ta/regional-secrets.tfvars
 cd ../global          && terraform destroy \
   -var-file=terraform.tfvars \
   -var-file=$HOME/.config/rosa-ta/secrets.tfvars
@@ -256,7 +281,9 @@ aws logs filter-log-events \
 2. Create a new HCP Terraform workspace entry in
    `hcp-terraform/rosa-trusted-actions/main.tf` following the
    `rosa-trusted-actions-stage` block. Set `working_directory =
-   "terraform/regional"` and provide the region-specific variables.
+   "terraform/regional"` and provide the region-specific variables. Each region
+   gets its **own** Aurora cluster, so author a fresh `db_password` in Vault
+   for it rather than reusing another region's.
 
 3. Add the new workspace ID to `tfe_workspace_settings.global_state_sharing`
    so it can read the global remote state.
