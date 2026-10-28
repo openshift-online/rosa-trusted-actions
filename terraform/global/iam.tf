@@ -1,7 +1,7 @@
 # All IAM resources are account-global; role and policy names must be unique
 # per account regardless of region.
 #
-# Two policies reference resources that are per-regional-deployment:
+# Three policies reference resources that are per-regional-deployment:
 #
 #   cwl_to_firehose   — grants PutRecord on the Firehose delivery stream.
 #                       Wildcarded to arn:aws:firehose:*:ACCOUNT:deliverystream/APP_NAME-audit-logs
@@ -10,9 +10,24 @@
 #   firehose_audit_logs — grants PutLogEvents on the Firehose error log group.
 #                         Wildcarded to arn:aws:logs:*:ACCOUNT:log-group:/aws/kinesisfirehose/APP_NAME-audit-logs:*
 #
+#   task_app            — grants S3 access on the per-region bucket created by
+#                         the regional workspace (see terraform/regional/s3.tf).
+#                         Wildcarded to arn:aws:s3:::ACCOUNT-ENVIRONMENT-SUFFIX-*
+#                         (region is the only variable segment) so the same
+#                         role works against every region's bucket.
+#
 # The wildcard scope is narrow: it only covers the predictable resource names
 # this project creates and is further constrained by the Firehose / CWL service
 # principal trust policies.
+
+data "aws_caller_identity" "current" {}
+
+locals {
+  # Matches the bucket name built in terraform/regional/s3.tf:
+  # ACCOUNT-ENVIRONMENT-SUFFIX-REGION. The trailing wildcard covers every
+  # region's bucket without this workspace knowing which regions exist.
+  s3_bucket_arn_pattern = "arn:aws:s3:::${data.aws_caller_identity.current.account_id}-${var.environment}-${var.s3_bucket_name_suffix}-*"
+}
 
 # ── EC2 Instance Role ──────────────────────────────────────────────────────────
 
@@ -100,12 +115,12 @@ resource "aws_iam_policy" "task_app" {
       {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:ListBucket"]
-        Resource = ["arn:aws:s3:::${var.s3_bucket_name}", "arn:aws:s3:::${var.s3_bucket_name}/*"]
+        Resource = [local.s3_bucket_arn_pattern, "${local.s3_bucket_arn_pattern}/*"]
       },
       {
         Effect   = "Allow"
         Action   = ["s3:PutObject"]
-        Resource = ["arn:aws:s3:::${var.s3_bucket_name}/trusted-actions/*"]
+        Resource = ["${local.s3_bucket_arn_pattern}/trusted-actions/*"]
       },
       {
         Effect   = "Allow"
@@ -202,8 +217,8 @@ resource "aws_iam_policy" "firehose_audit_logs" {
         Effect = "Allow"
         Action = ["s3:PutObject", "s3:PutObjectRetention", "s3:AbortMultipartUpload"]
         Resource = [
-          "${aws_s3_bucket.app.arn}/audit-logs/*",
-          "${aws_s3_bucket.app.arn}/audit-logs-errors/*",
+          "${local.s3_bucket_arn_pattern}/audit-logs/*",
+          "${local.s3_bucket_arn_pattern}/audit-logs-errors/*",
         ]
       },
       {
@@ -214,7 +229,7 @@ resource "aws_iam_policy" "firehose_audit_logs" {
           "s3:ListBucketMultipartUploads",
           "s3:GetBucketObjectLockConfiguration",
         ]
-        Resource = [aws_s3_bucket.app.arn]
+        Resource = [local.s3_bucket_arn_pattern]
       },
       {
         Effect = "Allow"

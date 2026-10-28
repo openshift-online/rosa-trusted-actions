@@ -36,7 +36,7 @@ resource "aws_kinesis_firehose_delivery_stream" "audit_logs" {
 
   extended_s3_configuration {
     role_arn   = local.global.iam_role_firehose_audit_logs_arn
-    bucket_arn = local.global.s3_bucket_arn
+    bucket_arn = aws_s3_bucket.app.arn
     prefix     = "audit-logs/"
 
     error_output_prefix = "audit-logs-errors/!{firehose:error-output-type}/"

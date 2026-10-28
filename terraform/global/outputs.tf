@@ -1,13 +1,3 @@
-output "s3_bucket_name" {
-  description = "S3 bucket name — pass to regional workspaces as var.s3_bucket_name."
-  value       = aws_s3_bucket.app.bucket
-}
-
-output "s3_bucket_arn" {
-  description = "S3 bucket ARN."
-  value       = aws_s3_bucket.app.arn
-}
-
 output "secretsmanager_secret_arn" {
   description = "Secrets Manager secret ARN — pass to regional workspaces as var.secretsmanager_secret_arn."
   value       = aws_secretsmanager_secret.app.arn

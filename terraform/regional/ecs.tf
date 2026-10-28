@@ -31,7 +31,7 @@ locals {
     { name = "ROSA_TA_LOG_JSON", value = "true" },
     { name = "ROSA_TA_LOG_LEVEL", value = "info" },
     { name = "ROSA_TA_ENABLE_AUTH", value = "true" },
-    { name = "ROSA_TA_S3_BUCKET", value = local.global.s3_bucket_name },
+    { name = "ROSA_TA_S3_BUCKET", value = aws_s3_bucket.app.bucket },
     { name = "ROSA_TA_S3_KEY_PREFIX", value = "trusted-actions" },
     { name = "ROSA_TA_OCM_BASE_URL", value = var.ocm_base_url },
     { name = "ROSA_TA_OCM_CLIENT_ID", value = var.ocm_client_id },
@@ -56,7 +56,7 @@ locals {
 }
 
 resource "aws_s3_object" "config" {
-  bucket       = local.global.s3_bucket_name
+  bucket       = aws_s3_bucket.app.bucket
   key          = "config/${var.aws_region}/config.yaml"
   content      = local.config_yaml
   content_type = "application/yaml"
@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "app" {
       image     = "public.ecr.aws/aws-cli/aws-cli:latest"
       essential = false
 
-      command = ["s3", "cp", "s3://${local.global.s3_bucket_name}/${aws_s3_object.config.key}", "/config/config.yaml", "--region", var.aws_region]
+      command = ["s3", "cp", "s3://${aws_s3_bucket.app.bucket}/${aws_s3_object.config.key}", "/config/config.yaml", "--region", var.aws_region]
 
       mountPoints = [{ sourceVolume = "config-data", containerPath = "/config", readOnly = false }]
 

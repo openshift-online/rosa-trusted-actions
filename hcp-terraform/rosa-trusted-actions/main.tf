@@ -24,7 +24,7 @@ module "rosa_trusted_actions" {
   workspaces = {
     # ── Global workspace ───────────────────────────────────────────────────────
     # Run once per account before any regional workspace.
-    # Manages: S3, IAM, Secrets Manager, ACM validation CNAME.
+    # Manages: IAM, Secrets Manager, ACM validation CNAME.
     # Outputs are consumed directly by regional workspaces via terraform_remote_state.
     rosa-trusted-actions-global = {
       terraform_version      = "1.16.0"
@@ -51,7 +51,7 @@ module "rosa_trusted_actions" {
           category = "terraform"
         },
         {
-          key      = "s3_bucket_name"
+          key      = "s3_bucket_name_suffix"
           value    = "rosa-trusted-actions"
           category = "terraform"
         },
@@ -72,8 +72,10 @@ module "rosa_trusted_actions" {
 
     # ── Regional workspace: us-east-1 stage ────────────────────────────────────
     # Apply after rosa-trusted-actions-global.
-    # IAM ARNs, S3 bucket name, and Secrets Manager ARN are read directly from
-    # the global workspace state via terraform_remote_state — no manual copying.
+    # IAM ARNs and the Secrets Manager ARN are read directly from the global
+    # workspace state via terraform_remote_state — no manual copying. The S3
+    # bucket is created in this workspace (s3_bucket_name_suffix must match
+    # the global workspace's value).
     rosa-trusted-actions-stage = {
       terraform_version      = "1.16.0"
       auto_apply             = false
@@ -97,6 +99,12 @@ module "rosa_trusted_actions" {
           key      = "environment"
           value    = "stage"
           category = "terraform"
+        },
+        {
+          key         = "s3_bucket_name_suffix"
+          value       = "rosa-trusted-actions"
+          category    = "terraform"
+          description = "Must match the global workspace's s3_bucket_name_suffix — used to build this region's bucket name."
         },
         {
           key      = "vpc_id"

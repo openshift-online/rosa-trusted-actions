@@ -46,6 +46,30 @@ variable "environment" {
   default     = "prod"
 }
 
+# ── Storage ───────────────────────────────────────────────────────────────────
+
+variable "s3_bucket_name_suffix" {
+  description = "Suffix segment of the S3 bucket name (ACCOUNT-ENVIRONMENT-SUFFIX-REGION). Must match the global workspace's s3_bucket_name_suffix so its IAM wildcard ARN covers this bucket."
+  type        = string
+  default     = "rosa-trusted-actions"
+}
+
+variable "enable_worm" {
+  description = "Enable WORM object lock retention (COMPLIANCE mode). The bucket is always created with object_lock_enabled = true, but without a retention rule objects are freely deletable. Set true for production."
+  type        = bool
+  default     = false
+}
+
+variable "retention_days" {
+  description = "WORM object lock retention period in days (COMPLIANCE mode)."
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.retention_days > 0 && floor(var.retention_days) == var.retention_days
+    error_message = "retention_days must be a positive integer."
+  }
+}
+
 # ── Compute ───────────────────────────────────────────────────────────────────
 
 variable "container_image" {
