@@ -34,6 +34,16 @@ variable "public_zone_id" {
   default     = ""
 }
 
+variable "public_zone" {
+  description = "public hosted zone to create"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.public_zone_id == "" || var.public_zone == ""
+    error_message = "Can not set both public_zone and public_zone_id"
+  }
+}
+
 # Sensitive — store in HCP Terraform workspace as sensitive variables, never in source
 variable "ocm_client_secret" {
   description = "OCM client secret (ROSA_TA_OCM_CLIENT_SECRET)"

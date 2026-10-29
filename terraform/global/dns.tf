@@ -13,8 +13,19 @@
 #
 # See docs/networking.md for the full shadow-zone pattern explanation.
 
+resource "aws_route53_zone" "main" {
+  count = var.public_zone != "" ? 1 : 0
+  name  = var.public_zone
+}
+
+locals {
+  # Unifies the "pass an existing zone" and "create one here" paths into a
+  # single ID so every downstream resource stays agnostic of which happened.
+  public_zone_id = var.public_zone != "" ? aws_route53_zone.main[0].zone_id : var.public_zone_id
+}
+
 resource "aws_route53_record" "cert_validation" {
-  for_each = var.internal_fqdn != "" && var.public_zone_id != "" ? {
+  for_each = var.internal_fqdn != "" && local.public_zone_id != "" ? {
     for dvo in aws_acm_certificate.validation_anchor[0].domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
@@ -22,7 +33,7 @@ resource "aws_route53_record" "cert_validation" {
     }
   } : {}
 
-  zone_id = var.public_zone_id
+  zone_id = local.public_zone_id
   name    = each.value.name
   type    = each.value.type
   records = [each.value.record]
@@ -33,9 +44,10 @@ resource "aws_route53_record" "cert_validation" {
 # ACM. It is never attached to an ALB. Each regional deployment issues its own
 # certificate (see terraform/regional/acm.tf) and validates against this CNAME.
 resource "aws_acm_certificate" "validation_anchor" {
-  count             = var.internal_fqdn != "" && var.public_zone_id != "" ? 1 : 0
+  count             = var.internal_fqdn != "" && local.public_zone_id != "" ? 1 : 0
   domain_name       = var.internal_fqdn
   validation_method = "DNS"
   lifecycle { create_before_destroy = true }
   tags = { Purpose = "validation-anchor", Environment = var.environment }
 }
+
