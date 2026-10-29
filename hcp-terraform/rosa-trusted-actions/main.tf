@@ -38,8 +38,8 @@ module "rosa_trusted_actions" {
     # Outputs are consumed directly by regional workspaces via terraform_remote_state.
     rosa-trusted-actions-global = {
       terraform_version      = "1.16.0"
-      auto_apply             = false
-      auto_apply_run_trigger = false
+      auto_apply             = true
+      auto_apply_run_trigger = true
       working_directory      = "terraform/global"
       github_repo_org        = "openshift-online"
       github_repo_name       = "rosa-trusted-actions"
@@ -88,8 +88,8 @@ module "rosa_trusted_actions" {
     # the global workspace's value).
     rosa-trusted-actions-stage = {
       terraform_version      = "1.16.0"
-      auto_apply             = false
-      auto_apply_run_trigger = false
+      auto_apply             = true
+      auto_apply_run_trigger = true
       working_directory      = "terraform/regional"
       github_repo_org        = "openshift-online"
       github_repo_name       = "rosa-trusted-actions"
