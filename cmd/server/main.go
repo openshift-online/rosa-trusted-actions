@@ -281,6 +281,11 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// API routes — authn and authz applied as chi middleware so the entire
 	// sub-tree is protected. HandlerWithOptions registers directly on r via
 	// BaseRouter to avoid an infinite routing loop from r.Mount("/", r).
+	//
+	// TODO: Catalog (GET /) and Describe (GET /{action}) are read-only
+	// discovery endpoints that the CLI needs without credentials. Either
+	// split them into a public route group here, or have the CLI fall back
+	// gracefully when unauthenticated.
 	router.Route("/api/v0/trusted-actions", func(r chi.Router) {
 		r.Use(authnMiddleware.AuthenticateAccountJWT)
 		r.Use(middleware.NewAuditLogger(dataStore, logger))
