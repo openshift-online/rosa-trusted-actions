@@ -63,24 +63,6 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) RunRes
 		return runResultError(err)
 	}
 
-	target := actions.ResourceTarget{
-		Group:     params["group"],
-		Version:   params["version"],
-		Resource:  params["resource"],
-		Name:      params["name"],
-		Namespace: params["namespace"],
-		// ClusterScoped is intentionally never derived from a missing
-		// namespace param: whether the target resource type is actually
-		// cluster-scoped is not something a caller-supplied (or absent)
-		// value can be trusted to declare. Doing so previously let a
-		// caller bypass the namespace allowlist entirely, since
-		// authorization.Authorize's "namespace required" check never
-		// fires once ClusterScoped is true. Until cluster-scoped targets
-		// can be derived from something the caller doesn't control (e.g.
-		// action/resource metadata), treat every claimed execution as
-		// namespaced.
-	}
-
 	callerID := ""
 	if exec.Username != nil {
 		callerID = *exec.Username
@@ -89,21 +71,27 @@ func (r *ExecutorRunner) Run(ctx context.Context, exec *models.Execution) RunRes
 	execCtx, cancel := context.WithTimeout(ctx, r.executionTimeout)
 	defer cancel()
 
+	// Target is left unset: the executor's scope for this action derives it
+	// from the caller-supplied params.
 	result := r.executor.Execute(execCtx, executor.Request{
 		CallerID:  callerID,
 		ClusterID: exec.TargetCluster,
 		Action:    act,
-		Target:    target,
 		Params:    params,
 	})
 
-	if !result.Allowed {
-		log.WithField("reason", result.Reason).Warn("claimed execution denied by authorizer")
-		return runResultError(fmt.Errorf("denied: %s", result.Reason))
-	}
+	// Error before Allowed: a run that never reached the authorizer — the
+	// executor could not build a target for it — carries an error and no
+	// decision, and reporting that as "denied" would tell the caller they were
+	// refused something they were never actually refused. A genuine denial
+	// still has no error, so it falls through to the check below.
 	if result.Error != nil {
 		log.WithError(result.Error).Error("claimed execution failed")
 		return runResultError(result.Error)
+	}
+	if !result.Allowed {
+		log.WithField("reason", result.Reason).Warn("claimed execution denied by authorizer")
+		return runResultError(fmt.Errorf("denied: %s", result.Reason))
 	}
 	log.Debug(result.Output)
 

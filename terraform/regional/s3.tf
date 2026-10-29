@@ -1,14 +1,22 @@
-data "aws_caller_identity" "current" {}
-
 # ── S3 bucket ─────────────────────────────────────────────────────────────────
+#
+# One bucket per regional deployment. The global workspace's IAM policies
+# (terraform/global/iam.tf) grant access via a wildcard ARN that matches this
+# naming pattern — s3_bucket_name_suffix must match the global workspace's
+# value for that wildcard to cover this bucket.
+
+locals {
+  # Globally unique bucket name: account + environment + logical suffix + region.
+  s3_bucket_name = "${data.aws_caller_identity.current.account_id}-${var.environment}-${var.s3_bucket_name_suffix}-${var.aws_region}"
+}
 
 # Object lock must be enabled at bucket creation — it cannot be added to an
 # existing bucket without an AWS Support request.
 resource "aws_s3_bucket" "app" {
-  bucket              = var.s3_bucket_name
+  bucket              = local.s3_bucket_name
   object_lock_enabled = true
 
-  tags = { Name = var.s3_bucket_name, Environment = var.environment }
+  tags = { Name = local.s3_bucket_name, Environment = var.environment }
 }
 
 resource "aws_s3_bucket_versioning" "app" {

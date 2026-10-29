@@ -1,6 +1,9 @@
 package catalog
 
 import (
+	"strings"
+
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/auth"
 	"github.com/openshift-online/rosa-trusted-actions/internal/openapi"
 )
@@ -111,6 +114,63 @@ func New() *Catalog {
 			{Name: "severity", Description: "Filter by severity: critical, warning (empty for both)"},
 			{Name: "state", Description: "Alert state: firing, pending, all", Default: "firing"},
 			{Name: "silences", Description: "Include active silences: true, false", Default: "false"},
+		},
+	})
+
+	c.register(&ActionDefinition{
+		Name:         "aws-get",
+		Description:  "Get or list AWS resources",
+		Type:         openapi.Read,
+		Scope:        openapi.AwsApi,
+		AllowedRoles: allRoles,
+		Params: []ParamDefinition{
+			// Built from the action's own registry rather than written out here,
+			// so adding a resource cannot leave the catalog describing a surface
+			// the server no longer has.
+			{Name: "resource", Description: "AWS resource type, one of: " + strings.Join(actions.AWSResourceNames(), ", "), Required: true},
+			// No region param: reads always target the cluster's own AWS
+			// region, which the server resolves from OCM.
+			// Which resources take id, filters and since varies, and listing that
+			// here would drift as resources are added. The action rejects a param
+			// the resource does not accept with a message naming what it does, so
+			// the authoritative answer comes from trying it.
+			{Name: "id", Description: "Resource ID (empty to list all); some resources require it, some cannot be narrowed by it"},
+			{Name: "filters", Description: "Comma-separated Name=Value API filters, e.g. instance-state-name=running (not accepted by every resource)"},
+			// The maximum comes from the action rather than being written out
+			// here, so the documented limit cannot drift from the enforced one.
+			{Name: "since", Description: "How far back to look, as a Go duration, e.g. 30m or 48h; at most " + actions.CloudTrailLookbackMax.String() + " (cloudtrail-events only)", Default: "2h"},
+		},
+	})
+
+	// The AWS writes. Neither takes a "resource" param the way aws-get does:
+	// each acts on EC2 instances and nothing else, so the kind of object is
+	// part of the action rather than something the caller chooses.
+	//
+	// Both are refused unless the server's write allowlist names their
+	// operation, which by default it does not. Being listed here means the
+	// action exists, not that a given deployment will run it.
+	c.register(&ActionDefinition{
+		Name:         "aws-reboot",
+		Description:  "Reboot one of the cluster's EC2 instances",
+		Type:         openapi.Write,
+		Scope:        openapi.AwsApi,
+		AllowedRoles: allRoles,
+		Params: []ParamDefinition{
+			{Name: "id", Description: "EC2 instance ID; the instance must be tagged as owned by this cluster", Required: true},
+		},
+	})
+
+	c.register(&ActionDefinition{
+		Name:        "aws-terminate",
+		Description: "Terminate one of the cluster's EC2 instances",
+		Type:        openapi.Write,
+		Scope:       openapi.AwsApi,
+		// Narrower than every other action: terminating an instance destroys it,
+		// and unlike a reboot there is no state to come back to. Limited to SREP
+		// so the irreversible one is not reachable by an automated caller.
+		AllowedRoles: []string{"SREP"},
+		Params: []ParamDefinition{
+			{Name: "id", Description: "EC2 instance ID; the instance must be tagged as owned by this cluster", Required: true},
 		},
 	})
 

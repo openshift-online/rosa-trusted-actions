@@ -34,7 +34,7 @@ func (d *DeleteAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule 
 	return []backplane.RBACRule{rule}
 }
 
-func (d *DeleteAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
+func (d *DeleteAction) Execute(ctx context.Context, clients KubeClients, req KubeActionRequest) (*ActionResult, error) {
 	if req.Target.Name == "" {
 		return nil, fmt.Errorf("delete action requires a resource name")
 	}

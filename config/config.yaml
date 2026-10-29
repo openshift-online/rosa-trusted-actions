@@ -17,3 +17,37 @@ roles:
 # actions:
 #   allowed_namespaces: []
 #   allowed_secrets: []
+#   # Which AWS regions actions may read from. Unlike the two above, this one
+#   # has no permissive mode and no built-in default: leave it out and the
+#   # server refuses to start, because which regions a deployment may reach is
+#   # that deployment's decision rather than one made here. Required whenever
+#   # AWS actions are in use.
+#   aws_allowed_regions: [us-east-1]
+#   # Which AWS mutations actions may perform: "reboot", "terminate". This one
+#   # has no built-in default to fall back to — leave it out and the server
+#   # permits no writes at all, while still permitting reads. Naming an
+#   # operation here is how a deployment acquires the ability to change a
+#   # cluster's cloud infrastructure, and the list below enables nothing.
+#   aws_allowed_operations: []
+
+# Connection settings for the two AWS client providers. Credentials are not
+# here on purpose: this file is committed, so AWS_ACCESS_KEY_ID and friends
+# stay environment-only.
+
+# aws:
+#   # Points AWS traffic at a local emulator (LocalStack). Setting it also
+#   # selects the static client provider over the backplane one, because a
+#   # single fixed endpoint can only mean a single emulated account. Leave it
+#   # unset in any deployment that talks to real AWS.
+#   endpoint_url: ""
+#   # Proxy for AWS traffic. Empty falls back to backplane.proxy_url below,
+#   # matching backplane-cli.
+#   proxy_url: ""
+
+# backplane:
+#   # The payer-account role the AWS assume-role chain starts from. Normally
+#   # left empty: backplane-cli infers it from the OCM URL and rejects anything
+#   # that is not one of the three known SRE support roles.
+#   assume_initial_arn: ""
+#   # Proxy used to reach the backplane API.
+#   proxy_url: ""

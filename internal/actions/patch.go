@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -36,7 +35,7 @@ func (p *PatchAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
 	return []backplane.RBACRule{rule}
 }
 
-func (p *PatchAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
+func (p *PatchAction) Execute(ctx context.Context, clients KubeClients, req KubeActionRequest) (*ActionResult, error) {
 	if req.Target.Name == "" {
 		return nil, fmt.Errorf("patch action requires a resource name")
 	}
@@ -65,7 +64,7 @@ func (p *PatchAction) Execute(ctx context.Context, clients Clients, req ActionRe
 	}
 
 	return &ActionResult{
-		Resources: []unstructured.Unstructured{*obj},
+		Resources: resourcesFrom(*obj),
 		Message:   fmt.Sprintf("patched %s/%s in %s", req.Target.Resource, req.Target.Name, scopeLabel(req.Target.Namespace)),
 	}, nil
 }

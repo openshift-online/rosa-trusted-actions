@@ -16,25 +16,10 @@ variable "environment" {
   default     = "prod"
 }
 
-variable "s3_bucket_name" {
-  description = "Globally unique S3 bucket name for execution outputs and audit logs."
+variable "s3_bucket_name_suffix" {
+  description = "Suffix segment of the per-region S3 bucket name (ACCOUNT-ENVIRONMENT-SUFFIX-REGION). The bucket itself is created in the regional workspace (terraform/regional/s3.tf); this value must match the regional workspace's s3_bucket_name_suffix so the IAM wildcard ARN here covers it."
   type        = string
-}
-
-variable "enable_worm" {
-  description = "Enable WORM object lock retention (COMPLIANCE mode). The bucket is always created with object_lock_enabled = true, but without a retention rule objects are freely deletable. Set true for production."
-  type        = bool
-  default     = false
-}
-
-variable "retention_days" {
-  description = "WORM object lock retention period in days (COMPLIANCE mode)."
-  type        = number
-  default     = 1
-  validation {
-    condition     = var.retention_days > 0 && floor(var.retention_days) == var.retention_days
-    error_message = "retention_days must be a positive integer."
-  }
+  default     = "rosa-trusted-actions"
 }
 
 variable "internal_fqdn" {

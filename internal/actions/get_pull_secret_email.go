@@ -48,7 +48,7 @@ func (g *GetPullSecretEmailAction) RequiredRBAC(_ ResourceTarget) []backplane.RB
 	}
 }
 
-func (g *GetPullSecretEmailAction) Execute(ctx context.Context, clients Clients, _ ActionRequest) (*ActionResult, error) {
+func (g *GetPullSecretEmailAction) Execute(ctx context.Context, clients KubeClients, _ KubeActionRequest) (*ActionResult, error) {
 	secret, err := clients.Dynamic.Resource(secretsGVR).Namespace(pullSecretNamespace).Get(ctx, pullSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secret %s/%s: %w", pullSecretNamespace, pullSecretName, err)
@@ -60,8 +60,8 @@ func (g *GetPullSecretEmailAction) Execute(ctx context.Context, clients Clients,
 	}
 
 	return &ActionResult{
-		Resources: []unstructured.Unstructured{
-			{Object: map[string]interface{}{"email": email}},
+		Resources: []map[string]interface{}{
+			{"email": email},
 		},
 		Message: "retrieved pull secret email",
 	}, nil

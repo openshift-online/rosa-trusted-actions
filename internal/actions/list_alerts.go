@@ -9,7 +9,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
@@ -46,7 +45,7 @@ func (l *ListAlertsAction) RequiredRBAC(target ResourceTarget) []backplane.RBACR
 	}
 }
 
-func (l *ListAlertsAction) Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error) {
+func (l *ListAlertsAction) Execute(ctx context.Context, clients KubeClients, req KubeActionRequest) (*ActionResult, error) {
 	if clients.PodExecutor == nil {
 		return nil, fmt.Errorf("list-alerts requires a pod executor")
 	}
@@ -118,10 +117,8 @@ func (l *ListAlertsAction) Execute(ctx context.Context, clients Clients, req Act
 	}
 
 	return &ActionResult{
-		Resources: []unstructured.Unstructured{
-			{Object: result},
-		},
-		Message: msg,
+		Resources: []map[string]interface{}{result},
+		Message:   msg,
 	}, nil
 }
 

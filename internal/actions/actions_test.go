@@ -176,7 +176,7 @@ func TestAction_Name(t *testing.T) {
 
 func TestAction_RequiredRBAC(t *testing.T) {
 	tests := []struct {
-		action            Action
+		action            KubeAction
 		testName          string
 		target            ResourceTarget
 		expectedRBACRules []backplane.RBACRule
@@ -299,13 +299,13 @@ func TestAction_RequiredRBAC(t *testing.T) {
 
 func TestAction_Execute(t *testing.T) {
 	tests := []struct {
-		action                      Action
+		action                      KubeAction
 		testName                    string
 		target                      ResourceTarget
 		params                      map[string]string
 		clientObjects               []runtime.Object
 		clientObjectsAfterExecution []runtime.Object
-		expectedResultResources     []unstructured.Unstructured
+		expectedResultResources     []map[string]interface{}
 		isExpectingError            bool
 	}{
 		// GET action tests
@@ -315,7 +315,7 @@ func TestAction_Execute(t *testing.T) {
 			target:                      myConfigMapTarget,
 			clientObjects:               []runtime.Object{myConfigMap},
 			clientObjectsAfterExecution: []runtime.Object{myConfigMap},
-			expectedResultResources:     []unstructured.Unstructured{*myConfigMap},
+			expectedResultResources:     []map[string]interface{}{myConfigMap.Object},
 		},
 		{
 			action:                      NewGetAction(),
@@ -323,7 +323,7 @@ func TestAction_Execute(t *testing.T) {
 			target:                      mySecretTarget,
 			clientObjects:               []runtime.Object{mySecret},
 			clientObjectsAfterExecution: []runtime.Object{mySecret},
-			expectedResultResources:     []unstructured.Unstructured{*mySecret},
+			expectedResultResources:     []map[string]interface{}{mySecret.Object},
 		},
 		{
 			action:                      NewGetAction(),
@@ -331,7 +331,7 @@ func TestAction_Execute(t *testing.T) {
 			target:                      myNodeTarget,
 			clientObjects:               []runtime.Object{myNode},
 			clientObjectsAfterExecution: []runtime.Object{myNode},
-			expectedResultResources:     []unstructured.Unstructured{*myNode},
+			expectedResultResources:     []map[string]interface{}{myNode.Object},
 		},
 		{
 			action:           NewGetAction(),
@@ -358,7 +358,7 @@ func TestAction_Execute(t *testing.T) {
 			},
 			clientObjects:               []runtime.Object{cm1, cm2},
 			clientObjectsAfterExecution: []runtime.Object{cm1, cm2},
-			expectedResultResources:     []unstructured.Unstructured{*cm1, *cm2},
+			expectedResultResources:     []map[string]interface{}{cm1.Object, cm2.Object},
 		},
 		{
 			action:   NewGetAction(),
@@ -395,7 +395,7 @@ func TestAction_Execute(t *testing.T) {
 			},
 			clientObjects:               []runtime.Object{n1, n2},
 			clientObjectsAfterExecution: []runtime.Object{n1, n2},
-			expectedResultResources:     []unstructured.Unstructured{*n1, *n2},
+			expectedResultResources:     []map[string]interface{}{n1.Object, n2.Object},
 		},
 		{
 			action:   NewGetAction(),
@@ -419,7 +419,7 @@ func TestAction_Execute(t *testing.T) {
 			params:                      map[string]string{"patch": `{"data":{"my-config-key":"updated"}}`},
 			clientObjects:               []runtime.Object{myConfigMap},
 			clientObjectsAfterExecution: []runtime.Object{newConfigMap("openshift-monitoring", "my-config", "my-config-key", "updated")},
-			expectedResultResources:     []unstructured.Unstructured{*newConfigMap("openshift-monitoring", "my-config", "my-config-key", "updated")},
+			expectedResultResources:     []map[string]interface{}{newConfigMap("openshift-monitoring", "my-config", "my-config-key", "updated").Object},
 		},
 		{
 			action:                      NewPatchAction(),
@@ -428,7 +428,7 @@ func TestAction_Execute(t *testing.T) {
 			params:                      map[string]string{"patch": `{"data":{"my-secret-key":"updated"}}`},
 			clientObjects:               []runtime.Object{mySecret},
 			clientObjectsAfterExecution: []runtime.Object{newSecret("openshift-monitoring", "my-secret", "my-secret-key", "updated")},
-			expectedResultResources:     []unstructured.Unstructured{*newSecret("openshift-monitoring", "my-secret", "my-secret-key", "updated")},
+			expectedResultResources:     []map[string]interface{}{newSecret("openshift-monitoring", "my-secret", "my-secret-key", "updated").Object},
 		},
 		{
 			action:                      NewPatchAction(),
@@ -437,7 +437,7 @@ func TestAction_Execute(t *testing.T) {
 			params:                      map[string]string{"patch": `{"metadata":{"labels":{"test":"value"}}}`},
 			clientObjects:               []runtime.Object{myNode},
 			clientObjectsAfterExecution: []runtime.Object{newNode("my-node", map[string]interface{}{"test": "value"})},
-			expectedResultResources:     []unstructured.Unstructured{*newNode("my-node", map[string]interface{}{"test": "value"})},
+			expectedResultResources:     []map[string]interface{}{newNode("my-node", map[string]interface{}{"test": "value"}).Object},
 		},
 		{
 			action:           NewPatchAction(),
@@ -476,7 +476,7 @@ func TestAction_Execute(t *testing.T) {
 			params:                      map[string]string{"patch": `{"data":{"my-config-key":"updated"}}`},
 			clientObjects:               []runtime.Object{myConfigMap, cm1, cm2, mySecret},
 			clientObjectsAfterExecution: []runtime.Object{newConfigMap("openshift-monitoring", "my-config", "my-config-key", "updated"), cm1, cm2, mySecret},
-			expectedResultResources:     []unstructured.Unstructured{*newConfigMap("openshift-monitoring", "my-config", "my-config-key", "updated")},
+			expectedResultResources:     []map[string]interface{}{newConfigMap("openshift-monitoring", "my-config", "my-config-key", "updated").Object},
 		},
 		{
 			action:                      NewPatchAction(),
@@ -485,7 +485,7 @@ func TestAction_Execute(t *testing.T) {
 			params:                      map[string]string{"patch": `{}`},
 			clientObjects:               []runtime.Object{myConfigMap},
 			clientObjectsAfterExecution: []runtime.Object{myConfigMap},
-			expectedResultResources:     []unstructured.Unstructured{*myConfigMap},
+			expectedResultResources:     []map[string]interface{}{myConfigMap.Object},
 		},
 		{
 			action:                      NewPatchAction(),
@@ -504,9 +504,9 @@ func TestAction_Execute(t *testing.T) {
 			clientObjectsAfterExecution: []runtime.Object{newDataObject("ConfigMap", "openshift-monitoring", "my-config", map[string]interface{}{
 				"my-config-key":     "my-config-value",
 				"my-new-config-key": "some-new-value"})},
-			expectedResultResources: []unstructured.Unstructured{*newDataObject("ConfigMap", "openshift-monitoring", "my-config", map[string]interface{}{
+			expectedResultResources: []map[string]interface{}{newDataObject("ConfigMap", "openshift-monitoring", "my-config", map[string]interface{}{
 				"my-config-key":     "my-config-value",
-				"my-new-config-key": "some-new-value"})},
+				"my-new-config-key": "some-new-value"}).Object},
 		},
 		{
 			action:                      NewPatchAction(),
@@ -515,7 +515,7 @@ func TestAction_Execute(t *testing.T) {
 			params:                      map[string]string{"patch": `{"data":{"my-config-key":null}}`},
 			clientObjects:               []runtime.Object{myConfigMap},
 			clientObjectsAfterExecution: []runtime.Object{newDataObject("ConfigMap", "openshift-monitoring", "my-config", map[string]interface{}{})},
-			expectedResultResources:     []unstructured.Unstructured{*newDataObject("ConfigMap", "openshift-monitoring", "my-config", map[string]interface{}{})},
+			expectedResultResources:     []map[string]interface{}{newDataObject("ConfigMap", "openshift-monitoring", "my-config", map[string]interface{}{}).Object},
 		},
 		// DELETE action tests
 		{
@@ -575,7 +575,7 @@ func TestAction_Execute(t *testing.T) {
 				g := NewWithT(t)
 
 				client := newFakeClient(test.clientObjects...)
-				result, err := test.action.Execute(context.Background(), Clients{Dynamic: client}, ActionRequest{
+				result, err := test.action.Execute(context.Background(), KubeClients{Dynamic: client}, KubeActionRequest{
 					Target: test.target,
 					Params: test.params,
 				})
