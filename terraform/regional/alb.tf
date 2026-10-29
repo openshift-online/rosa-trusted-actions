@@ -1,9 +1,12 @@
 resource "aws_lb" "main" {
   name                       = var.app_name
-  internal                   = false
+  internal                   = true
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.alb.id]
-  subnets                    = [local.public_subnet_a, local.public_subnet_b]
+  # Internal ALB sits in private subnets — two AZs required by AWS even for internal ALBs.
+  # Ensure var.private_subnet_ids provides at least two subnets in different AZs when
+  # bringing your own VPC; the managed VPC always creates private_a (AZ-0) and private_b (AZ-1).
+  subnets                    = [local.private_subnet_a, local.private_subnet_b]
   drop_invalid_header_fields = true
   tags                       = { Environment = var.environment }
 }

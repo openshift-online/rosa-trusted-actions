@@ -15,10 +15,35 @@ locals {
     ? aws_subnet.private_b[0].id
     : (length(var.private_subnet_ids) > 1 ? var.private_subnet_ids[1] : var.private_subnet_ids[0])
   )
+
+  # AZ of the primary private subnet — used to co-locate the EBS volume.
+  # When Terraform owns the VPC the AZ comes directly from the managed subnet
+  # resource. When subnets are provided externally it is looked up via
+  # data.aws_subnet.private_a (count=1 only in that case).
+  private_subnet_a_az = (
+    local.create_vpc
+    ? aws_subnet.private_a[0].availability_zone
+    : data.aws_subnet.private_a[0].availability_zone
+  )
 }
 
 data "aws_availability_zones" "available" {
   state = "available"
+}
+
+# Resolved at apply time for both managed and externally-provided VPCs.
+# Used by:
+#   - security_groups.tf  — locks ALB ingress to the VPC CIDR
+#   - postcondition       — guards Route 53 PHZ resolution prerequisites
+data "aws_vpc" "current" {
+  id = local.vpc_id
+
+  lifecycle {
+    postcondition {
+      condition     = self.enable_dns_support && self.enable_dns_hostnames
+      error_message = "VPC ${self.id} must have enable_dns_support and enable_dns_hostnames set to true. Route 53 Private Hosted Zone resolution requires both flags."
+    }
+  }
 }
 
 resource "aws_vpc" "main" {

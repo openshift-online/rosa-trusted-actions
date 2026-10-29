@@ -188,6 +188,7 @@ func TestAction_RequiredRBAC(t *testing.T) {
 			target:   myConfigMapTarget,
 			expectedRBACRules: []backplane.RBACRule{
 				{
+					Namespace:     "openshift-monitoring",
 					APIGroups:     []string{""},
 					Resources:     []string{"configmaps"},
 					ResourceNames: []string{"my-config"},
@@ -207,6 +208,7 @@ func TestAction_RequiredRBAC(t *testing.T) {
 			},
 			expectedRBACRules: []backplane.RBACRule{
 				{
+					Namespace:     "openshift-logging",
 					APIGroups:     []string{""},
 					Resources:     []string{"configmaps"},
 					ResourceNames: []string{"my-config"},
@@ -226,6 +228,7 @@ func TestAction_RequiredRBAC(t *testing.T) {
 			},
 			expectedRBACRules: []backplane.RBACRule{
 				{
+					Namespace:     "openshift-monitoring",
 					APIGroups:     []string{"apps"},
 					Resources:     []string{"deployments"},
 					ResourceNames: []string{"prometheus"},
@@ -244,6 +247,7 @@ func TestAction_RequiredRBAC(t *testing.T) {
 			},
 			expectedRBACRules: []backplane.RBACRule{
 				{
+					Namespace: "openshift-monitoring",
 					APIGroups: []string{""},
 					Resources: []string{"configmaps"},
 					Verbs:     []string{"list"},
@@ -257,6 +261,7 @@ func TestAction_RequiredRBAC(t *testing.T) {
 			target:   myConfigMapTarget,
 			expectedRBACRules: []backplane.RBACRule{
 				{
+					Namespace:     "openshift-monitoring",
 					APIGroups:     []string{""},
 					Resources:     []string{"configmaps"},
 					ResourceNames: []string{"my-config"},
@@ -271,6 +276,7 @@ func TestAction_RequiredRBAC(t *testing.T) {
 			target:   myConfigMapTarget,
 			expectedRBACRules: []backplane.RBACRule{
 				{
+					Namespace:     "openshift-monitoring",
 					APIGroups:     []string{""},
 					Resources:     []string{"configmaps"},
 					ResourceNames: []string{"my-config"},

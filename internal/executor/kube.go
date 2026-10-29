@@ -85,7 +85,7 @@ func (s *KubeScope) Run(ctx context.Context, req Request) (*actions.ActionResult
 	// from all sub-actions and call GetClient once to reuse a single session.
 	// (possible design decision for later)
 	rbacRules := action.RequiredRBAC(target)
-	client, err := s.backplane.GetClient(ctx, req.ClusterID, rbacRules)
+	client, err := s.backplane.GetClient(ctx, req.ClusterID, req.Action.Name(), rbacRules)
 	if err != nil {
 		return nil, &Failure{Message: "failed to get cluster client", Cause: err}
 	}
@@ -93,7 +93,7 @@ func (s *KubeScope) Run(ctx context.Context, req Request) (*actions.ActionResult
 	clients := actions.KubeClients{Dynamic: client}
 
 	if action.UsesPodExec() {
-		podExec, podErr := s.backplane.GetPodExecutor(ctx, req.ClusterID, rbacRules)
+		podExec, podErr := s.backplane.GetPodExecutor(ctx, req.ClusterID, req.Action.Name(), rbacRules)
 		if podErr != nil {
 			return nil, &Failure{Message: "failed to get pod executor", Cause: podErr}
 		}

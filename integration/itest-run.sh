@@ -2,9 +2,9 @@
 set -e
 
 # Retrieves a kubeconfig from the kind cluster created by itest-up.sh, starts the server
-# against it with mock auth, and runs smoke tests for both execution scopes — a 'get'
-# action against kind and an 'aws-get' action against localstack — to confirm the API
-# works end-to-end. See integration/README.md Phase 1.
+# against it with mock auth, and runs smoke tests for all workflow actions across both
+# execution scopes — the Kubernetes actions against kind and 'aws-get' against
+# localstack — to confirm the API works end-to-end. See integration/README.md Phase 1.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -37,10 +37,46 @@ for bin in kind go curl jq podman; do
     command -v "$bin" > /dev/null 2>&1 || fail "'$bin' is required but not found on PATH"
 done
 
-# run_action <action> <json-body> — submits an action, polls until it leaves the
-# pending/running states, and echoes "<status> <execution_id>". Both scopes are
-# exercised the same way, so the polling lives here rather than being repeated.
+# --- Helper: run an action and wait for completion ---
+# Usage: run_action <action-name> <json-body>
+# Sets: EXEC_ID, EXEC_RESPONSE
 run_action() {
+    local action="$1"
+    local body="$2"
+
+    local response
+    response=$(curl -sf -X POST "$API_BASE/$action/run" \
+        -H 'Content-Type: application/json' \
+        -d "$body") \
+        || fail "POST $API_BASE/$action/run failed — check $SERVER_LOG"
+
+    EXEC_ID=$(echo "$response" | jq -r '.id')
+    [ -n "$EXEC_ID" ] && [ "$EXEC_ID" != "null" ] || fail "no execution id in response: $response"
+
+    local status="pending"
+    local elapsed=0
+    while [ "$status" = "pending" ] || [ "$status" = "running" ]; do
+        if [ "$elapsed" -ge "$WAIT_TIMEOUT" ]; then
+            fail "execution $EXEC_ID ($action) did not complete within ${WAIT_TIMEOUT}s (last status: $status)"
+        fi
+        sleep 1
+        elapsed=$((elapsed + 1))
+        EXEC_RESPONSE=$(curl -sf "$API_BASE/runs/$EXEC_ID") \
+            || fail "GET $API_BASE/runs/$EXEC_ID failed — check $SERVER_LOG"
+        status=$(echo "$EXEC_RESPONSE" | jq -r '.status')
+    done
+
+    [ "$status" = "succeeded" ] || fail "execution $EXEC_ID ($action) finished with status '$status': $EXEC_RESPONSE"
+}
+
+# --- Helper: run an action and return its final status ---
+# Usage: read -r status execution_id <<< "$(run_action_status <action> <json-body>)"
+#
+# run_action above treats anything but success as a script failure, which is
+# what every positive test wants. The AWS section also asserts that a bad
+# request *fails*, so that case needs a path that reports the status instead of
+# dying on it.
+run_action_status() {
     local action=$1 body=$2 response execution_id status elapsed=0
 
     response=$(curl -sf -X POST "$API_BASE/$action/run" \
@@ -64,6 +100,14 @@ run_action() {
     done
 
     echo "$status $execution_id"
+}
+
+# --- Helper: get execution output ---
+# Usage: get_output <exec-id>
+# Sets: EXEC_OUTPUT
+get_output() {
+    EXEC_OUTPUT=$(curl -sf "$API_BASE/runs/$1/output") \
+        || fail "GET $API_BASE/runs/$1/output failed — check $SERVER_LOG"
 }
 
 # --- 1. Retrieve a kubeconfig from kind ---
@@ -122,15 +166,86 @@ until curl -sf "$SERVER_URL/health" > /dev/null 2>&1; do
 done
 ok "server is healthy"
 
-# --- 4. Run a simple GET action against kind and check the API works ---
+# --- 4. Test: get action (list pods in kube-system) ---
 log "Running 'get' action (list pods in kube-system)"
-read -r status execution_id <<< "$(run_action get \
-    '{"target_cluster": "local", "params": {"version": "v1", "resource": "pods", "namespace": "kube-system"}}')"
+run_action "get" '{"target_cluster": "local", "params": {"version": "v1", "resource": "pods", "namespace": "kube-system"}}'
+ok "get action succeeded (execution $EXEC_ID)"
 
-[ "$status" = "succeeded" ] || fail "execution $execution_id finished with status '$status' — check $SERVER_LOG"
-ok "get action succeeded (execution $execution_id)"
+# --- 5. Test: describe-nodes action ---
+log "Running 'describe-nodes' action (all nodes)"
+run_action "describe-nodes" '{"target_cluster": "local", "jira": "ITEST-1"}'
+get_output "$EXEC_ID"
 
-# --- 5. Run an AWS GET action against localstack ---
+node_count=$(echo "$EXEC_OUTPUT" | jq '.resources | length')
+[ "$node_count" -ge 1 ] || fail "describe-nodes returned $node_count nodes, expected at least 1"
+
+first_node_name=$(echo "$EXEC_OUTPUT" | jq -r '.resources[0].name')
+[ -n "$first_node_name" ] && [ "$first_node_name" != "null" ] \
+    || fail "describe-nodes: first node has no name"
+
+has_conditions=$(echo "$EXEC_OUTPUT" | jq '.resources[0] | has("conditions")')
+[ "$has_conditions" = "true" ] || fail "describe-nodes: first node has no conditions"
+
+has_capacity=$(echo "$EXEC_OUTPUT" | jq '.resources[0] | has("capacity")')
+[ "$has_capacity" = "true" ] || fail "describe-nodes: first node has no capacity"
+
+has_pods=$(echo "$EXEC_OUTPUT" | jq '.resources[0] | has("pods")')
+[ "$has_pods" = "true" ] || fail "describe-nodes: first node has no pods array"
+
+ok "describe-nodes action succeeded: $node_count node(s), first node '$first_node_name' has conditions, capacity, and pods (execution $EXEC_ID)"
+
+# Test: describe-nodes with a specific node name
+log "Running 'describe-nodes' action (single node: $first_node_name)"
+run_action "describe-nodes" "{\"target_cluster\": \"local\", \"jira\": \"ITEST-2\", \"params\": {\"name\": \"$first_node_name\"}}"
+get_output "$EXEC_ID"
+
+single_node_count=$(echo "$EXEC_OUTPUT" | jq '.resources | length')
+[ "$single_node_count" -eq 1 ] || fail "describe-nodes (single): expected 1 node, got $single_node_count"
+
+returned_name=$(echo "$EXEC_OUTPUT" | jq -r '.resources[0].name')
+[ "$returned_name" = "$first_node_name" ] \
+    || fail "describe-nodes (single): expected node '$first_node_name', got '$returned_name'"
+
+ok "describe-nodes (single node) succeeded (execution $EXEC_ID)"
+
+# --- 6. Test: get-pull-secret-email action ---
+log "Running 'get-pull-secret-email' action"
+run_action "get-pull-secret-email" '{"target_cluster": "local", "jira": "ITEST-3"}'
+get_output "$EXEC_ID"
+
+email=$(echo "$EXEC_OUTPUT" | jq -r '.resources[0].email')
+[ "$email" = "itest@example.com" ] \
+    || fail "get-pull-secret-email: expected 'itest@example.com', got '$email'"
+
+ok "get-pull-secret-email action succeeded: email=$email (execution $EXEC_ID)"
+
+# --- 7. Test: list-alerts action ---
+log "Running 'list-alerts' action (firing alerts)"
+run_action "list-alerts" '{"target_cluster": "local", "jira": "ITEST-4", "params": {"namespace": "openshift-monitoring", "state": "firing"}}'
+get_output "$EXEC_ID"
+
+critical_count=$(echo "$EXEC_OUTPUT" | jq '.resources[0].alerts.critical | length')
+warning_count=$(echo "$EXEC_OUTPUT" | jq '.resources[0].alerts.warning | length')
+
+[ "$critical_count" -ge 1 ] || fail "list-alerts: expected at least 1 critical alert, got $critical_count"
+[ "$warning_count" -ge 1 ] || fail "list-alerts: expected at least 1 warning alert, got $warning_count"
+
+ok "list-alerts action succeeded: $critical_count critical, $warning_count warning alerts (execution $EXEC_ID)"
+
+# Test: list-alerts with severity filter
+log "Running 'list-alerts' action (critical only)"
+run_action "list-alerts" '{"target_cluster": "local", "jira": "ITEST-5", "params": {"namespace": "openshift-monitoring", "state": "firing", "severity": "critical"}}'
+get_output "$EXEC_ID"
+
+critical_only=$(echo "$EXEC_OUTPUT" | jq '.resources[0].alerts.critical | length')
+warning_filtered=$(echo "$EXEC_OUTPUT" | jq '.resources[0].alerts.warning | length')
+
+[ "$critical_only" -ge 1 ] || fail "list-alerts (critical): expected at least 1 critical alert, got $critical_only"
+[ "$warning_filtered" -eq 0 ] || fail "list-alerts (critical): expected 0 warning alerts, got $warning_filtered"
+
+ok "list-alerts (severity=critical) succeeded: $critical_only critical, $warning_filtered warning (execution $EXEC_ID)"
+
+# --- 8. Run an AWS GET action against localstack ---
 # Seeded here rather than in itest-up.sh so the fixture sits next to the assertion
 # that depends on it. Re-running the script simply adds another instance, which the
 # tag filter ignores.
@@ -153,21 +268,18 @@ instance_id=$(podman exec "$LOCALSTACK_CONTAINER" awslocal ec2 run-instances \
 ok "seeded EC2 instance $instance_id"
 
 log "Running 'aws-get' action (list ec2-instances)"
-read -r status execution_id <<< "$(run_action aws-get \
-    "{\"target_cluster\": \"local\", \"params\": {\"resource\": \"ec2-instances\", \"filters\": \"tag:Name=$AWS_TEST_TAG\"}}")"
-
-[ "$status" = "succeeded" ] || fail "execution $execution_id finished with status '$status' — check $SERVER_LOG"
+run_action "aws-get" \
+    "{\"target_cluster\": \"local\", \"params\": {\"resource\": \"ec2-instances\", \"filters\": \"tag:Name=$AWS_TEST_TAG\"}}"
+get_output "$EXEC_ID"
 
 # Assert on the output, not just the status: a read action that succeeds while
 # returning nothing would otherwise pass.
-output=$(curl -sf "$API_BASE/runs/$execution_id/output") \
-    || fail "GET $API_BASE/runs/$execution_id/output failed — check $SERVER_LOG"
-echo "$output" | jq -e --arg id "$instance_id" \
+echo "$EXEC_OUTPUT" | jq -e --arg id "$instance_id" \
     'any(.resources[]; .InstanceId == $id)' > /dev/null \
-    || fail "instance $instance_id not found in aws-get output: $output"
-ok "aws-get action succeeded and returned $instance_id (execution $execution_id)"
+    || fail "instance $instance_id not found in aws-get output: $EXEC_OUTPUT"
+ok "aws-get action succeeded and returned $instance_id (execution $EXEC_ID)"
 
-# --- 6. Cover the rest of the aws-get resources localstack can serve ---
+# --- 9. Cover the rest of the aws-get resources localstack can serve ---
 # The community image has no elb, elbv2 or cloudtrail, so load-balancers,
 # load-balancers-classic, target-groups, target-health and cloudtrail-events
 # cannot be exercised here — they are covered by unit tests against fakes.
@@ -177,19 +289,15 @@ ok "aws-get action succeeded and returned $instance_id (execution $execution_id)
 # checks the output, not just the status: a read that succeeds while returning
 # nothing would otherwise pass.
 assert_aws_get() {
-    local resource=$1 extra=$2 filter=$3 status execution_id output
+    local resource=$1 extra=$2 filter=$3
 
-    read -r status execution_id <<< "$(run_action aws-get \
-        "{\"target_cluster\": \"local\", \"params\": {\"resource\": \"$resource\"$extra}}")"
+    run_action "aws-get" \
+        "{\"target_cluster\": \"local\", \"params\": {\"resource\": \"$resource\"$extra}}"
+    get_output "$EXEC_ID"
 
-    [ "$status" = "succeeded" ] \
-        || fail "aws-get $resource finished with status '$status' — check $SERVER_LOG"
-
-    output=$(curl -sf "$API_BASE/runs/$execution_id/output") \
-        || fail "GET $API_BASE/runs/$execution_id/output failed — check $SERVER_LOG"
-    echo "$output" | jq -e "$filter" > /dev/null \
-        || fail "aws-get $resource returned unexpected output: $output"
-    ok "aws-get $resource succeeded (execution $execution_id)"
+    echo "$EXEC_OUTPUT" | jq -e "$filter" > /dev/null \
+        || fail "aws-get $resource returned unexpected output: $EXEC_OUTPUT"
+    ok "aws-get $resource succeeded (execution $EXEC_ID)"
 }
 
 # A default localstack already has a VPC, subnets, a route table and a security
@@ -225,11 +333,12 @@ assert_aws_get route53-hosted-zones "" \
 assert_aws_get route53-record-sets ", \"id\": \"$zone_id\"" \
     '[.resources[].Type] | contains(["NS", "SOA"])'
 
-# --- 7. A rejected request must fail the execution, not quietly return more ---
+# --- 10. A rejected request must fail the execution, not quietly return more ---
 # aws-get refuses a param the resource does not accept. That guarantee is only
 # worth having if it survives the whole HTTP path, so it is checked here too.
+# run_action_status rather than run_action, because this one must not succeed.
 log "Running 'aws-get' with a param the resource does not accept"
-read -r status execution_id <<< "$(run_action aws-get \
+read -r status execution_id <<< "$(run_action_status aws-get \
     '{"target_cluster": "local", "params": {"resource": "route53-hosted-zones", "filters": "tag:Name=x"}}')"
 
 [ "$status" = "failed" ] \
@@ -237,4 +346,4 @@ read -r status execution_id <<< "$(run_action aws-get \
 ok "aws-get rejected an unaccepted param (execution $execution_id)"
 
 echo
-ok "Integration smoke test passed."
+ok "All integration tests passed."

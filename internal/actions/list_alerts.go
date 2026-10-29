@@ -34,10 +34,14 @@ func NewListAlertsAction() *ListAlertsAction {
 func (l *ListAlertsAction) Name() string      { return "list-alerts" }
 func (l *ListAlertsAction) UsesPodExec() bool { return true }
 
-func (l *ListAlertsAction) RequiredRBAC(_ ResourceTarget) []backplane.RBACRule {
+func (l *ListAlertsAction) RequiredRBAC(target ResourceTarget) []backplane.RBACRule {
+	ns := target.Namespace
+	if ns == "" {
+		ns = defaultMonitoringNamespace
+	}
 	return []backplane.RBACRule{
-		{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"list"}},
-		{APIGroups: []string{""}, Resources: []string{"pods/exec"}, Verbs: []string{"create"}},
+		{Namespace: ns, APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"list"}},
+		{Namespace: ns, APIGroups: []string{""}, Resources: []string{"pods/exec"}, Verbs: []string{"create"}},
 	}
 }
 
@@ -177,7 +181,7 @@ func execCurl(ctx context.Context, executor backplane.PodExecutor, namespace, po
 	execCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	raw, err := executor.Exec(execCtx, namespace, pod, container, []string{"curl", "-sfS", "--max-time", "25", u})
+	raw, err := executor.Exec(execCtx, namespace, pod, container, []string{"wget", "-qO-", "-T", "25", u})
 	if err != nil {
 		return nil, fmt.Errorf("exec failed: %w", err)
 	}

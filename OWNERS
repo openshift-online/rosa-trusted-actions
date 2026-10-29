@@ -7,6 +7,7 @@ approvers:
   - petrkotas
   - zmird-r
   - gvnnn
+  - xiaoyu74
 reviewers:
   - bergmannf
   - Makdaam
@@ -16,6 +17,7 @@ reviewers:
   - petrkotas
   - zmird-r
   - gvnnn
+  - xiaoyu74
 maintainers:
   - bergmannf
   - Makdaam
@@ -25,3 +27,4 @@ maintainers:
   - petrkotas
   - zmird-r
   - gvnnn
+  - xiaoyu74
