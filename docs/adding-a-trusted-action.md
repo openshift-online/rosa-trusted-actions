@@ -33,7 +33,7 @@ An action is defined in **two** places, and both are required:
 > If you register only one:
 > - **Catalog but no implementation** — the API accepts `POST /{action}/run`,
 >   but the background worker fails the execution with `unknown action "<name>"`
->   (see `worker/executor_runner.go` → `actions.CreateAction`).
+>   (see `internal/worker/executor_runner.go` → `actions.CreateAction`).
 > - **Implementation but no catalog** — `GET /{action}` and
 >   `POST /{action}/run` return `404 Unknown action` (handlers validate against
 >   the catalog in `internal/handlers/api.go`).
@@ -48,23 +48,42 @@ request → authorize (namespace/secret allowlist) → backplane session (scoped
         → Action.Execute → audit record
 ```
 
-The executor builds a backplane client from `Action.RequiredRBAC(target)` and,
-only if `Action.UsesPodExec()` is true, also a pod executor. The action receives
-these as `actions.Clients` and never constructs its own cluster credentials.
+The executor builds a backplane client from `KubeAction.RequiredRBAC(target)`
+and, only if `KubeAction.UsesPodExec()` is true, also a pod executor. The action
+receives these as `actions.KubeClients` and never constructs its own cluster
+credentials. (An AWS action is the analogue: the scope builds only the
+`awsapi.Clients` named by `AWSAction.RequiredServices(target)`.)
 
 ## Step 1 — Implement the action
 
-Create `internal/actions/<name>.go` and implement the `actions.Action`
-interface (`internal/actions/actions.go`):
+Create `internal/actions/<name>.go`. Every action implements the shared
+`actions.Action` interface (just `Name()`) plus the scope-specific interface for
+where it runs (`internal/actions/actions.go`):
 
 ```go
 type Action interface {
 	Name() string
+}
+
+// Kubernetes-scoped actions:
+type KubeAction interface {
+	Action
 	RequiredRBAC(target ResourceTarget) []backplane.RBACRule
 	UsesPodExec() bool
-	Execute(ctx context.Context, clients Clients, req ActionRequest) (*ActionResult, error)
+	Execute(ctx context.Context, clients KubeClients, req KubeActionRequest) (*ActionResult, error)
+}
+
+// AWS-scoped actions:
+type AWSAction interface {
+	Action
+	RequiredServices(target AWSTarget) []awsapi.Service
+	Execute(ctx context.Context, clients awsapi.Clients, req AWSActionRequest) (*ActionResult, error)
 }
 ```
+
+The rest of this step covers Kube actions. An AWS action implements `AWSAction`
+instead — least-privilege `RequiredServices` in place of `RequiredRBAC`, no pod
+exec; see `internal/actions/aws_get.go`.
 
 Self-register the action with an `init()` function so it is discoverable the
 moment the package is imported:
@@ -188,9 +207,9 @@ Authorization runs **before** the action executes
   configured). An action whose `RequiredRBAC` can reach a secret other than its
   declared target bypasses this check.
 - **Cluster-scoped targets** — claimed executions are always treated as
-  namespaced (the worker never trusts a caller-supplied cluster-scoped flag; see
-  the comment in `worker/executor_runner.go`). Keep this in mind for actions
-  whose targets are cluster-scoped.
+  namespaced (`ClusterScoped` is never derived from a missing namespace; see the
+  comment in `internal/executor/kube.go`). Keep this in mind for actions whose
+  targets are cluster-scoped.
 
 Update `ARCHITECTURE.md` (the Configuration section) if your action introduces a
 new required namespace or secret.
@@ -235,9 +254,12 @@ make lint                              # golangci-lint
 For the primitive `get` / `patch` / `delete` actions, `cmd/action-cli` wires up
 the full executor pipeline (authorization, audit, backplane, execution) without
 running the server — see [cmd/action-cli/README.md](../cmd/action-cli/README.md).
-For a bespoke action, run it through the server locally (`ROSA_TA_AUTH=disabled`,
-a kubeconfig via `ROSA_TA_KUBECONFIG`) as described in the
-[README](../README.md), then `POST /{action}/run` and poll `GET /runs/{id}`.
+For a bespoke action, run it through the server locally with auth disabled
+(`ROSA_TA_AUTH=disabled`), bound to loopback only (`--listen-addr 127.0.0.1:8080`)
+and backed by a disposable or least-privilege test kubeconfig via
+`ROSA_TA_KUBECONFIG` — see the
+[`add-trusted-action` skill's local e2e recipe](../.claude/skills/add-trusted-action/references/local-e2e-testing.md).
+Then `POST /{action}/run` and poll `GET /runs/{id}`.
 
 ## Step 4 — Review requirements
 
