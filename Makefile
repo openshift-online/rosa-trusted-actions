@@ -108,6 +108,8 @@ dev: ## Run in development mode with auto-reload (requires air)
 # Testing
 .PHONY: test
 test: generate ## Run unit tests (SQLite only; Postgres tests require TEST_POSTGRES_URL)
+	# compile integration tests (but don't run them) to ensure they build
+	go test -tags=integration -c -o /dev/null ./tests/actions/
 	go test -v ./...
 
 .PHONY: test-race
