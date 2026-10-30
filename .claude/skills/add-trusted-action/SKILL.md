@@ -36,7 +36,14 @@ If not already specified, confirm with the user:
     `Execute(ctx, clients KubeClients, req KubeActionRequest) (*ActionResult, error)`.
   - AWS: `AWSAction` — `RequiredServices(target AWSTarget)`,
     `Execute(ctx, clients awsapi.Clients, req AWSActionRequest) (*ActionResult, error)`
-    (reference: `internal/actions/aws_get.go`).
+    (reference for a read: `internal/actions/aws_get.go`).
+  - AWS **mutations must also implement** `AWSWriteAction` — `Operation() string`,
+    `Resource() string` (reference: `internal/actions/aws_write.go`). `AWSScope`
+    derives the write operation purely from this type assertion
+    (`internal/executor/aws.go`): an action that only implements `AWSAction` is
+    judged as a read and its mutation runs without ever being checked against
+    `ROSA_TA_AWS_ALLOWED_OPERATIONS` / `actions.aws_allowed_operations`. Catalog
+    `Type: openapi.Write` does not enforce this on its own.
 - Register with `init() { RegisterActionFactory(NewXxxAction) }` — factory function,
   not an instance.
 - `Name()` must match the catalog `Name` **exactly**.

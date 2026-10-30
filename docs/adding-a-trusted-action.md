@@ -79,11 +79,32 @@ type AWSAction interface {
 	RequiredServices(target AWSTarget) []awsapi.Service
 	Execute(ctx context.Context, clients awsapi.Clients, req AWSActionRequest) (*ActionResult, error)
 }
+
+// AWS actions that mutate something MUST also implement this — see below.
+type AWSWriteAction interface {
+	AWSAction
+	Operation() string
+	Resource() string
+}
 ```
 
 The rest of this step covers Kube actions. An AWS action implements `AWSAction`
 instead — least-privilege `RequiredServices` in place of `RequiredRBAC`, no pod
-exec; see `internal/actions/aws_get.go`.
+exec; see `internal/actions/aws_get.go` for a read.
+
+**A mutating AWS action must also implement `AWSWriteAction`.** `AWSScope`
+derives the write operation it authorizes purely from a type assertion to
+`AWSWriteAction` (`internal/executor/aws.go`): if an action only implements
+`AWSAction`, the scope treats it as a read and never checks
+`ROSA_TA_AWS_ALLOWED_OPERATIONS` / `actions.aws_allowed_operations` at all — an
+action that mutates AWS state while implementing only `AWSAction` runs
+unconditionally, regardless of the write allowlist. `Operation()` names the
+mutation (e.g. `"reboot"`, `"terminate"`) and must be present in that allowlist
+for the action to be authorized; `Resource()` fixes the kind of object acted on
+so a caller-supplied `resource` param can't redirect the write. Catalog `Type:
+openapi.Write` alone does not enforce this — it is not cross-checked against
+the Go interface, so the implementation must get it right. See
+`internal/actions/aws_write.go` for the reference implementation.
 
 Self-register the action with an `init()` function so it is discoverable the
 moment the package is imported:
@@ -303,6 +324,7 @@ and executor). Once your PR merges and a new image is built and rolled out:
 - [ ] `UsesPodExec()` is correct; pod-exec actions declare `pods/exec` and guard a nil executor.
 - [ ] `Execute` validates params, wraps errors with context, and never leaks secret data.
 - [ ] `internal/catalog/catalog.go` registers an `ActionDefinition` with a matching `Name`, correct `Type`/`Scope`, narrowest `AllowedRoles`, documented `Params`, and write-safety metadata for write actions.
+- [ ] A mutating AWS action implements `AWSWriteAction` (`Operation()`, `Resource()`), not just `AWSAction`, and its `Operation()` value is documented for addition to `ROSA_TA_AWS_ALLOWED_OPERATIONS` / `actions.aws_allowed_operations` in deployment.
 - [ ] New namespaces/secrets added to the allowlists and documented in `ARCHITECTURE.md`.
 - [ ] Unit tests cover name, RBAC, success, and error paths; patch coverage ≥ 80%.
 - [ ] `go build ./...`, `make test-race`, and `make lint` pass.
