@@ -32,3 +32,8 @@ output "internal_fqdn" {
   description = "FQDN used by the global ACM validation anchor."
   value       = var.internal_fqdn
 }
+
+output "public_zone_name_servers" {
+  description = "Name servers for the public hosted zone created from var.public_zone. Delegate the parent domain to these. Empty when an existing zone is passed via public_zone_id instead."
+  value       = var.public_zone != "" ? aws_route53_zone.main[0].name_servers : []
+}
