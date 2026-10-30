@@ -1,6 +1,10 @@
-# ROSA Trusted Actions Server
+# ROSA Trusted Actions
 
-A Chi-based HTTP server implementing the ROSA Trusted Actions API, automatically generated from OpenAPI specifications using oapi-codegen.
+[![Prow Status](https://prow.ci.openshift.org/badge.svg?jobs=pull-ci-openshift-online-rosa-trusted-actions-main-make-test)](https://prow.ci.openshift.org/badge.svg?jobs=pull-ci-openshift-online-rosa-trusted-actions-main-make-test)
+
+## Overview
+
+Modular, tested, API to interact with ROSA clusters. Based on OpenAPI.
 
 ## Prerequisites
 
@@ -130,9 +134,6 @@ result:
 }
 ```
 
-(`output`/`logs` retrieval via `?include=output,logs` is not implemented yet — it's a placeholder
-pending a persistent audit/output backend.)
-
 ### Supported params
 
 | Param       | Required | Description                                                           |
@@ -201,7 +202,6 @@ export AWS_ACCESS_KEY_ID="your-key"
 export AWS_SECRET_ACCESS_KEY="your-secret"
 
 # Application Configuration
-export ROSA_TA_S3_BUCKET="trusted-actions-bucket"
 export ROSA_TA_ALLOWED_ACCOUNTS="123456789012,987654321098"
 
 # Security Configuration
@@ -240,21 +240,7 @@ Base path: `/api/v0/trusted-actions`
 
 ## Project Structure
 
-```
-rosa-trusted-actions-server/
-├── cmd/server/              # Main application
-├── docs/                   # API documentation (ReDoc)
-├── internal/
-│   ├── handlers/           # API handlers
-│   ├── middleware/         # HTTP middleware
-│   ├── config/             # Configuration
-│   └── openapi/            # Generated code (committed, don't edit)
-├── openapi/                # OpenAPI 3.0 specification (source of truth)
-├── scripts/                # Helper scripts
-└── Makefile               # Build automation
-```
-
-Run `make help` for all available targets.
+See [ARCHITECTURE](./ARCHITECTURE.md).
 
 ### Show the API in a browsable format
 

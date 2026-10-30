@@ -1,23 +1,79 @@
-# Architecture Documentation
+# Architecture
 
 ## Overview
 
-The ROSA Trusted Actions Server is a Go-based HTTP API server that provides a controlled interface for executing trusted actions against Red Hat managed clusters and AWS resources. The system enables operators to submit actions through the API, where each execution is tracked, dispatched, and produces artifacts (output and logs) that can be retrieved through the API.
+OpenAPI-based HTTP API that accepts requests to execute one of a fixed catalog of *trusted actions* against a managed cluster. Trusted actions are modular, testable actions that are audited, persisted, and run asynchronously; the resulting output can later be retrieved through the API.
+
+## Context
+
+Trusted Actions is a provider: a narrow, audited, role-gated operation API. Consumers
+include SREs working through rosa-boundary, Configuration Anomaly Detection, and the
+ROSA AI agent — the roles allowed per action are listed in `internal/catalog`.
+
+It runs on ECS behind an ALB, co-located in the rosa-boundary AWS account, and reaches
+managed clusters only through Backplane, with a short-lived, RBAC-scoped session per
+action. Dashed edges are not implemented yet:
+
+```mermaid
+flowchart LR
+    subgraph vpc["rosa-boundary AWS account"]
+        CLI["rosa-boundary CLI<br/>investigation container"] --> TA["Trusted Actions<br/>ECS + ALB"]
+        TA --> DB[("Aurora")]
+    end
+
+    CAD["CAD"] --> TA
+    AGENT["ROSA AI agent"] --> TA
+    TA -->|"JWT validation + AccessReview"| OCM["OCM / AMS"]
+    TA -->|"RBAC-scoped session"| BP["Backplane"]
+    BP --> K8S["Managed cluster<br/>kube API"]
+    TA -.-> AWS["AWS APIs<br/>(aws-api scope)"]
+```
 
 ## Project Structure
 
+The code is split into two main layers:
+
+* **Request handling**: router -> middleware -> handlers -> store
+* **Action execution**: worker pool -> runner -> executor -> action -> backplane -> cluster/cloud provider
+
 ```
 rosa-trusted-actions-server/
-├── cmd/server/              # Main application entry point
+├── cmd/
+│   ├── server              # main application entry point
+│   └── action-cli          # standalone action execution client
 ├── internal/
-│   ├── handlers/           # API request handlers (implements generated interfaces)
-│   ├── middleware/         # HTTP middleware (logging, recovery, request ID)
-│   ├── config/             # Configuration management
-│   └── openapi/            # Generated code from OpenAPI specs (do not edit)
+│   ├── openapi             # generated from openapi/ via oapi-codegen
+│   ├── handlers            # ServerInterface implementation
+│   ├── catalog             # action registry
+│   ├── actions             # action implementations
+│   ├── executor            # authorize -> get client -> execute -> audit
+│   ├── worker              # pool + ExecutorRunner, params -> ResourceTarget
+│   ├── backplane           # client (real BP or kubeconfig for local dev)
+│   ├── auth                # action-level authorization, authentication layer
+│   ├── authorization       # resource-level authorization
+│   ├── ocm                 # OCM SDK client
+│   ├── store               # SQLite + Postgres, migrations
+│   ├── middleware          # (audit, logging, recovery)
+│   └── config              # env + optional YAML config file
 ├── openapi/                # OpenAPI 3.0 specification source files
-├── api-spec.yaml          # Bundled OpenAPI spec (generated)
-└── Makefile               # Build automation
+└── api-spec.yaml           # Bundled OpenAPI spec (generated)
 ```
+
+## Request Flow
+
+1. `POST /api/v0/trusted-actions/{action}/run` -> OCM JWKS signature validation -> JWT authentication -> Audit MW injection -> AMS authorization + Action allowlist check -> Action validation/persistence
+2. Worker claims pending execution -> ExecutorRunner resolves/decodes the action -> Executor validates the RBAC scope as well as a namespace/secret allowlist -> generates least-privilege, resource-scoped, backplane clients, and sets up auditing -> Action is executed
+
+## Action Plugin Interface
+
+Actions can be added by:
+
+1. implementing the `Action` interface at `internal/actions/{action}.go`
+1. initializing the Action `func init() { RegisterActionFactory(NewGetAction) }`
+1. adding an `ActionDefinition` to the catalog at `internal/catalog/catalog.go`
+1. the action is self-registered during package initialization
+
+**Note**: implementing an Action and initializing it will not make it available to incoming requests: adding the ActionDefinition (step 3) is mandatory.
 
 ## API Design
 
@@ -47,16 +103,19 @@ The server is configured via:
 Applied in order:
 1. **Custom Logger**: Request/response logging with structured fields
 2. **Request ID**: Generates unique ID for request tracing
-3. **Recovery**: Panic recovery with stack trace logging  
+3. **Recovery**: Panic recovery with stack trace logging
 4. **Real IP**: Processes X-Forwarded-For headers
 5. **Timeout**: 60-second request timeout
 6. **CORS**: Permissive CORS policy for development
+6. **Authentication** (action routes only): User identity captured from OCM JWT token
+6. **Auditing** (action routes only): Requests are audited with a custom sink
+6. **Authorization** (action routes only): Permission to run/get the output of actions is checked against allowed roles
 
 ### Request Routing
 
 - Base path: `/api/v0/trusted-actions`
 - Health check: `/health`
-- API routes generated from OpenAPI specs and mounted via `openapi.HandlerFromMux`
+- API routes generated from OpenAPI specs and mounted via middleware-augmented (authn/z) OpenAPI handler.
 
 ## Configuration Management
 
@@ -65,14 +124,12 @@ Applied in order:
 The `config.Config` struct separates:
 - **Server config**: Overridden by CLI flags (listen address, logging)
 - **AWS config**: Standard AWS environment variables
-- **Storage config**: S3 bucket configuration
 - **Security config**: Authentication and account restrictions
 - **Workers config**: Number of workers and some time settings around those workers
 
 ### Environment Variables
 
 - `AWS_*`: Standard AWS SDK environment variables for authentication
-- `ROSA_TA_S3_BUCKET`: S3 bucket for storing execution outputs and logs
 - `ROSA_TA_AUTH`: Enable/disable authentication enforcement. Valid values:
   - `disabled`
   - `enabled`: OCM settings are taken from TA (Trusted Action) config file
@@ -105,7 +162,6 @@ actions:
 
 ## Security
 
-- AWS Signature V4 authentication for request verification
 - Account allowlisting through configuration
 - Audit logging of all API calls with caller identity
 
@@ -157,18 +213,12 @@ Logs include:
 - HTTP method and URI
 - Error details and stack traces (for panics)
 
-## Data Flow
+## Storage
 
-### Typical Workflow
+SQLite for local dev, Postgres otherwise. Schema in `internal/store/migrations`:
 
-1. **Discover actions**: `GET /` (catalog) or `GET /{action}` (describe)
-2. **Execute action**: `POST /{action}/run` (returns `202 Accepted` with execution ID)
-3. **Poll for completion**: `GET /runs/{id}` (metadata only by default)
-4. **Retrieve results**: `GET /runs/{id}?include=output,logs` (opt-in content)
-5. **Audit and reporting**: `GET /runs` (filter executions) or `GET /audit` (API call log)
-
-### Storage Architecture
-
-- **S3**: Execution outputs and logs stored as objects
-- **Database**: Execution metadata, audit entries, and trusted action definitions
-- **Key Structure**: S3 objects partitioned by account, cluster, and execution ID
+```
+executions ──1:1──> executions_output
+     ▲
+     └──────────── audit_entries (execution_id, nullable)
+```
