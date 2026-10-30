@@ -10,6 +10,11 @@ resource "aws_acm_certificate" "app" {
   count             = var.internal_fqdn != "" && var.public_zone_id != "" ? 1 : 0
   domain_name       = var.internal_fqdn
   validation_method = "DNS"
+  # Internal hostname only — disable Certificate Transparency logging so
+  # internal_fqdn is not published to public CT logs.
+  options {
+    certificate_transparency_logging_preference = "DISABLED"
+  }
   lifecycle {
     create_before_destroy = true
 
