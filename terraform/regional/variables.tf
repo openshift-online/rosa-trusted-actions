@@ -111,14 +111,16 @@ variable "app_config" {
 
   # Structure check only — the full schema is validated by the Go loader at
   # container startup (and in CI before apply). yamldecode fails the
-  # validation when the YAML is malformed, and roles is required in the
-  # deployed config because auth is always enabled.
+  # validation when the YAML is malformed. roles may come from the file or
+  # from the deprecated var.roles (merged in ecs.tf) — either satisfies the
+  # requirement, because roles is required in the deployed config when auth
+  # is enabled.
   validation {
     condition = alltrue([
       try(length(yamldecode(var.app_config)) > 0, false),
-      can(yamldecode(var.app_config).roles),
+      can(yamldecode(var.app_config).roles) || var.roles != null,
     ])
-    error_message = "app_config must be valid YAML with a non-empty top-level map and a 'roles' key."
+    error_message = "app_config must be valid YAML with a non-empty top-level map, and roles must come from the file or the deprecated roles variable."
   }
 
   # Default reproduces the values previously spread across the roles,
@@ -145,6 +147,76 @@ variable "app_config" {
       poll_interval: 5s
       execution_timeout: 2m
   YAML
+}
+
+# ── Deprecated per-setting variables (remove after one release) ───────────────
+#
+# app_config replaced these. They are re-added for one commit so existing
+# tfvars/HCP workspace configurations keep working: when one of these is set,
+# its value is applied as an environment variable on the task definition —
+# env overrides the config file in the Go loader, so the old variable wins,
+# which is the behaviour callers had before the migration. A non-empty old
+# variable together with the same key in app_config produces a validation
+# error rather than a silent override.
+#
+# New deployments should set app_config only. These variables and their env
+# entries in ecs.tf are removed in the next change.
+
+variable "worker_concurrency" {
+  description = "DEPRECATED: use app_config (workers.concurrency). Still applied as ROSA_TA_WORKER_CONCURRENCY when set, overriding the file."
+  type        = number
+  default     = null
+}
+
+variable "worker_poll_interval" {
+  description = "DEPRECATED: use app_config (workers.poll_interval). Still applied as ROSA_TA_WORKER_POLL_INTERVAL when set, overriding the file."
+  type        = string
+  default     = null
+}
+
+variable "worker_execution_timeout" {
+  description = "DEPRECATED: use app_config (workers.execution_timeout). Still applied as ROSA_TA_WORKER_EXECUTION_TIMEOUT when set, overriding the file."
+  type        = string
+  default     = null
+}
+
+variable "roles" {
+  description = "DEPRECATED: use app_config (roles). Ignored unless app_config's roles block is absent — the file value wins when both are present."
+  type = list(object({
+    id           = string
+    ams_resource = string
+  }))
+  default = null
+}
+
+variable "allowed_namespaces" {
+  description = "DEPRECATED: use app_config (actions.allowed_namespaces). Still applied as ROSA_TA_ALLOWED_NAMESPACES when set, overriding the file."
+  type        = string
+  default     = null
+}
+
+variable "allowed_secrets" {
+  description = "DEPRECATED: use app_config (actions.allowed_secrets). Still applied as ROSA_TA_ALLOWED_SECRETS when set, overriding the file."
+  type        = string
+  default     = null
+}
+
+variable "ocm_client_id" {
+  description = "DEPRECATED: use app_config (ocm.client_id). Still applied as ROSA_TA_OCM_CLIENT_ID when set, overriding the file."
+  type        = string
+  default     = null
+}
+
+variable "backplane_url" {
+  description = "DEPRECATED: use app_config (backplane.base_url). Still applied as ROSA_TA_BACKPLANE_URL when set, overriding the file."
+  type        = string
+  default     = null
+}
+
+variable "backplane_client_id" {
+  description = "DEPRECATED: use app_config (backplane.client_id). Still applied as ROSA_TA_BACKPLANE_CLIENT_ID when set, overriding the file."
+  type        = string
+  default     = null
 }
 
 

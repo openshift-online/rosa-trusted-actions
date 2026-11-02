@@ -10,9 +10,13 @@ resource "aws_ecs_cluster" "main" {
 locals {
   # app_config (see variables.tf) is the complete config file uploaded to S3.
   # Env vars override the config file silently in the Go loader, so any
-  # setting carried by the file must NOT also appear below — that is why the
-  # ROSA_TA_WORKER_* entries are gone: workers.* now lives in the file only.
-  container_environment = [
+  # setting carried by the file must NOT also appear in container_environment
+  # — that is why the ROSA_TA_WORKER_* entries are gone: workers.* now lives
+  # in the file only. The deprecated_* entries below are the one-release
+  # compatibility shim: they re-add the env var only when the corresponding
+  # deprecated variable is set, so an old tfvars value still applies (env
+  # wins, exactly as before the migration).
+  container_environment = concat([
     { name = "ROSA_TA_LISTEN_ADDR", value = ":8080" },
     { name = "ROSA_TA_LOG_JSON", value = "true" },
     { name = "ROSA_TA_LOG_LEVEL", value = "info" },
@@ -22,10 +26,26 @@ locals {
     { name = "ROSA_TA_OCM_BASE_URL", value = var.ocm_base_url },
     { name = "ROSA_TA_JWK_CERT_URL", value = var.jwk_cert_url },
     { name = "ROSA_TA_ALLOWED_ACCOUNTS", value = var.allowed_accounts },
-    { name = "ROSA_TA_BACKPLANE_URL",  value = "https://api.stage.backplane.openshift.com" },
     { name = "AWS_REGION", value = var.aws_region },
     { name = "DATABASE_URL", value = "/data/trusted_actions.db" },
-  ]
+    ],
+    var.worker_concurrency != null ? [{ name = "ROSA_TA_WORKER_CONCURRENCY", value = tostring(var.worker_concurrency) }] : [],
+    var.worker_poll_interval != null ? [{ name = "ROSA_TA_WORKER_POLL_INTERVAL", value = var.worker_poll_interval }] : [],
+    var.worker_execution_timeout != null ? [{ name = "ROSA_TA_WORKER_EXECUTION_TIMEOUT", value = var.worker_execution_timeout }] : [],
+    var.allowed_namespaces != null ? [{ name = "ROSA_TA_ALLOWED_NAMESPACES", value = var.allowed_namespaces }] : [],
+    var.allowed_secrets != null ? [{ name = "ROSA_TA_ALLOWED_SECRETS", value = var.allowed_secrets }] : [],
+    var.ocm_client_id != null ? [{ name = "ROSA_TA_OCM_CLIENT_ID", value = var.ocm_client_id }] : [],
+    var.backplane_url != null ? [{ name = "ROSA_TA_BACKPLANE_URL", value = var.backplane_url }] : [],
+    var.backplane_client_id != null ? [{ name = "ROSA_TA_BACKPLANE_CLIENT_ID", value = var.backplane_client_id }] : [],
+  )
+
+  # roles has no env var — the loader reads it from the file only. The shim
+  # merges a deprecated var.roles into the config file when (and only when)
+  # app_config does not define a roles block itself.
+  app_config_effective = var.roles != null && try(length(yamldecode(var.app_config).roles), 1) == 0 ? yamlencode(merge(
+    yamldecode(var.app_config),
+    { roles = [for r in var.roles : { id = r.id, amsResource = r.ams_resource }] },
+  )) : var.app_config
 
   container_secrets = [
     { name = "ROSA_TA_OCM_CLIENT_SECRET", valueFrom = "${local.global.secretsmanager_secret_arn}:ocm_client_secret::" },
@@ -37,7 +57,7 @@ locals {
 resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.app.bucket
   key          = "config/${var.aws_region}/config.yaml"
-  content      = var.app_config
+  content      = local.app_config_effective
   content_type = "application/yaml"
 
   tags = { Environment = var.environment }
