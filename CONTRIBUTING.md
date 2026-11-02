@@ -32,6 +32,7 @@ This project follows the [Red Hat Community Code of Conduct](https://www.redhat.
 - PRs must pass all CI checks (lint, test, build, OpenAPI validation).
 - PRs must have a clear title and description explaining the change and its motivation.
 - PRs modifying the OpenAPI spec must regenerate code with `make generate` and include the updated generated files.
+- New configuration values must be settable via the config file (`internal/config/config.go`) unless they are secret; secrets stay environment-only (Secrets Manager in deployments). Document new config-file keys in `config/config.yaml`. See [ARCHITECTURE.md](./ARCHITECTURE.md) § Configuration Management for the precedence rules.
 
 ### AI-Assisted Contributions
 

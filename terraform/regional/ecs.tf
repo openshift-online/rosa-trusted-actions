@@ -8,24 +8,10 @@ resource "aws_ecs_cluster" "main" {
 }
 
 locals {
-  # Rendered config.yaml content — uploaded to S3 so the init container can
-  # fetch it at task start. The 'roles' block is the only configuration that
-  # cannot be expressed as environment variables, which is why we need this
-  # file rather than relying purely on env vars.
-  config_yaml = yamlencode({
-    roles = [
-      for r in var.roles : {
-        id          = r.id
-        amsResource = r.ams_resource
-      }
-    ]
-    workers = {
-      concurrency       = var.worker_concurrency
-      poll_interval     = var.worker_poll_interval
-      execution_timeout = var.worker_execution_timeout
-    }
-  })
-
+  # app_config (see variables.tf) is the complete config file uploaded to S3.
+  # Env vars override the config file silently in the Go loader, so any
+  # setting carried by the file must NOT also appear below — that is why the
+  # ROSA_TA_WORKER_* entries are gone: workers.* now lives in the file only.
   container_environment = [
     { name = "ROSA_TA_LISTEN_ADDR", value = ":8080" },
     { name = "ROSA_TA_LOG_JSON", value = "true" },
@@ -34,16 +20,9 @@ locals {
     { name = "ROSA_TA_S3_BUCKET", value = aws_s3_bucket.app.bucket },
     { name = "ROSA_TA_S3_KEY_PREFIX", value = "trusted-actions" },
     { name = "ROSA_TA_OCM_BASE_URL", value = var.ocm_base_url },
-    { name = "ROSA_TA_OCM_CLIENT_ID", value = var.ocm_client_id },
     { name = "ROSA_TA_JWK_CERT_URL", value = var.jwk_cert_url },
-    { name = "ROSA_TA_BACKPLANE_URL", value = var.backplane_url },
-    { name = "ROSA_TA_BACKPLANE_CLIENT_ID", value = var.backplane_client_id },
     { name = "ROSA_TA_ALLOWED_ACCOUNTS", value = var.allowed_accounts },
-    { name = "ROSA_TA_ALLOWED_NAMESPACES", value = var.allowed_namespaces },
-    { name = "ROSA_TA_ALLOWED_SECRETS", value = var.allowed_secrets },
-    { name = "ROSA_TA_WORKER_CONCURRENCY", value = tostring(var.worker_concurrency) },
-    { name = "ROSA_TA_WORKER_POLL_INTERVAL", value = var.worker_poll_interval },
-    { name = "ROSA_TA_WORKER_EXECUTION_TIMEOUT", value = var.worker_execution_timeout },
+    { name = "ROSA_TA_BACKPLANE_URL",  value = "https://api.stage.backplane.openshift.com" },
     { name = "AWS_REGION", value = var.aws_region },
     { name = "DATABASE_URL", value = "/data/trusted_actions.db" },
   ]
@@ -58,7 +37,7 @@ locals {
 resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.app.bucket
   key          = "config/${var.aws_region}/config.yaml"
-  content      = local.config_yaml
+  content      = var.app_config
   content_type = "application/yaml"
 
   tags = { Environment = var.environment }
