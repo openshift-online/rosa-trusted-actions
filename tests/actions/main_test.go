@@ -15,9 +15,11 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/openshift-online/rosa-trusted-actions/internal/actions"
 	"github.com/openshift-online/rosa-trusted-actions/internal/audit"
 	"github.com/openshift-online/rosa-trusted-actions/internal/authorization"
 	"github.com/openshift-online/rosa-trusted-actions/internal/backplane"
@@ -113,6 +115,29 @@ func requireProxy(t *testing.T) {
 	if !proxyAvailable {
 		t.Skip("proxy backplane not available")
 	}
+}
+
+// kubeAction resolves an action from the registry and asserts it runs against
+// the Kubernetes API, which is what the action-level tests need to call it
+// without going through the executor.
+func kubeAction(t *testing.T, name string) actions.KubeAction {
+	t.Helper()
+	action := actions.CreateAction(name)
+	if action == nil {
+		t.Fatalf("no action registered under %q", name)
+	}
+	kube, ok := action.(actions.KubeAction)
+	if !ok {
+		t.Fatalf("action %q is not a Kubernetes action", name)
+	}
+	return kube
+}
+
+// asUnstructured wraps a resource from an ActionResult so the apimachinery
+// accessors apply to it. ActionResult carries plain maps, since not every
+// scope returns Kubernetes objects.
+func asUnstructured(resource map[string]interface{}) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: resource}
 }
 
 // mockRBACRequest is the request body the Imposter mock expects at
@@ -261,98 +286,6 @@ func createMockSessionExpectError(t *testing.T, clusterID string, rbacRules []ba
 	return errResp.Message
 }
 
-// mockRole is a namespace-scoped RBAC role for the Imposter mock.
-type mockRole struct {
-	Namespace string              `json:"namespace"`
-	Rules     []backplane.RBACRule `json:"rules"`
-}
-
-// createMockSessionWithRoles creates a trusted action using namespace-scoped
-// roles instead of (or in addition to) clusterRoleRules. This tests the mock's
-// Role-vs-ClusterRole RBAC distinction.
-func createMockSessionWithRoles(t *testing.T, clusterID string, clusterRules []backplane.RBACRule, roles []mockRole) dynamic.Interface {
-	t.Helper()
-	requireMock(t)
-
-	type rbacWithRoles struct {
-		ClusterRoleRules []backplane.RBACRule `json:"clusterRoleRules"`
-		Roles            []mockRole           `json:"roles"`
-	}
-
-	type reqWithRoles struct {
-		Name               string       `json:"name"`
-		CustomerDataAccess bool         `json:"customerDataAccess"`
-		RBAC               rbacWithRoles `json:"rbac"`
-	}
-
-	reqBody := reqWithRoles{
-		Name:               t.Name(),
-		CustomerDataAccess: false,
-		RBAC: rbacWithRoles{
-			ClusterRoleRules: clusterRules,
-			Roles:            roles,
-		},
-	}
-	if reqBody.RBAC.ClusterRoleRules == nil {
-		reqBody.RBAC.ClusterRoleRules = []backplane.RBACRule{}
-	}
-
-	bodyBytes, err := json.Marshal(reqBody)
-	if err != nil {
-		t.Fatalf("marshal mock request: %v", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	url := fmt.Sprintf("%s/backplane/trustedactions/%s", mockBaseURL, clusterID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyBytes))
-	if err != nil {
-		t.Fatalf("create mock request: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("create mock session: %v", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read response body: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("mock backplane returned %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var result mockCreateResponse
-	if err := json.Unmarshal(respBody, &result); err != nil {
-		t.Fatalf("decode mock response: %v", err)
-	}
-
-	proxyURL := mockBaseURL + result.ProxyURI
-	config := &rest.Config{Host: proxyURL}
-	dynClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		t.Fatalf("create dynamic client: %v", err)
-	}
-
-	t.Cleanup(func() {
-		delURL := fmt.Sprintf("%s/backplane/trustedactions/%s/%s", mockBaseURL, clusterID, result.InstanceID)
-		req, err := http.NewRequest(http.MethodDelete, delURL, nil)
-		if err != nil {
-			t.Errorf("construct cleanup request: %v", err)
-			return
-		}
-		if delResp, err := http.DefaultClient.Do(req); err == nil {
-			delResp.Body.Close()
-		}
-	})
-
-	return dynClient
-}
-
 // newTestExecutor builds an executor wired to the mock backplane.
 func newTestExecutor(t *testing.T, allowedNS []string, allowedSecrets []string) (*executor.Executor, *audit.MockLogger) {
 	t.Helper()
@@ -362,7 +295,7 @@ func newTestExecutor(t *testing.T, allowedNS []string, allowedSecrets []string) 
 	authorizer := authorization.New(logger, allowedNS, allowedSecrets)
 	auditor := audit.NewMockLogger(logger)
 	provider := newMockBackplaneProvider(t)
-	return executor.New(logger, authorizer, auditor, provider), auditor
+	return executor.New(logger, auditor, executor.NewKubeScope(authorizer, provider)), auditor
 }
 
 // mockBackplaneProvider implements backplane.ClientProvider by talking to the
@@ -377,7 +310,7 @@ func newMockBackplaneProvider(t *testing.T) *mockBackplaneProvider {
 	return &mockBackplaneProvider{t: t}
 }
 
-func (m *mockBackplaneProvider) GetClient(ctx context.Context, clusterID string, rbacRules []backplane.RBACRule) (dynamic.Interface, error) {
+func (m *mockBackplaneProvider) GetClient(ctx context.Context, clusterID, actionName string, rbacRules []backplane.RBACRule) (dynamic.Interface, error) {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
@@ -385,7 +318,7 @@ func (m *mockBackplaneProvider) GetClient(ctx context.Context, clusterID string,
 	}
 
 	reqBody := mockRBACRequest{
-		Name:               m.t.Name(),
+		Name:               actionName,
 		CustomerDataAccess: false,
 		RBAC: mockRBAC{
 			ClusterRoleRules: rbacRules,
@@ -440,7 +373,7 @@ func (m *mockBackplaneProvider) GetClient(ctx context.Context, clusterID string,
 	return dynamic.NewForConfig(config)
 }
 
-func (m *mockBackplaneProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+func (m *mockBackplaneProvider) GetPodExecutor(_ context.Context, _, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
 	return nil, fmt.Errorf("mock backplane does not support pod execution")
 }
 
@@ -533,7 +466,7 @@ func newProxyBackplaneProvider(t *testing.T) *proxyBackplaneProvider {
 	return &proxyBackplaneProvider{t: t}
 }
 
-func (p *proxyBackplaneProvider) GetClient(ctx context.Context, clusterID string, _ []backplane.RBACRule) (dynamic.Interface, error) {
+func (p *proxyBackplaneProvider) GetClient(ctx context.Context, clusterID, actionName string, _ []backplane.RBACRule) (dynamic.Interface, error) {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
@@ -541,7 +474,7 @@ func (p *proxyBackplaneProvider) GetClient(ctx context.Context, clusterID string
 	}
 
 	reqBody := proxyRegisterRequest{
-		Name:       p.t.Name(),
+		Name:       actionName,
 		Kubeconfig: kubeconfigB64,
 	}
 
@@ -591,7 +524,7 @@ func (p *proxyBackplaneProvider) GetClient(ctx context.Context, clusterID string
 	return dynamic.NewForConfig(config)
 }
 
-func (p *proxyBackplaneProvider) GetPodExecutor(_ context.Context, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
+func (p *proxyBackplaneProvider) GetPodExecutor(_ context.Context, _, _ string, _ []backplane.RBACRule) (backplane.PodExecutor, error) {
 	return nil, fmt.Errorf("proxy backplane does not support pod execution")
 }
 
@@ -603,5 +536,5 @@ func newTestExecutorWithProxy(t *testing.T, allowedNS []string, allowedSecrets [
 	authorizer := authorization.New(logger, allowedNS, allowedSecrets)
 	auditor := audit.NewMockLogger(logger)
 	provider := newProxyBackplaneProvider(t)
-	return executor.New(logger, authorizer, auditor, provider), auditor
+	return executor.New(logger, auditor, executor.NewKubeScope(authorizer, provider)), auditor
 }

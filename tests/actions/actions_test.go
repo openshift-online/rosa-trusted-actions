@@ -24,10 +24,10 @@ func TestGetAction_ListPods(t *testing.T) {
 		Resource:  "pods",
 		Namespace: "ns-a",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestGetAction_ListPods(t *testing.T) {
 
 	names := map[string]bool{}
 	for _, r := range result.Resources {
-		names[r.GetName()] = true
+		names[asUnstructured(r).GetName()] = true
 	}
 	if !names["pod-1"] || !names["pod-2"] {
 		t.Errorf("expected pod-1 and pod-2, got %v", names)
@@ -51,18 +51,18 @@ func TestGetAction_GetSinglePod(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
 	if len(result.Resources) != 1 {
 		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
 	}
-	if result.Resources[0].GetName() != "pod-1" {
-		t.Errorf("expected name pod-1, got %s", result.Resources[0].GetName())
+	if asUnstructured(result.Resources[0]).GetName() != "pod-1" {
+		t.Errorf("expected name pod-1, got %s", asUnstructured(result.Resources[0]).GetName())
 	}
 }
 
@@ -73,10 +73,10 @@ func TestGetAction_NotFound(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "gone",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err == nil {
 		t.Fatal("expected error for non-existent pod, got nil")
 	}
@@ -94,9 +94,9 @@ func TestGetAction_Forbidden(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err == nil {
 		t.Fatal("expected error for forbidden access, got nil")
 	}
@@ -109,11 +109,11 @@ func TestGetAction_CrossClusterIsolation(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	clusterC2 := "00000000-0000-0000-0000-000000000002"
 	client := createMockSession(t, clusterC2, action.RequiredRBAC(target))
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err == nil {
 		t.Fatal("expected error accessing C1 fixture from C2 session")
 	}
@@ -126,15 +126,15 @@ func TestGetAction_ResponseContentValidation(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
 
-	obj := result.Resources[0]
+	obj := asUnstructured(result.Resources[0])
 	if obj.GetAPIVersion() != "v1" {
 		t.Errorf("expected apiVersion v1, got %s", obj.GetAPIVersion())
 	}
@@ -160,10 +160,10 @@ func TestGetAction_EmptyList(t *testing.T) {
 		Resource:  "configmaps",
 		Namespace: "default",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -178,10 +178,10 @@ func TestGetAction_ClusterScoped_ListNamespaces(t *testing.T) {
 		Resource:      "namespaces",
 		ClusterScoped: true,
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestGetAction_ClusterScoped_ListNamespaces(t *testing.T) {
 	}
 	names := map[string]bool{}
 	for _, r := range result.Resources {
-		names[r.GetName()] = true
+		names[asUnstructured(r).GetName()] = true
 	}
 	if !names["default"] || !names["ns-a"] {
 		t.Errorf("expected default and ns-a, got %v", names)
@@ -209,9 +209,9 @@ func TestGetAction_RBACVerbMismatch(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err == nil {
 		t.Fatal("expected error when session only grants list but get is needed")
 	}
@@ -229,14 +229,14 @@ func TestGetAction_WildcardRBAC(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	if result.Resources[0].GetName() != "pod-1" {
-		t.Errorf("expected pod-1, got %s", result.Resources[0].GetName())
+	if asUnstructured(result.Resources[0]).GetName() != "pod-1" {
+		t.Errorf("expected pod-1, got %s", asUnstructured(result.Resources[0]).GetName())
 	}
 }
 
@@ -251,11 +251,11 @@ func TestPatchAction_HappyPath(t *testing.T) {
 		Namespace: "default",
 		Name:      "test-proxy-mutation",
 	}
-	action := actions.CreateAction("patch")
+	action := kubeAction(t, "patch")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
 	params := map[string]string{"patch": `{"data":{"key1":"updated"}}`}
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{
 		Target: target,
 		Params: params,
 	})
@@ -265,8 +265,8 @@ func TestPatchAction_HappyPath(t *testing.T) {
 	if len(result.Resources) != 1 {
 		t.Fatalf("expected 1 resource, got %d", len(result.Resources))
 	}
-	if result.Resources[0].GetName() != "test-proxy-mutation" {
-		t.Errorf("expected name test-proxy-mutation, got %s", result.Resources[0].GetName())
+	if asUnstructured(result.Resources[0]).GetName() != "test-proxy-mutation" {
+		t.Errorf("expected name test-proxy-mutation, got %s", asUnstructured(result.Resources[0]).GetName())
 	}
 }
 
@@ -276,14 +276,14 @@ func TestPatchAction_MissingName(t *testing.T) {
 		Resource:  "configmaps",
 		Namespace: "default",
 	}
-	action := actions.CreateAction("patch")
+	action := kubeAction(t, "patch")
 	rbac := []backplane.RBACRule{
 		{APIGroups: []string{""}, Resources: []string{"configmaps"}, Verbs: []string{"patch"}},
 	}
 	client := createMockSession(t, clusterC1, rbac)
 
 	params := map[string]string{"patch": `{"data":{"key1":"updated"}}`}
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{
 		Target: target,
 		Params: params,
 	})
@@ -299,10 +299,10 @@ func TestPatchAction_MissingPatchParam(t *testing.T) {
 		Namespace: "default",
 		Name:      "test-proxy-mutation",
 	}
-	action := actions.CreateAction("patch")
+	action := kubeAction(t, "patch")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{
 		Target: target,
 	})
 	if err == nil {
@@ -322,10 +322,10 @@ func TestPatchAction_ForbiddenByRBAC(t *testing.T) {
 		Namespace: "default",
 		Name:      "test-proxy-mutation",
 	}
-	action := actions.CreateAction("patch")
+	action := kubeAction(t, "patch")
 	params := map[string]string{"patch": `{"data":{"key1":"updated"}}`}
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{
 		Target: target,
 		Params: params,
 	})
@@ -345,10 +345,10 @@ func TestDeleteAction_HappyPath(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("delete")
+	action := kubeAction(t, "delete")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -363,13 +363,13 @@ func TestDeleteAction_MissingName(t *testing.T) {
 		Resource:  "pods",
 		Namespace: "ns-a",
 	}
-	action := actions.CreateAction("delete")
+	action := kubeAction(t, "delete")
 	rbac := []backplane.RBACRule{
 		{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"delete"}},
 	}
 	client := createMockSession(t, clusterC1, rbac)
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err == nil {
 		t.Fatal("expected error for missing name, got nil")
 	}
@@ -387,9 +387,9 @@ func TestDeleteAction_ForbiddenByRBAC(t *testing.T) {
 		Namespace: "ns-a",
 		Name:      "pod-1",
 	}
-	action := actions.CreateAction("delete")
+	action := kubeAction(t, "delete")
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err == nil {
 		t.Fatal("expected error when session only grants get/list but delete is needed")
 	}
@@ -405,10 +405,10 @@ func TestDescribeNodes_ListAll(t *testing.T) {
 		Resource:      "nodes",
 		ClusterScoped: true,
 	}
-	action := actions.CreateAction("describe-nodes")
+	action := kubeAction(t, "describe-nodes")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -416,7 +416,7 @@ func TestDescribeNodes_ListAll(t *testing.T) {
 		t.Fatal("expected at least 1 node description")
 	}
 
-	node := result.Resources[0].Object
+	node := result.Resources[0]
 	if node["name"] != "node-1" {
 		t.Errorf("expected node name node-1, got %v", node["name"])
 	}
@@ -438,10 +438,10 @@ func TestDescribeNodes_SingleNode(t *testing.T) {
 		ClusterScoped: true,
 		Name:          "node-1",
 	}
-	action := actions.CreateAction("describe-nodes")
+	action := kubeAction(t, "describe-nodes")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -449,7 +449,7 @@ func TestDescribeNodes_SingleNode(t *testing.T) {
 		t.Fatalf("expected 1 node description, got %d", len(result.Resources))
 	}
 
-	node := result.Resources[0].Object
+	node := result.Resources[0]
 	if node["name"] != "node-1" {
 		t.Errorf("expected node name node-1, got %v", node["name"])
 	}
@@ -466,15 +466,15 @@ func TestDescribeNodes_StructureValidation(t *testing.T) {
 		Resource:      "nodes",
 		ClusterScoped: true,
 	}
-	action := actions.CreateAction("describe-nodes")
+	action := kubeAction(t, "describe-nodes")
 	client := createMockSession(t, clusterC1, action.RequiredRBAC(target))
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
 
-	node := result.Resources[0].Object
+	node := result.Resources[0]
 
 	conditions, ok := node["conditions"].([]interface{})
 	if !ok || len(conditions) == 0 {
@@ -520,7 +520,7 @@ func TestDescribeNodes_StructureValidation(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestGetPullSecretEmail_ForbiddenByBackplane(t *testing.T) {
-	action := actions.CreateAction("get-pull-secret-email")
+	action := kubeAction(t, "get-pull-secret-email")
 	rbac := action.RequiredRBAC(actions.ResourceTarget{})
 
 	msg := createMockSessionExpectError(t, clusterC1, rbac, 400)
@@ -536,7 +536,7 @@ func TestGetPullSecretEmail_ForbiddenByBackplane(t *testing.T) {
 func TestExecutor_AuthorizationDenied(t *testing.T) {
 	exec, _ := newTestExecutor(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -559,7 +559,7 @@ func TestExecutor_AuthorizationDenied(t *testing.T) {
 func TestExecutor_AuthorizationAllowed(t *testing.T) {
 	exec, _ := newTestExecutor(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -588,7 +588,7 @@ func TestExecutor_AuthorizationAllowed(t *testing.T) {
 func TestExecutor_PatchThroughPipeline(t *testing.T) {
 	exec, _ := newTestExecutor(t, []string{"default"}, nil)
 
-	action := actions.CreateAction("patch")
+	action := kubeAction(t, "patch")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -611,15 +611,15 @@ func TestExecutor_PatchThroughPipeline(t *testing.T) {
 	if result.Output == nil || len(result.Output.Resources) != 1 {
 		t.Fatal("expected 1 resource in output")
 	}
-	if result.Output.Resources[0].GetName() != "test-proxy-mutation" {
-		t.Errorf("expected name test-proxy-mutation, got %s", result.Output.Resources[0].GetName())
+	if asUnstructured(result.Output.Resources[0]).GetName() != "test-proxy-mutation" {
+		t.Errorf("expected name test-proxy-mutation, got %s", asUnstructured(result.Output.Resources[0]).GetName())
 	}
 }
 
 func TestExecutor_DeleteThroughPipeline(t *testing.T) {
 	exec, _ := newTestExecutor(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("delete")
+	action := kubeAction(t, "delete")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -646,7 +646,7 @@ func TestExecutor_DeleteThroughPipeline(t *testing.T) {
 func TestExecutor_ClusterScopedGet(t *testing.T) {
 	exec, _ := newTestExecutor(t, nil, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -672,7 +672,7 @@ func TestExecutor_ClusterScopedGet(t *testing.T) {
 func TestExecutor_SecretsAuthorizationDenied(t *testing.T) {
 	exec, auditor := newTestExecutor(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -699,7 +699,7 @@ func TestExecutor_SecretsAuthorizationDenied(t *testing.T) {
 func TestExecutor_SecretsAuthorizationWithAllowlist(t *testing.T) {
 	exec, auditor := newTestExecutor(t, []string{"ns-a"}, []string{"ns-a/secret-1"})
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -729,7 +729,7 @@ func TestExecutor_SecretsAuthorizationWithAllowlist(t *testing.T) {
 func TestExecutor_NamespaceRequired(t *testing.T) {
 	exec, _ := newTestExecutor(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -752,7 +752,7 @@ func TestExecutor_NamespaceRequired(t *testing.T) {
 func TestAudit_SuccessRecorded(t *testing.T) {
 	exec, auditor := newTestExecutor(t, nil, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -789,7 +789,7 @@ func TestAudit_SuccessRecorded(t *testing.T) {
 func TestAudit_DenialRecorded(t *testing.T) {
 	exec, auditor := newTestExecutor(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -817,7 +817,7 @@ func TestAudit_DenialRecorded(t *testing.T) {
 func TestAudit_PatchRecorded(t *testing.T) {
 	exec, auditor := newTestExecutor(t, []string{"default"}, nil)
 
-	action := actions.CreateAction("patch")
+	action := kubeAction(t, "patch")
 	exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -850,7 +850,7 @@ func TestAudit_PatchRecorded(t *testing.T) {
 func TestAudit_BackplaneErrorRecorded(t *testing.T) {
 	exec, auditor := newTestExecutor(t, []string{"ns-a"}, []string{"ns-a/secret-1"})
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -891,9 +891,9 @@ func TestGetAction_Proxy_ListNamespaces(t *testing.T) {
 		Resource:      "namespaces",
 		ClusterScoped: true,
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 
-	result, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	result, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -910,9 +910,9 @@ func TestGetAction_Proxy_ListPods(t *testing.T) {
 		Resource:  "pods",
 		Namespace: "default",
 	}
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 
-	_, err := action.Execute(context.Background(), actions.Clients{Dynamic: client}, actions.ActionRequest{Target: target})
+	_, err := action.Execute(context.Background(), actions.KubeClients{Dynamic: client}, actions.KubeActionRequest{Target: target})
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -925,7 +925,7 @@ func TestGetAction_Proxy_ListPods(t *testing.T) {
 func TestExecutor_Proxy_AuthorizationDenied(t *testing.T) {
 	exec, _ := newTestExecutorWithProxy(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -948,7 +948,7 @@ func TestExecutor_Proxy_AuthorizationDenied(t *testing.T) {
 func TestExecutor_Proxy_ClusterScopedGet(t *testing.T) {
 	exec, _ := newTestExecutorWithProxy(t, nil, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	result := exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -974,7 +974,7 @@ func TestExecutor_Proxy_ClusterScopedGet(t *testing.T) {
 func TestAudit_Proxy_SuccessRecorded(t *testing.T) {
 	exec, auditor := newTestExecutorWithProxy(t, nil, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,
@@ -1001,7 +1001,7 @@ func TestAudit_Proxy_SuccessRecorded(t *testing.T) {
 func TestAudit_Proxy_DenialRecorded(t *testing.T) {
 	exec, auditor := newTestExecutorWithProxy(t, []string{"ns-a"}, nil)
 
-	action := actions.CreateAction("get")
+	action := kubeAction(t, "get")
 	exec.Execute(context.Background(), executor.Request{
 		CallerID:  "test-user",
 		ClusterID: clusterC1,

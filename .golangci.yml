@@ -61,6 +61,7 @@ linters:
       - std-error-handling
 
 run:
+  build-tags: integration
   timeout: 5m
 
 formatters:
