@@ -16,10 +16,10 @@ packages this guide into an actionable workflow, including a local
 ## What a Trusted Action is
 
 A Trusted Action is a named, auditable operation that the server runs against a
-managed cluster on a caller's behalf. Callers never talk to the cluster
-directly — they submit an action through the API, the server authorizes it,
-requests a least-privilege backplane session scoped to exactly the RBAC the
-action declares, runs it, and records an audit entry.
+managed cluster or cloud account on a caller's behalf. Callers never talk to
+the cluster or cloud account directly — they submit an action through the API,
+the server authorizes it, requests a least-privilege backplane session scoped
+to exactly the RBAC the action declares, runs it, and records an audit entry.
 
 An action is defined in **two** places, and both are required:
 
@@ -324,6 +324,7 @@ and executor). Once your PR merges and a new image is built and rolled out:
 - [ ] `UsesPodExec()` is correct; pod-exec actions declare `pods/exec` and guard a nil executor.
 - [ ] `Execute` validates params, wraps errors with context, and never leaks secret data.
 - [ ] `internal/catalog/catalog.go` registers an `ActionDefinition` with a matching `Name`, correct `Type`/`Scope`, narrowest `AllowedRoles`, documented `Params`, and write-safety metadata for write actions.
+- [ ] `Approval` is correctly set for `openapi.Write` actions — there's no approval enforcement system today, so when in doubt default to requiring approval (`Approval: "manual"`) and call it out explicitly in the PR description for reviewers.
 - [ ] A mutating AWS action implements `AWSWriteAction` (`Operation()`, `Resource()`), not just `AWSAction`, and its `Operation()` value is documented for addition to `ROSA_TA_AWS_ALLOWED_OPERATIONS` / `actions.aws_allowed_operations` in deployment.
 - [ ] New namespaces/secrets added to the allowlists and documented in `ARCHITECTURE.md`.
 - [ ] Unit tests cover name, RBAC, success, and error paths; patch coverage ≥ 80%.

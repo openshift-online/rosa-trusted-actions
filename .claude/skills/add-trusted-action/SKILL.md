@@ -74,7 +74,11 @@ Add a `c.register(&catalog.ActionDefinition{...})` call in `catalog.New()`:
 - `Params` — one `ParamDefinition` (`Name`, `Description`, `Required`, `Default`)
   per param read from `req.Params`. Document every one.
 - For `openapi.Write` actions, set write-safety metadata: `DryRunAction`
-  (read-only counterpart), `WriteCooldownSeconds`, `Approval`.
+  (read-only counterpart), `WriteCooldownSeconds`, `Approval`. There is no
+  approval *enforcement* system today — `Approval` is descriptive metadata
+  only — so if it's not obvious whether this action needs manual approval,
+  ask the user and default to recommending "yes" (set `Approval: "manual"`)
+  rather than leaving it unset.
 
 ### 4. Account for runtime authorization
 These are enforced in `internal/authorization/authorization.go` **before** the
