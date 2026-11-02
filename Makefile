@@ -189,7 +189,7 @@ test-integration: ## Run integration tests (starts server, runs tests, stops ser
 
 .PHONY: test-actions
 test-actions: ## Run action integration tests against the mock backplane (requires make mock-backplane)
-	TEST_BACKPLANE=proxy MOCK_BACKPLANE_URL=http://localhost:$(MOCK_BACKPLANE_PORT) \
+	TEST_BACKPLANE=mock MOCK_BACKPLANE_URL=http://localhost:$(MOCK_BACKPLANE_PORT) \
 		go test -v -tags=integration -count=1 ./tests/actions/...
 
 .PHONY: test-actions-proxy
