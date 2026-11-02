@@ -9,13 +9,15 @@ resource "aws_ecs_cluster" "main" {
 
 locals {
   # app_config (see variables.tf) is the complete config file uploaded to S3.
-  # Env vars override the config file silently in the Go loader, so any
-  # setting carried by the file must NOT also appear in container_environment
-  # — that is why the ROSA_TA_WORKER_* entries are gone: workers.* now lives
-  # in the file only. The deprecated_* entries below are the one-release
-  # compatibility shim: they re-add the env var only when the corresponding
-  # deprecated variable is set, so an old tfvars value still applies (env
-  # wins, exactly as before the migration).
+  #
+  # Compatibility window: the deployed container image may predate the
+  # config-file keys for backplane/ocm/workers/allowlists — it reads those
+  # from environment variables only. The compat_env entries below are
+  # therefore derived from the config file (deprecated variable wins when
+  # set), so an old image receives the same values the file carries. For a
+  # new image the env value equals the file value, which makes the loader's
+  # env-over-file precedence harmless. Remove compat_env with the deprecated
+  # variables in the next change.
   container_environment = concat([
     { name = "ROSA_TA_LISTEN_ADDR", value = ":8080" },
     { name = "ROSA_TA_LOG_JSON", value = "true" },
@@ -29,14 +31,7 @@ locals {
     { name = "AWS_REGION", value = var.aws_region },
     { name = "DATABASE_URL", value = "/data/trusted_actions.db" },
     ],
-    var.worker_concurrency != null ? [{ name = "ROSA_TA_WORKER_CONCURRENCY", value = tostring(var.worker_concurrency) }] : [],
-    var.worker_poll_interval != null ? [{ name = "ROSA_TA_WORKER_POLL_INTERVAL", value = var.worker_poll_interval }] : [],
-    var.worker_execution_timeout != null ? [{ name = "ROSA_TA_WORKER_EXECUTION_TIMEOUT", value = var.worker_execution_timeout }] : [],
-    var.allowed_namespaces != null ? [{ name = "ROSA_TA_ALLOWED_NAMESPACES", value = var.allowed_namespaces }] : [],
-    var.allowed_secrets != null ? [{ name = "ROSA_TA_ALLOWED_SECRETS", value = var.allowed_secrets }] : [],
-    var.ocm_client_id != null ? [{ name = "ROSA_TA_OCM_CLIENT_ID", value = var.ocm_client_id }] : [],
-    var.backplane_url != null ? [{ name = "ROSA_TA_BACKPLANE_URL", value = var.backplane_url }] : [],
-    var.backplane_client_id != null ? [{ name = "ROSA_TA_BACKPLANE_CLIENT_ID", value = var.backplane_client_id }] : [],
+    [for name, value in local.compat_env : { name = name, value = value } if value != ""],
   )
 
   # roles has no env var — the loader reads it from the file only. The shim
@@ -46,6 +41,22 @@ locals {
     yamldecode(var.app_config),
     { roles = [for r in var.roles : { id = r.id, amsResource = r.ams_resource }] },
   )) : var.app_config
+
+  config_decoded = yamldecode(local.app_config_effective)
+
+  # Env values for the compatibility window: the deprecated per-setting
+  # variable when set, otherwise the value from the config file. A missing
+  # key yields "" and the env entry is then omitted.
+  compat_env = {
+    ROSA_TA_WORKER_CONCURRENCY       = var.worker_concurrency != null ? tostring(var.worker_concurrency) : tostring(try(local.config_decoded.workers.concurrency, ""))
+    ROSA_TA_WORKER_POLL_INTERVAL     = var.worker_poll_interval != null ? var.worker_poll_interval : try(local.config_decoded.workers.poll_interval, "")
+    ROSA_TA_WORKER_EXECUTION_TIMEOUT = var.worker_execution_timeout != null ? var.worker_execution_timeout : try(local.config_decoded.workers.execution_timeout, "")
+    ROSA_TA_ALLOWED_NAMESPACES       = var.allowed_namespaces != null ? var.allowed_namespaces : try(join(",", local.config_decoded.actions.allowed_namespaces), "")
+    ROSA_TA_ALLOWED_SECRETS          = var.allowed_secrets != null ? var.allowed_secrets : try(join(",", local.config_decoded.actions.allowed_secrets), "")
+    ROSA_TA_OCM_CLIENT_ID            = var.ocm_client_id != null ? var.ocm_client_id : try(local.config_decoded.ocm.client_id, "")
+    ROSA_TA_BACKPLANE_URL            = var.backplane_url != null ? var.backplane_url : try(local.config_decoded.backplane.base_url, "")
+    ROSA_TA_BACKPLANE_CLIENT_ID      = var.backplane_client_id != null ? var.backplane_client_id : try(local.config_decoded.backplane.client_id, "")
+  }
 
   container_secrets = [
     { name = "ROSA_TA_OCM_CLIENT_SECRET", valueFrom = "${local.global.secretsmanager_secret_arn}:ocm_client_secret::" },
