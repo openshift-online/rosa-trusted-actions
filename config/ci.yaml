@@ -1,0 +1,52 @@
+# Server configuration for the end-to-end suite (tests/e2e), run against a
+# real cluster via staging backplane. It mirrors a deployment's shape, with the
+# allowlists narrowed to what the suite touches.
+#
+# Credentials are not here, and must not be: this file is committed. The OCM
+# and backplane client IDs and secrets come from the environment.
+
+roles:
+- id: "SREP"
+  amsResource: "BackplaneOsdSrepResource"
+- id: "ConfigurationAnomalyDetection"
+  amsResource: "BackplaneOsdCadResource"
+- id: "ROSAAiAgent"
+  amsResource: "BackplaneOsdAiAgentResource"
+
+workers:
+  concurrency: 4
+  # Short, because the suite polls each execution to completion: the poll
+  # interval is a floor on how long every test takes.
+  poll_interval: 2s
+  # Above the default, since a real backplane session plus a cluster round trip
+  # is slower than the local paths this default was chosen for.
+  execution_timeout: 3m
+
+actions:
+  # Deliberately not empty. An empty list puts the authorizer in permissive
+  # mode, which would make the suite's denial cases pass without the
+  # authorizer having decided anything.
+  #
+  # Every namespace a test names has to appear here, including the ones passed
+  # only to satisfy the authorizer for cluster-scoped reads — see the comment
+  # at the top of tests/e2e/kube_test.go.
+  allowed_namespaces:
+  - openshift-monitoring  # read-only targets, and the namespace list-alerts queries
+  - openshift-config      # get-pull-secret-email
+  - rosa-ta-e2e           # fixtures; must match E2E_FIXTURE_NAMESPACE
+
+  # get-pull-secret-email does not go through this check: the authorizer only
+  # applies the secrets allowlist when the request's derived target names
+  # "secrets" as its resource, and that action takes no resource parameter.
+  allowed_secrets: []
+
+  # No default and no permissive mode: the server refuses to start when this
+  # is empty. It is left out of this file on purpose, because the only correct
+  # value is wherever the cluster under test was provisioned — the job sets
+  # ROSA_TA_AWS_ALLOWED_REGIONS from the provisioned cluster's region.
+  # aws_allowed_regions: []
+
+  # Reads need nothing here. Writes stay off until the destructive variant of
+  # the job enables them, so that a suite which is not meant to change a
+  # cluster's infrastructure cannot.
+  aws_allowed_operations: []

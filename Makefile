@@ -110,6 +110,8 @@ dev: ## Run in development mode with auto-reload (requires air)
 test: generate ## Run unit tests (SQLite only; Postgres tests require TEST_POSTGRES_URL)
 	# compile integration tests (but don't run them) to ensure they build
 	go test -tags=integration -c -o /dev/null ./tests/actions/
+	# same for the end-to-end suite, which needs a cluster to run
+	go test -tags=e2e -c -o /dev/null ./tests/e2e/
 	go test -v ./...
 
 .PHONY: test-race
@@ -196,6 +198,15 @@ test-actions: ## Run action integration tests against the mock backplane (requir
 test-actions-proxy: ## Run action integration tests against the proxy backplane (requires make proxy-backplane + KUBECONFIG)
 	PROXY_BACKPLANE_URL=http://localhost:$(PROXY_BACKPLANE_PORT) \
 		go test -v -tags=integration -count=1 -run Proxy ./tests/actions/...
+
+# End-to-end suite: drives the HTTP API of a running server against a real
+# cluster through staging backplane. Needs RTA_BASE_URL, RTA_TOKEN and
+# E2E_CLUSTER_ID; RUN takes a 'go test -run' pattern for targeting one action.
+E2E_TIMEOUT ?= 30m
+.PHONY: test-e2e
+test-e2e: ## Run the end-to-end suite against a running server and a real cluster
+	go test -v -tags=e2e -count=1 -timeout $(E2E_TIMEOUT) \
+		$(if $(RUN),-run $(RUN),) ./tests/e2e/...
 
 # Mock backplane server
 .PHONY: mock-backplane
