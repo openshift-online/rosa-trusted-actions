@@ -165,13 +165,15 @@ API enforces:
 ```go
 // Adapted from the real "delete" registration in catalog.go, with the
 // write-safety fields (DryRunAction/WriteCooldownSeconds/Approval) added to
-// show the full struct — "delete" doesn't set them today.
+// show the full struct — "delete" doesn't set them today. AllowedRoles is
+// also narrowed here to illustrate the "grant the narrowest set" guidance
+// below; the real "delete" registration grants allRoles.
 c.register(&catalog.ActionDefinition{
 	Name:         "delete",                       // MUST match Action.Name()
 	Description:  "Delete a Kubernetes resource",
 	Type:         openapi.Write,                   // Read (read-only) or Write (mutating)
 	Scope:        openapi.KubeApi,                 // KubeApi or AwsApi
-	AllowedRoles: allRoles,                        // caller roles permitted to run it
+	AllowedRoles: []string{"SREP"},                // caller roles permitted to run it
 	Params: []catalog.ParamDefinition{
 		{Name: "group", Description: "API group (empty for core resources)"},
 		{Name: "version", Description: "API version", Required: true, Default: "v1"},
