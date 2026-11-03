@@ -221,9 +221,9 @@ variable "backplane_client_id" {
 
 
 variable "ocm_base_url" {
-  description = "OCM base URL (ROSA_TA_OCM_BASE_URL)"
+  description = "DEPRECATED: use app_config (ocm.base_url). Applied as ROSA_TA_OCM_BASE_URL when set, overriding the file. Unset (null) falls back to the file and then the server's built-in default."
   type        = string
-  default     = "https://api.openshift.com"
+  default     = null
 }
 
 variable "jwk_cert_url" {
