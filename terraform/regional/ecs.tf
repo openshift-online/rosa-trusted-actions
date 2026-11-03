@@ -25,7 +25,6 @@ locals {
     { name = "ROSA_TA_ENABLE_AUTH", value = "true" },
     { name = "ROSA_TA_S3_BUCKET", value = aws_s3_bucket.app.bucket },
     { name = "ROSA_TA_S3_KEY_PREFIX", value = "trusted-actions" },
-    { name = "ROSA_TA_OCM_BASE_URL", value = var.ocm_base_url },
     { name = "ROSA_TA_JWK_CERT_URL", value = var.jwk_cert_url },
     { name = "ROSA_TA_ALLOWED_ACCOUNTS", value = var.allowed_accounts },
     { name = "AWS_REGION", value = var.aws_region },
@@ -55,7 +54,7 @@ locals {
     ROSA_TA_WORKER_EXECUTION_TIMEOUT = var.worker_execution_timeout != null ? var.worker_execution_timeout : try(local.config_decoded.workers.execution_timeout, "")
     ROSA_TA_ALLOWED_NAMESPACES       = var.allowed_namespaces != null ? var.allowed_namespaces : try(join(",", local.config_decoded.actions.allowed_namespaces), "")
     ROSA_TA_ALLOWED_SECRETS          = var.allowed_secrets != null ? var.allowed_secrets : try(join(",", local.config_decoded.actions.allowed_secrets), "")
-    ROSA_TA_OCM_CLIENT_ID            = var.ocm_client_id != null ? var.ocm_client_id : try(local.config_decoded.ocm.client_id, "")
+    ROSA_TA_OCM_BASE_URL             = var.ocm_base_url != null ? var.ocm_base_url : try(local.config_decoded.ocm.base_url, "")
     ROSA_TA_BACKPLANE_URL            = var.backplane_url != null ? var.backplane_url : try(local.config_decoded.backplane.base_url, "")
     ROSA_TA_BACKPLANE_CLIENT_ID      = var.backplane_client_id != null ? var.backplane_client_id : try(local.config_decoded.backplane.client_id, "")
   }
