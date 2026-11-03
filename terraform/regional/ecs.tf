@@ -35,9 +35,11 @@ locals {
   )
 
   # roles has no env var — the loader reads it from the file only. The shim
-  # merges a deprecated var.roles into the config file when (and only when)
-  # app_config does not define a roles block itself.
-  app_config_effective = var.roles != null && try(length(yamldecode(var.app_config).roles), 1) == 0 ? yamlencode(merge(
+  # merges a deprecated var.roles into the config file when app_config does
+  # not define a roles block itself: an absent key counts as "not defined"
+  # (try yields null, which is not a list), while an explicit roles: [] in
+  # the file IS a definition and wins — the file said "no roles" on purpose.
+  app_config_effective = var.roles != null && !can(yamldecode(var.app_config).roles) ? yamlencode(merge(
     yamldecode(var.app_config),
     { roles = [for r in var.roles : { id = r.id, amsResource = r.ams_resource }] },
   )) : var.app_config
