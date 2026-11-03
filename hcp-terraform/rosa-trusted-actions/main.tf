@@ -70,7 +70,32 @@ module "rosa_trusted_actions" {
           value       = "rosa-trusted-actions.internal.company.com"
           category    = "terraform"
           description = "Used only to obtain the ACM validation CNAME token. Must match all regional workspaces."
-        }
+        },
+        {
+          key      = "default_tags"
+          value    = <<-EOT
+            {
+              owner         = "app-sre"
+              service-phase = "stage"
+            }
+          EOT
+          category = "terraform"
+          hcl      = true
+        },
+        {
+          key      = "ignored_tag_keys"
+          value    = <<-EOT
+            [
+              "app",
+              "app-code",
+              "cost-center",
+              "managed_by_integration",
+              "organization",
+            ]
+          EOT
+          category = "terraform"
+          hcl      = true
+        },
         # public_zone_id: add when the public apex zone is available.
         # {
         #   key      = "public_zone_id"
@@ -153,6 +178,31 @@ module "rosa_trusted_actions" {
           value       = "rosa-trusted-actions.internal.company.com"
           category    = "terraform"
           description = "Private FQDN — must match the value in the global workspace."
+        },
+        {
+          key      = "default_tags"
+          value    = <<-EOT
+            {
+              owner         = "app-sre"
+              service-phase = "stage"
+            }
+          EOT
+          category = "terraform"
+          hcl      = true
+        },
+        {
+          key      = "ignored_tag_keys"
+          value    = <<-EOT
+            [
+              "app",
+              "app-code",
+              "cost-center",
+              "managed_by_integration",
+              "organization",
+            ]
+          EOT
+          category = "terraform"
+          hcl      = true
         },
         {
           key       = "ocm_client_id"
