@@ -27,6 +27,7 @@ require (
 	github.com/openshift/backplane-cli v1.0.1-0.20261029115741-74bbe3c8028e
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
+	github.com/spf13/viper v1.21.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
@@ -137,7 +138,6 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/spf13/viper v1.21.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
