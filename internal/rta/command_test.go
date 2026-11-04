@@ -124,7 +124,7 @@ func TestActionList_Text(t *testing.T) {
 	srv := serveCatalog(t, catalog)
 	defer srv.Close()
 
-	stdout, err := execute(t, "action", "list", "--server", srv.URL)
+	stdout, err := execute(t, "action", "list", "--server", srv.URL, "--token", "tok")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ func TestActionList_JSON(t *testing.T) {
 	srv := serveCatalog(t, catalog)
 	defer srv.Close()
 
-	stdout, err := execute(t, "action", "list", "--server", srv.URL, "-o", "json")
+	stdout, err := execute(t, "action", "list", "--server", srv.URL, "--token", "tok", "-o", "json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +163,7 @@ func TestActionList_Empty(t *testing.T) {
 	srv := serveCatalog(t, openapi.TrustedActionCatalog{Items: []openapi.TrustedActionSummary{}})
 	defer srv.Close()
 
-	stdout, err := execute(t, "action", "list", "--server", srv.URL)
+	stdout, err := execute(t, "action", "list", "--server", srv.URL, "--token", "tok")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestActionList_EmptyJSON(t *testing.T) {
 	srv := serveCatalog(t, openapi.TrustedActionCatalog{Items: []openapi.TrustedActionSummary{}})
 	defer srv.Close()
 
-	stdout, err := execute(t, "action", "list", "--server", srv.URL, "-o", "json")
+	stdout, err := execute(t, "action", "list", "--server", srv.URL, "--token", "tok", "-o", "json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +200,7 @@ func TestActionDescribe_Text(t *testing.T) {
 	srv := serveDescribe(t, action)
 	defer srv.Close()
 
-	stdout, err := execute(t, "action", "describe", "get", "--server", srv.URL)
+	stdout, err := execute(t, "action", "describe", "get", "--server", srv.URL, "--token", "tok")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +220,7 @@ func TestActionDescribe_JSON(t *testing.T) {
 	srv := serveDescribe(t, action)
 	defer srv.Close()
 
-	stdout, err := execute(t, "action", "describe", "get", "--server", srv.URL, "-o", "json")
+	stdout, err := execute(t, "action", "describe", "get", "--server", srv.URL, "--token", "tok", "-o", "json")
 	if err != nil {
 		t.Fatal(err)
 	}
