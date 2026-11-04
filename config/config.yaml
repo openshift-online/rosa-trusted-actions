@@ -44,10 +44,22 @@ roles:
 #   # matching backplane-cli.
 #   proxy_url: ""
 
+# ocm:
+#   # OCM API base URL and the client ID this server authenticates as.
+#   # Overridden by ROSA_TA_OCM_BASE_URL / ROSA_TA_OCM_CLIENT_ID; the secret
+#   # stays environment-only (Secrets Manager in deployments).
+#   base_url: ""
+#   client_id: ""
+
 # backplane:
 #   # The payer-account role the AWS assume-role chain starts from. Normally
 #   # left empty: backplane-cli infers it from the OCM URL and rejects anything
 #   # that is not one of the three known SRE support roles.
 #   assume_initial_arn: ""
+#   # Backplane API base URL and the client ID used for HMAC signing.
+#   # Overridden by ROSA_TA_BACKPLANE_URL / ROSA_TA_BACKPLANE_CLIENT_ID; the
+#   # HMAC secret stays environment-only (Secrets Manager in deployments).
+#   base_url: ""
+#   client_id: ""
 #   # Proxy used to reach the backplane API.
 #   proxy_url: ""

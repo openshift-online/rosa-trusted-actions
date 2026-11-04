@@ -101,7 +101,7 @@ module "rosa_trusted_actions" {
       variables = [
         {
           key         = "aws_region"
-          value       = "us-east-1"
+          value       = var.aws_region
           category    = "terraform"
           description = "AWS region for this deployment."
         },
@@ -139,26 +139,37 @@ module "rosa_trusted_actions" {
           category = "terraform"
         },
         {
-          key      = "backplane_url"
-          value    = "https://api.stage.backplane.openshift.com"
-          category = "terraform"
-        },
-        {
-          key      = "backplane_client_id"
-          value    = "trusted-actions"
-          category = "terraform"
+          key         = "app_config"
+          value       = <<-YAML
+            actions:
+              aws_allowed_regions: [${var.aws_region}]
+              allowed_namespaces: []
+              allowed_secrets: []
+            ocm:
+              client_id: ${var.ocm_client_id}
+            backplane:
+              base_url: https://api.stage.backplane.openshift.com
+              client_id: trusted-actions
+            roles:
+              - id: SREP
+                amsResource: BackplaneOsdSrepResource
+              - id: ConfigurationAnomalyDetection
+                amsResource: BackplaneOsdCadResource
+              - id: ROSAAiAgent
+                amsResource: BackplaneOsdAiAgentResource
+            workers:
+              concurrency: 4
+              poll_interval: 5s
+              execution_timeout: 2m
+          YAML
+          category    = "terraform"
+          description = "Complete application config file (config.yaml) uploaded to S3. The Go loader applies env-over-file precedence, so settings here must not also be env vars on the task definition."
         },
         {
           key         = "internal_fqdn"
           value       = "rosa-trusted-actions.internal.company.com"
           category    = "terraform"
           description = "Private FQDN — must match the value in the global workspace."
-        },
-        {
-          key       = "ocm_client_id"
-          value     = var.ocm_client_id
-          category  = "terraform"
-          sensitive = true
         },
         {
           key       = "ocm_client_secret"

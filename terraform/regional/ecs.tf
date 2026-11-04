@@ -8,45 +8,56 @@ resource "aws_ecs_cluster" "main" {
 }
 
 locals {
-  # Rendered config.yaml content — uploaded to S3 so the init container can
-  # fetch it at task start. The 'roles' block is the only configuration that
-  # cannot be expressed as environment variables, which is why we need this
-  # file rather than relying purely on env vars.
-  config_yaml = yamlencode({
-    roles = [
-      for r in var.roles : {
-        id          = r.id
-        amsResource = r.ams_resource
-      }
-    ]
-    workers = {
-      concurrency       = var.worker_concurrency
-      poll_interval     = var.worker_poll_interval
-      execution_timeout = var.worker_execution_timeout
-    }
-  })
-
-  container_environment = [
+  # app_config (see variables.tf) is the complete config file uploaded to S3.
+  #
+  # Compatibility window: the deployed container image may predate the
+  # config-file keys for backplane/ocm/workers/allowlists — it reads those
+  # from environment variables only. The compat_env entries below are
+  # therefore derived from the config file (deprecated variable wins when
+  # set), so an old image receives the same values the file carries. For a
+  # new image the env value equals the file value, which makes the loader's
+  # env-over-file precedence harmless. Remove compat_env with the deprecated
+  # variables in the next change.
+  container_environment = concat([
     { name = "ROSA_TA_LISTEN_ADDR", value = ":8080" },
     { name = "ROSA_TA_LOG_JSON", value = "true" },
     { name = "ROSA_TA_LOG_LEVEL", value = "info" },
     { name = "ROSA_TA_ENABLE_AUTH", value = "true" },
     { name = "ROSA_TA_S3_BUCKET", value = aws_s3_bucket.app.bucket },
     { name = "ROSA_TA_S3_KEY_PREFIX", value = "trusted-actions" },
-    { name = "ROSA_TA_OCM_BASE_URL", value = var.ocm_base_url },
-    { name = "ROSA_TA_OCM_CLIENT_ID", value = var.ocm_client_id },
     { name = "ROSA_TA_JWK_CERT_URL", value = var.jwk_cert_url },
-    { name = "ROSA_TA_BACKPLANE_URL", value = var.backplane_url },
-    { name = "ROSA_TA_BACKPLANE_CLIENT_ID", value = var.backplane_client_id },
     { name = "ROSA_TA_ALLOWED_ACCOUNTS", value = var.allowed_accounts },
-    { name = "ROSA_TA_ALLOWED_NAMESPACES", value = var.allowed_namespaces },
-    { name = "ROSA_TA_ALLOWED_SECRETS", value = var.allowed_secrets },
-    { name = "ROSA_TA_WORKER_CONCURRENCY", value = tostring(var.worker_concurrency) },
-    { name = "ROSA_TA_WORKER_POLL_INTERVAL", value = var.worker_poll_interval },
-    { name = "ROSA_TA_WORKER_EXECUTION_TIMEOUT", value = var.worker_execution_timeout },
     { name = "AWS_REGION", value = var.aws_region },
     { name = "DATABASE_URL", value = "/data/trusted_actions.db" },
-  ]
+    ],
+    [for name, value in local.compat_env : { name = name, value = value } if value != ""],
+  )
+
+  # roles has no env var — the loader reads it from the file only. The shim
+  # merges a deprecated var.roles into the config file when app_config does
+  # not define a roles block itself: an absent key counts as "not defined"
+  # (try yields null, which is not a list), while an explicit roles: [] in
+  # the file IS a definition and wins — the file said "no roles" on purpose.
+  app_config_effective = var.roles != null && !can(yamldecode(var.app_config).roles) ? yamlencode(merge(
+    yamldecode(var.app_config),
+    { roles = [for r in var.roles : { id = r.id, amsResource = r.ams_resource }] },
+  )) : var.app_config
+
+  config_decoded = yamldecode(local.app_config_effective)
+
+  # Env values for the compatibility window: the deprecated per-setting
+  # variable when set, otherwise the value from the config file. A missing
+  # key yields "" and the env entry is then omitted.
+  compat_env = {
+    ROSA_TA_WORKER_CONCURRENCY       = var.worker_concurrency != null ? tostring(var.worker_concurrency) : tostring(try(local.config_decoded.workers.concurrency, ""))
+    ROSA_TA_WORKER_POLL_INTERVAL     = var.worker_poll_interval != null ? var.worker_poll_interval : try(local.config_decoded.workers.poll_interval, "")
+    ROSA_TA_WORKER_EXECUTION_TIMEOUT = var.worker_execution_timeout != null ? var.worker_execution_timeout : try(local.config_decoded.workers.execution_timeout, "")
+    ROSA_TA_ALLOWED_NAMESPACES       = var.allowed_namespaces != null ? var.allowed_namespaces : try(join(",", local.config_decoded.actions.allowed_namespaces), "")
+    ROSA_TA_ALLOWED_SECRETS          = var.allowed_secrets != null ? var.allowed_secrets : try(join(",", local.config_decoded.actions.allowed_secrets), "")
+    ROSA_TA_OCM_BASE_URL             = var.ocm_base_url != null ? var.ocm_base_url : try(local.config_decoded.ocm.base_url, "")
+    ROSA_TA_BACKPLANE_URL            = var.backplane_url != null ? var.backplane_url : try(local.config_decoded.backplane.base_url, "")
+    ROSA_TA_BACKPLANE_CLIENT_ID      = var.backplane_client_id != null ? var.backplane_client_id : try(local.config_decoded.backplane.client_id, "")
+  }
 
   container_secrets = [
     { name = "ROSA_TA_OCM_CLIENT_SECRET", valueFrom = "${local.global.secretsmanager_secret_arn}:ocm_client_secret::" },
@@ -58,7 +69,7 @@ locals {
 resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.app.bucket
   key          = "config/${var.aws_region}/config.yaml"
-  content      = local.config_yaml
+  content      = local.app_config_effective
   content_type = "application/yaml"
 
   tags = { Environment = var.environment }

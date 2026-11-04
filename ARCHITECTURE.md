@@ -87,7 +87,16 @@ The `config.Config` struct separates:
 
 ### Configuration file
 
-Some of the above parameters can also be defined in a configuration file:
+Every non-secret setting must be settable via the configuration file
+(`--config-file`, schema in `internal/config/config.go`, documented in
+`config/config.yaml`). Secrets are environment-only (Secrets Manager in
+deployments) and never appear in the config file, tfvars, or Terraform state.
+
+The loader resolves each setting as **environment variable > config file >
+built-in default**. A setting must live in exactly one place: if it has a
+config-file key, do not also set its environment variable on the deployed
+task definition — the env var silently wins and the file value is ignored.
+
 ```yaml
 workers:
     concurrency: 4
@@ -101,6 +110,14 @@ actions:
     allowed_secrets:
       - openshift-logging/collector-config
       - openshift-monitoring/alertmanager-config
+    aws_allowed_regions:
+      - us-east-1
+ocm:
+    base_url: https://api.openshift.com
+    client_id: ""
+backplane:
+    base_url: https://api.openshift.com
+    client_id: ""
 ```
 
 ## Security
