@@ -4,6 +4,18 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "default_tags" {
+  description = "Organization-wide tags applied by the AWS provider to every taggable resource; per-resource tags are merged on top."
+  type        = map(string)
+  default     = {}
+}
+
+variable "ignored_tag_keys" {
+  description = "Tag keys the AWS provider ignores when diffing, so AWS-managed and external automation tags do not show as drift."
+  type        = list(string)
+  default     = []
+}
+
 variable "app_name" {
   description = "Application name, used as a prefix for all resource names."
   type        = string
