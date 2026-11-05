@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a591b8065c520d4c9a6c476fcc4ab7ea3df03bc4b00514e43117dcc9fb9d23ba",
+  "claims": [
+    {
+      "id": "claim_5ccfaef4196748eda9749d1fb66ee2f2",
+      "statement": "Executor.Execute dispatches a Request to the first registered Scope whose Supports(action) returns true, deriving the Target from params when the caller left it nil, then calling Authorize and, if allowed, Run, writing exactly one audit.Record via a deferred auditor.Log call on every return path.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/executor.go#L93-L159",
+          "version": "repo-lines-v1:sha256:f384618a4ea92aea25534aaf7ce36ff6fa75ff714c39c678938eb868eb45d2f8:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxODJjMGEyMDRlOTA3MjU1ZWQ1NDQzYTVhY2M4MzU5N2FhMjljMGM3ZmQxMmE4YjVkNTAzY2IwZDY4MDAwNzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiZjNiNWU4ZTk3NGFhMTBhZmE1NmY5NzMyYWE4MzIyZTY0OWRkN2QzYWMwNDI0MmJiODg0YTY2ODA5ZTQ1MDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_97aaea131fc0404daaf042c8cfb86014",
+      "statement": "The Scope interface (Supports, DeriveTarget, Authorize, Run) is the domain-agnostic abstraction Executor dispatches to; KubeScope and AWSScope are its only implementations, each owning which actions it claims, how it builds/authorizes a target, and how it provisions domain-specific clients.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L19-L31",
+          "version": "repo-lines-v1:sha256:38f4e0a47d3b55cfa243b8e6dbe1ddb0dd41630bc60cee20d407b7f030ea1b38:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MmIxYzhkOWE4ZDAyYmNjNjBhMjViYjZjM2U4ZTg2YzMxYWNjMWQ0NjVjZmQzZmJjMmM5ODZiOTI2NWVmOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3MmRmMDM3OTc1NGM5N2U4MGEzYmY4YThhMGZiZmEyMzRiYThiMjE0YTY3YjQ1MjA1ZDIwOWM4ZGFkMDE3MjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUyMWM1YzU3ZWVlNzY5MTRiNDUyMDlhZDVjNWU1NGJkMGIxMTNjOTE5ZmY2MDZiZTBkOWEzODJjMDRmOTcxN2QifQ"
+        },
+        {
+          "resource": "repo://internal/executor/executor.go#L34-L57",
+          "version": "repo-lines-v1:sha256:54ec93c29d8f83a7c3dd2ce9075624a3060afc41bc8c815b91a9e30febd0e711:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkODRiYjI5YzMxMTIyYmZkM2Y2NTRjYTA1ODAyNWQ3NTZjNjA1ZjFiMTU5ZmM0NTgwNmRhNjQwMzA4MWE4ZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiM2Q1OTI2ODFkMjBlNjhkMTE2N2Y3ZjBjYTBkZGYzNWJkYmVjYTkxZDM1NjJiMDI0NDExYjYyOWMwNmRkZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNDQ2NjMyNjQxMzIwZGY4NmUzMTQzNjBkNThiYmNlNjA5YTMxNWNhNjUzMmM0MTdhNzYyYTE3NWQ3ODY4NjkifQ"
+        },
+        {
+          "resource": "repo://internal/executor/kube.go#L19-L31",
+          "version": "repo-lines-v1:sha256:f03dc2ed3c2cdcf1a813e447bf38f255ef0d32f411d840557889c9e1398b745f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjOTU1NzM4N2NjNjE4ZDBjMjIyOWVkYjYwNGM3MzhlZjMxNDc3YzEzYmQzYmM0NWFjYzRhMjk2MjQ3YzM2ZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhMWQxOTVhMjRjNTFlMjRiZWQyZDE2MjE0NDM2YzhjNTE5NWFjOWM2YzNkMWRjNzQxOTdlZjZlZTcxOWNkODEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2MmMxNzk0MGRhODEwYzZjMjBjZGU3MjllMzJkMmNhZDJlZmM0NmUwZDczYjVjOWYzNjc0NWI5NTg5OGNlNDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b55422d8e8e24a76986a73bd576b9dd1",
+      "statement": "Failure separates the caller-facing Message from the audited Cause: Executor.Execute's auditedCause helper unwraps a *Failure to record its Cause (not the pipeline's framing) in the audit trail's Error field, while a plain (non-Failure) error from DeriveTarget signals a request that was understood and refused rather than one that failed.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L64-L74",
+          "version": "repo-lines-v1:sha256:2af398f6f438a70ddac7514acaf992f9b0715b818d3542455419f6e764d29662:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzMjE3ZTE3NzM0ZjcwM2U2MmZiOGI5NjczMTk4YzExZDlmZDAwNzMwMWEwOTA5NWMwZTA1OTBhM2M4NjllZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0OGUxZDBkMjQwYmIzYjMyZDA3NDlkZDg5NTY1NjU0ZDBjODIwYjdmZTY4Yjk1OGFhOGYzNzVhNWEyMzRkMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5ODFjMjYzNDU2YmZhOWJmMzNkMzgzZjU3ZTE2YWVkYzI1ZTI1NTg4ZTMyNmRkYjczNDEyYjMwMjMzZDFmYTkifQ"
+        },
+        {
+          "resource": "repo://internal/executor/executor.go#L170-L178",
+          "version": "repo-lines-v1:sha256:19414eb2867868ea0fa93f944a5fa2cfe7755de5fb9a57d46e9cc8b9819d0ffa:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDgwYTg3ZmMxZTcwNGE3YzllMGQwZTEwMGQwNTBlMTQ5NWI0YTI4ZWZmODkyNDU0ZjE1NGY3MDZhMTI2NzUzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTYzMWI2ZTJjYTA3ZDhiYWYwZWI0NGU3NDlkYmY0OTBiMzkyZTNhNTM0ZWY2MTAyMjc3MTE0NmNkZjlhZjFhMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://internal/executor/executor.go#L59-L77",
+          "version": "repo-lines-v1:sha256:f397a2bd68b59b5e4e722879284f182fbebf93d2ccecaa43c176b117645c3415:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwZTI1MWRkYmZhMDJmZTk1NDM1NWY4ZGZkOGRhMDg3ODFlMmY1ZmZjMWRmYjhiZjUwNDZkYjlmY2YwOTgzNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZTJkMmFkOTY2MDg0N2M4MmY4NWE2YTYyODRlNDc0NjY0YWE3MDI4OGJjZjMwNWUxNDA0NDE0M2MwZTZkZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzM2U5OTU5ODFhNDBiNDRmZTJjZGY1MGQ1NTAwODQzYTkwZWFiZDcyMzIyZWFlM2RhNGNiMThmOGIyOWU0NTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlZDE0MjcyNTQ2Y2YxOWM3MDY3NDVhMzJhOTU0N2UyOWJiN2VjMDk4NDE3NjhhMTZiMTRiMTE3YmVlYjU5MDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd67e999cc6a45eca6aa9138c90af4c3",
+      "statement": "Result.Allowed and Result.Error are independent outcomes: a DeriveTarget failure (no target to authorize against) is reported only as Result.Error with Allowed left false, so callers like worker.ExecutorRunner.Run must check Error before treating a non-allowed result as a denial.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/executor.go#L114-L125",
+          "version": "repo-lines-v1:sha256:118eed5ebec9f21aea2555b85a5fdf220066d75436288f0c9c491ac43875e66b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ODYxNDc4M2Y4ZDU5NGEzNDE2MzliZmE3Mzg5ZjczNGZiN2NmNTA1YjE5Mzk3MmI3YWZkZWIyMjA5ZGZlMzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZjJmZjVmZWVjNjBmNTg3YzhmYWU0ZTg3ZjgwOWE2NjFjZmZlZDZiNDdhYWU1ZjZkNmEyNjUzYWE4OTUyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1OGZhNGViMzdmYmE5NTExMzYyMmM2NTU2MzcwNWVlMjRiMmQ2NTc5MTZkYjA2MzY0MDBiMDY0OWZkYzBjYTkifQ"
+        },
+        {
+          "resource": "repo://internal/worker/executor_runner.go#L83-L95",
+          "version": "repo-lines-v1:sha256:c4a6fb4b316b50da77b4c31b7af5b388a05e8891e7020761be3e266e94a9d849:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMzE2YjI0MGVmMjczMTc0MTIyNWY1YjgxN2QwNjk3MDNmMDRjNGZiYmNiY2M1YWUyMDE3MTQxNzdkYmRhZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkZmY4NTE4Y2U3NTUzNDc1MjdkMGM1Y2ViYmUwZTI2ZDA2ZDQ4MTJjMWNlOTVjN2QzZDAzY2I0NTZlNzJjZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyMTY1MTE3ZWE3ODcwOTE0M2YxZWUzMjQ5NWYzOWI2MDc2ZTEyMDRiOTYzNzhkNDc1MTZlN2RiZmFkOGY1NDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e42a97002434517a93de7349354a297",
+      "statement": "AWSScope.DeriveTarget always resolves the AWS region for a request from the target cluster's own OCM record via awsapi.ClientProvider.DefaultRegion, never from caller-supplied params, because a cluster's AWS resources live only in its own account/region.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L33-L48",
+          "version": "repo-lines-v1:sha256:e134015a2178619ef6aa006594294ed9dbd346d7b40a5e0fa96fb117533c3b2c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNzAwMTdkNzAxNjYyMzhmMDkzOWUzZTI4NWE2NjQ5MDI2ZDZiM2QwNWRkNmFhZWJkYTZjYzYyOTJlMmI3N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmNWI2MzQzMWZjMDA0ODc4YWVlNzlmYThmZDQ1OGM1YTU4Y2Q5MjhmODAxY2UxYzMyZDA1ZWM0MDkzYjk0MzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkMGE5YTYxNWUxZGZmZDI4ZWFhZTkwYjdhZmE0YTU1YzgwOGFiODUwMGZkMzc0NGRlNGY5MGM4ZjU0ZjMzZGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_698e33f7f72e46acb9fb7547d2c05e86",
+      "statement": "For an actions.AWSWriteAction, AWSScope.DeriveTarget refuses (with a plain, non-Failure error) a caller-supplied resource param that does not match the write action's declared Resource(), rather than silently overriding it; when no resource is supplied it defaults to the action's declared Resource().",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L56-L75",
+          "version": "repo-lines-v1:sha256:a73156cdae812489bb34f13b90d45ad3365a9328e77b5e085ecaa5aa0d76081e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MDQ2ODEyOTFkZjlmYmU1ZTQzZDVkOGYyYjk1NWIzZjFiNmJjZTMwYmZkYWJhMWMyODQ4NWNjODExMzYzMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlMDA3ZDI0YjA0OWE1ZTU3ODI1OTA1M2JlYmVhMGMwYjZhMjlkMWI1MDc5MjdlYmI1OTQ2YWU1ZmYwMzIxZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkYzBlYTJmNDI1NDg2OGE4ZDg5NzJiZmRmYTc1MGRkYzc3YWE3Nzc5NzRmODAzOTEzMzU4OGExYmUxYTYzNDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5MzlkYTM1MGQ5YzVmYzVkYjMwODY4OWM3MDQ0MDNiMTYxNDY4YmM3NjFjODgxNzQzOTlmNTJkZmE4ZDkyZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_aaf7dab044d4407786a80bb2a3f190c9",
+      "statement": "For an actions.AWSWriteAction, AWSScope.DeriveTarget also resolves the target cluster's InfraID from OCM (awsapi.ClientProvider.ClusterInfraID) so the action can check a mutated instance's ownership tag against the cluster that is actually authorized to change it; a lookup failure here is a Failure that stops execution.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L77-L86",
+          "version": "repo-lines-v1:sha256:a0dadf63d72fe01d13897133a54299c9742a038fa13aef7ed8231e03a9a079a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDU0MmEwNWQ0OGM4ZjFmZjUzOThjZWY1MzVkOGY0NDAxMGZlZWU3MzQyNDkwNjliOWQzYjRiZWFhODJhNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3NTMxMWIwOWJlOGY4NGZiZDA4MmFlYzg1MmNhYzcyNjcxYmU5NmI2MzcxOGY2ZmM5ZmM5MGQzYTQ2NTUyMzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4MDg2YWRlMWJiMDhjM2QzNGI1NzFkMjhlZjBjMzVkODNkN2U0OWFiMTA0ZTQ0Mjg0Njc5NmE1Y2EyMDBmMDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0N2IwMzQ0OTNjNzE0NzJmN2MyYmNhYjgwMTZmZTFhNjhhZjQ0ZDc5NjQ2MGJiNGU1YTVkMWRmNjExM2Q4NzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_13ee6c07e6e94b57a519104f00045b1f",
+      "statement": "AWSScope.Authorize takes the Operation judged by the write allowlist from the action itself (AWSWriteAction.Operation()), never from request params, so a caller cannot relabel a mutating operation to land on a permitted allowlist entry; non-write actions are judged with an empty operation as reads.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L91-L114",
+          "version": "repo-lines-v1:sha256:d53c581a8b1af850ae71f766cab0aa33d7f210d009bffb011d0121cf990fc600:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxZmVmOGFkZjI0MTgyNDhjNjE1NzZiYjY3YTkyNTVjZDliZjdjZDBmMTkwNDI4ZjM3Y2NiMmZkZjNjYzlkYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2YjhlNGQxNGIwYTAzYTY4YzA4ODhjZGRjMTc4NGY0ODU2ODZkZmYwMmJmYTE1MzIwY2E0MzE5ZTg1MTUwMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmZGY5NjVmMGQzZWZiNjc2YThiODg0MDQ3YmExZjQ0ZTQ1NzVkYjEyZmEyMGNhYzc2ZDcxMTBiMmRhY2IwYmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0a85119e721443cab8201927d455e585",
+      "statement": "AWSScope.Run builds only the AWS SDK clients the action declares via RequiredServices(target) and calls action.Execute with those clients and the derived AWSActionRequest, wrapping client-provisioning and execution errors in *Failure.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L116-L143",
+          "version": "repo-lines-v1:sha256:4b2556555ae2c806f6341ce958fe86d21603b490a3e10d95ac8fb16089c41f7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMDBlZjJhODc2NTcyOWNmMGMzOTgxZjFmODY1NTBjNTIyNzhiNTY4YmM2ZTRlZDIxZDQ2Y2QzNThlMDA0ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzYzhjODdlNTc4NGY3YmM2ZDRhNTJkNTQ5YTdkZjQ3MGY5MmExNGNiYTdkNzkxNWI5ZWFjZWM5M2Y2NjUxNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f69bc9dc6cb4164bc63084f67d13247",
+      "statement": "KubeScope.DeriveTarget builds an actions.ResourceTarget purely from request params and never infers ClusterScoped=true from an absent namespace param, because doing so previously let a caller bypass the namespace allowlist entirely (authorization.Authorizer's namespace-required check is skipped once ClusterScoped is true); every params-derived target is therefore treated as namespaced.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/kube.go#L33-L54",
+          "version": "repo-lines-v1:sha256:90662aa1cfa9efe3cdf491840f339a74a59229e31e4d3a34cc4effb9af886486:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjMzY1YzU2NTdiZjc5NDM1YTI4YmJlYzM3ZmJkNjZjZTJjMjg0Njk1ZDFlMmJjYjcwZDRlOWY5MTZkZmEzZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmNWI2MzQzMWZjMDA0ODc4YWVlNzlmYThmZDQ1OGM1YTU4Y2Q5MjhmODAxY2UxYzMyZDA1ZWM0MDkzYjk0MzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0NDJlNWU0ZjAyMzFlMTVhZjkyYWNjYjFhZjk5Yjk4NzRiNjNhNDZiM2ZmYzVmZWQyOTgyMDJiYTZjZmY2MjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ce506be0260470485aef398e4468565",
+      "statement": "KubeScope.Run requests a backplane session scoped to exactly the RBAC the action declares via RequiredRBAC(target) (least-privilege per action), and additionally requests a backplane.PodExecutor scoped to the same RBAC rules only when the action reports UsesPodExec() == true.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/kube.go#L83-L101",
+          "version": "repo-lines-v1:sha256:5d68d38af562834be5bc7436996db9e91a53ad76b9652c00176259c0f9486e99:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NmQyYmNiOGJmODRkMzVkY2IzOTgxNTE2NjY0NjUxZjgzYTQ4ZWE0YmI4YjJhMDZlYzU4ZDJmZTE3YmEyYzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2NTZkMzhjM2Y5NzczMWFmNzQ0YWFhZjk3MzVhYTYzYjk4MTQ0MjBlMzU5YTIwYzgzNWVmNjVkYjUwNzhhZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlMzAyYjNlNjIzZTcxNjZiYjdmZjE2MDNmNDc0Y2Q5YTdlNjFjZmI5ZDUxMzllOGViMDM2NjFjODI2NWY5ZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bd653f5cc0a443f0b7188f76f0ba59e0",
+      "statement": "TestScopes_CoverEveryRegisteredAction asserts that every action name returned by actions.GetActionsNames() is claimed by at least one registered Scope (Executor.scopeFor returns non-nil), guarding against an action being registered without any scope able to run it; such a gap would otherwise surface at runtime only as Executor denying the action with \"no execution scope configured\".",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/executor.go#L102-L112",
+          "version": "repo-lines-v1:sha256:480b111cf2d27963132c109e4c6bcb0cb47daff81fc0a799493de20dd256ce66:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NTEwZDY0MTlmYmVjMDc2MTVjZDNjNDdmZTNlNjhiY2E3YjljMTY0MDI0YmUyODQ1MWQxM2E5OTM2ODIxYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmNmQzMmYzYjA2MWU5MDAwY2IyMzBmNjkzNjIwYjNmNTMxNTNkNmMzM2VlZDJhMjJlYjAyMWVjMDhiMDNiMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3YWU1YmZiYWM1NDIxZDRmMjU1NjMzODAxYzEwNGFhYTExN2EwN2E3YWU0ODcyZWU4ZDA0NmQ4YWRlZTljZDQifQ"
+        },
+        {
+          "resource": "repo://internal/executor/scope_test.go#L14-L43",
+          "version": "repo-lines-v1:sha256:69dc44808837ca3b3c834f1cc8cc99bee0b88f6721eea4b53ed11f7e38a04533:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1MzdiYjJlZDhmOThiYmVmZWI5ZTVhYTE4OTA2Zjk2NDhmNjc1ODRiN2FiODUzNjhhY2EwMzI2NDVmZDk3NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlNTQyNGUyMTlmOWRlNzczZjYzOTc5Njk2NGFjOTJjZTU4MzdjYmNkMjg1NDA2YjRkMWFjMDNjZmNjODczYjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7f6de268cc3e4f86abab75f5f418813c",
+      "statement": "The same *executor.Executor pipeline (with KubeScope and AWSScope registered) is used by cmd/server's background worker pool via worker.ExecutorRunner to run API-submitted, queued executions off the HTTP request path, and independently by cmd/action-cli to run actions synchronously and locally, selecting AWSScope or KubeScope based on whether the resolved action implements actions.AWSAction.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/main.go#L107-L166",
+          "version": "repo-lines-v1:sha256:1a9f2ca3ad693d04eab5342bd195bc36af33cd7cb791e7a5151a115b85530ba0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3ZDg3ZmEzMmFjNDgyNjhjYjMzMDg5ZWNiNTRiMzUxNWYxN2JhY2U3MTc2YzAwODE4ODI0OWQxMTRmNjcxYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlODBlOGNiNTRjMWE4YzMxMmU5ZGNiMTY4M2NjYTM4MTM2M2RiNWU5NmE5MTQ5MmI4YzY3ODgzN2Y3NWE0NzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0N2NhZjg1ZDQ1NjI1YzAzOGE5YjAzOTk4OTJlM2U5YTQ3YzlhNTdkNWQ5ZjVjMWIxMGMxZTQyNTdhNTE2MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3NjRlMWMyYzRmNTBhY2M4N2U0NjkyMDYwN2U0OTVhZTliNWZiZTIyMzc5NmQ4NjIxNjczMDJhYTRiOWQyODEifQ"
+        },
+        {
+          "resource": "repo://cmd/server/main.go#L323-L329",
+          "version": "repo-lines-v1:sha256:3f412f3caa7e8e87f9c9026c4a047dfdb4770954ab68b9d8267a3a9481e660f7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWQzNDdlZTk1ZGMzNDM4MmRlNjBiZjgxYmRlM2Y1ZWZlZmZmNzg2MGQ0ZTg4YzcwZDA3NDg2OGNiMjgwN2Q3YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2ZhYzE4YTNiNTQ5ODY5MDRjMjc3OGE0MGNmNWRlYzRmZWJjNTYyY2U1ZGE5OGU1NjcyYzFlYzY3NjlhYjYxOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWM2YjQ3NDNiOTliZTM3N2YzMDJlNWM3ZTc5YjM0ZTdiOTY3MjM0YTcwMzk2NWUwZWZiMjJmZjc5MGM5Njk0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZjZWNmNTMyM2I5YTQ3Y2NmYTUwZDc3YzZkOWUyOTc1M2JhMWM4ZWU1YmVjNTQ2NGNmOWM1YTZkZjgxM2M4NCJ9"
+        },
+        {
+          "resource": "repo://internal/worker/executor_runner.go#L41-L81",
+          "version": "repo-lines-v1:sha256:f377c7fe54e0ab39888e6e4905c9e737c229d8293736b199261eb1ea4108600e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZGY2YTk1ZTRiM2NiYzg3Y2I1YjI3NTZmZGJkM2Q3Zjg0MDBjMTU3NjE3ODUwZDk1OTNkYWU5ZWFjM2U0NWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YTliNWU5MDE5YzhkYjg3ODNlYzljM2ZlYmIwYTJjOTg2MmY2MWEwNWMzMDhmZTg5NWU0YTliZWQwM2VkYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwMmUyYjZkMTQwYjIyMjVlYmI3Yjc3ODEzZTgxMjU5YmExNjBiZWFiZmEwOTcyZTUzN2NlNzA4NzQwOTQ1YmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExOGZhYzM4ZTQyZDVmMGI4MjhjMDc1ZmM3NjE0NDRmOWVkMTAxMGJmYmFmMzAwYjc1NTFmZDFjMjNjZDM1NzQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

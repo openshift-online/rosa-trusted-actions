@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d1acb5d5b274858cad20c1a3b68f8116ae5d9441c844558cfa470953cd4a796b",
+  "claims": [
+    {
+      "id": "claim_67f0709af6b64ca6b8c9f9d392fdc229",
+      "statement": "internal/backplane.ClientProvider is an interface with GetClient and GetPodExecutor methods, each taking a clusterID, actionName, and []RBACRule, implemented by BackplaneProvider (production, talks to the real backplane API) and KubeconfigProvider (local/dev, builds a rest.Config from a local kubeconfig).",
+      "evidence": [
+        {
+          "resource": "repo://internal/backplane/backplane.go#L17-L24",
+          "version": "repo-lines-v1:sha256:3c969934d84d816e734770eb3be2b066d3b7536c22d7958804199d8f69607803:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2FlNDU1OWM0Y2Q4ZGQyNzg2ZjE0ZjQxZTQzYmRjMzJiNDg2ZGY3MWY0MGNmY2Q3YzJlMmM0MTI2NTY0NWQ1ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTlkMjg3NTczMjc5ZDBkZWJhNjc5Y2RjMTI3ZmRhNDYxNjZkNTViYTViZGQxYmMyY2NjYWYxNGNkZWRkYjNkZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://internal/backplane/client.go#L1-L24",
+          "version": "repo-lines-v1:sha256:f1a611c1eb395a2a4c172efb95bcec16cfda381d4be48216d71e6f01ec0154a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjOGFkMTJlNmIyOWU4MTUwOTdhMGU1OGZhYWJiMWQzZDFiNjI5Y2ZiODkzMWEyZjYwY2U0YzQxNzFlYTZmM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5MWFjNjBmZGIwYTZlMGIwYTU4OTdkMTgyOWMxMDA3Mjc2YjNiNTNkZmMyZjdiOTI0NTBiZTIzZGNkNDNmODIifQ"
+        },
+        {
+          "resource": "repo://internal/backplane/kubeconfig.go#L18-L30",
+          "version": "repo-lines-v1:sha256:3bf9d12c8f4f875004636bfb97ac185bdae5a328ad378ad3071cc9e99cb33621:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhMDI1MGIwNzIzMzU2ODEyYzE0NjgxZTJlZmI2MjZhYjQyZjVkOGY5YWNhMjcyMWU3OTcwNDcxNzFlN2ZlNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0YTA3ODJhODUzOTAxNTMxNjQ0ZjJjMWExZGUwNDgzYzg1MWM1YzQ5ODlmZjY0N2UxOTVhNzNiODRhNTljMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2YzAzZmFhYmNlYTgwN2NhMThmZDk3NGMyNmJkNjI0NDA0MjBmMTRjNTU3OGYzZGZkYjQ3YWMwMDA0YmFkNjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6ef49089f80240d3ad39a61a413f800b",
+      "statement": "KubeScope.Run requests a backplane session scoped to exactly the RequiredRBAC(target) rules for each primitive action execution via GetClient, rather than reusing one broad session; GetPodExecutor is called with the same rbacRules only when action.UsesPodExec() returns true, and the resulting PodExecutor is attached to actions.KubeClients only in that case.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/kube.go#L83-L101",
+          "version": "repo-lines-v1:sha256:5d68d38af562834be5bc7436996db9e91a53ad76b9652c00176259c0f9486e99:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NmQyYmNiOGJmODRkMzVkY2IzOTgxNTE2NjY0NjUxZjgzYTQ4ZWE0YmI4YjJhMDZlYzU4ZDJmZTE3YmEyYzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2NTZkMzhjM2Y5NzczMWFmNzQ0YWFhZjk3MzVhYTYzYjk4MTQ0MjBlMzU5YTIwYzgzNWVmNjVkYjUwNzhhZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlMzAyYjNlNjIzZTcxNjZiYjdmZjE2MDNmNDc0Y2Q5YTdlNjFjZmI5ZDUxMzllOGViMDM2NjFjODI2NWY5ZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a836aa29b1024d06b6b062d0688eaa36",
+      "statement": "BackplaneProvider.requestAccessAndConfig pins the origin of the backplane-returned proxy URI: it resolves ProxyUri against the configured base backplane URL and requires the resolved scheme and host to exactly match the base URL's, refusing to build a client if they differ; the resulting rest.Config's transport (bearerTransport) attaches the bearer token only to requests whose host matches the pinned trustedHost (or has no host), preventing the trusted-action token from being sent to an unverified origin.",
+      "evidence": [
+        {
+          "resource": "repo://internal/backplane/client.go#L194-L210",
+          "version": "repo-lines-v1:sha256:d3b721a3397c2dfee10fb435a9b4eda864b286ad09eef37f0fbbd9a83839e06c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzZjM5NWQ5YzEyOWRkNDQwNjVkY2NmMjliNTRkM2Q4NTllNzY2NWU0OGUwNmVmMTU1MWY3NDk5Yzk3YmJlMjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3YzE4MDVlYmFkMDVlNGU4ZWFhM2EyMWMwNzA2MGFhMGE0Yzc1NmU5ODcwZGM1Yjc1MzYwMDI5ODJlMzg2MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNmYmYxYzk5ZmIzNDFhMjU5Mzc0MDkyYTlhN2ExYmY2ZGM4YTlmOWQ4ODUzZGY4OGNmNjVhODQ5Y2EzOGM4YmUifQ"
+        },
+        {
+          "resource": "repo://internal/backplane/client.go#L55-L94",
+          "version": "repo-lines-v1:sha256:db056826cfeffad2407a149587777a20de2cb9ecbde21c93cbdb642dcce42fe3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4YWM5OTJmZGE4MDYxNTcxZjEzZTM4YmYxZjE2MDdmMTRmZTUyNDViYWYxNzcyNzY1MGEyNjZmY2QzMjEzZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlNGU0MmY3MDQwMTdiZmYxMWViODYxODQ1ZDMyYTA0MjRhNjc4OGJhMWU3NDQyOGFiMTI2MDJjOGEzZmEyZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2OTE3ZTA5NjhlNTdiZmE0YTA3MjU5NjhiOWY2MjM4Y2E0NTkwOGQwYzRiYjk1OThiOWFjNjZkZjlmY2IwZWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8fc056e511ab465cb5adb2026424c16b",
+      "statement": "BackplaneProvider.requestAccess builds a CreateTrustedActionRequest from the caller's []RBACRule: rules with an empty Namespace become ClusterRoleRules, rules with a namespace are grouped per-namespace into sorted Roles, and CustomerDataAccess is always false; the request is authenticated with a bearer token obtained per-call from tokenFunc.",
+      "evidence": [
+        {
+          "resource": "repo://internal/backplane/client.go#L124-L192",
+          "version": "repo-lines-v1:sha256:0ef6090832380246834f12c926e011bab82e5fad52404c68b73b04126c520e7c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjZTlhYzk3NTY3MjBlN2ZiYzAyOTcwN2I3Y2Y0M2YwMTRkNWRhNjY4MzZiNWJhNmM5YzJhYTdhOWVlNzk0YjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjODI4YTkzZDdkYjY0MTEwNGI4MDQ5OTM5NTMxNDk1YzUzNTg3NDAyZGJhYzJiZjEzZjA5MDlkYzJlOTlhMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMDNhYzgwNDY5MTkwOTBlZGZkMGNlZDA2ODZkM2NlMjdmMzA4ZmE1Y2VjYjBmNjQ1NzhjOGQ3NDcyYWFkMGIifQ"
+        },
+        {
+          "resource": "repo://internal/backplane/client.go#L32-L53",
+          "version": "repo-lines-v1:sha256:45dc7e7cb0af21fab909da5831a9118936fbd65e270a27b50ce6b8987044d495:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOThjZjc3MWE2ZDg3NmZhYjg0NjFkMDg4NTVjM2Y1NmJlNzM1MDFmNWIxYzY4YzIzNzBhYThlOWI0ZGM4M2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4MzYxMGM0ZmQ0NTAxZGNlOTA4ODE4MTdkOTRmOWY0ZTZiM2EzMjEzNGIyOGEyOTI3MzIzNzk5YjNhOTYwZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmNGQzZTk2YTc3ZTE3OGM2M2M0ZDg1OWJjNWFiODlmYjViMWI2OGEyMGExNmIyOGRkNzkwZGQ0OTI5MWEwZWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_13ed347bb55a4335bde1903590a58dfa",
+      "statement": "BackplaneProvider's GetPodExecutor and KubeconfigProvider's GetPodExecutor both implement pod exec via a POST to the pods/exec subresource streamed through remotecommand.NewSPDYExecutor, capturing stdout/stderr into buffers and returning stdout bytes.",
+      "evidence": [
+        {
+          "resource": "repo://internal/backplane/client.go#L212-L245",
+          "version": "repo-lines-v1:sha256:f5c3b624d1235070ba87bb72fd9ec4794c5486b1b2d02b9a7d35e5abc5b6912d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjOTdhNDU2YzQ1YzY3MjJlYmQzYTM3ZmYwNDU4YWVmMDgwMGRlNzQ1MjUzNzQ2NmMxMzY4Y2ZkZmFhNTBlNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiY2I2ZThlMWM5OTE3ZmQ4MzVmNTYyODRjYWJkNDZjYjc5MTgzYTZlZTNjZTU4YTNmYTEyMmE1Yjg0OTk0ZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://internal/backplane/kubeconfig.go#L72-L105",
+          "version": "repo-lines-v1:sha256:4b8718a0debd4ed69477f832659d4d115f2d429b1bf324d82df441b9c3628d09:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkOWM1MjlmMmQyNmYyMGViZWU2MjQ5NzVjMTQxOWVjNWJhZGJjYjljNWI2YWNmMzNmMGMzMzI0YjlkYThlNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4MGY1ODZiMmYzMzVjZDllYTljMmUyZjc3ZWE4YmJhYzljMmM0YmZkN2Q4ODEzMWMyZGY5OTcxYTExYmIzMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7438be989b444c3792f855340c1ce3b1",
+      "statement": "KubeconfigProvider builds Kubernetes clients directly from a local kubeconfig via clientcmd.BuildConfigFromFlags and ignores the rbacRules argument entirely for both GetClient and GetPodExecutor; it is used by cmd/server when ROSA_TA_KUBECONFIG is set and always by cmd/action-cli.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/main.go#L165-L165",
+          "version": "repo-lines-v1:sha256:f73843e7dcb2f19a18b5a6b30ca5add0632498000e9a3cf28bcf64bad1541a4e:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjczODQzZTdkY2IyZjE5YTE4YjVhNmIzMGNhNWFkZDA2MzI0OTgwMDBlOWEzY2YyOGJjZjY0YmFkMTU0MWE0ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjczODQzZTdkY2IyZjE5YTE4YjVhNmIzMGNhNWFkZDA2MzI0OTgwMDBlOWEzY2YyOGJjZjY0YmFkMTU0MWE0ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjNjNjQyMjYyMTYyYTQ2MmEyMjU4NjBhMjdkZjE2NjRhMWU3MWZhM2VlMmM4NzVmOTNhM2ZkZDk4NWU4NDc4ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWE0Mzk5ZmMwMzViNzBhOTkyYzA3M2IwM2UwNmRhMzcyOWYxNTE2M2Q1ZDMwMTNmNTJkYTc0OWNkZjk0YzQ2NSJ9"
+        },
+        {
+          "resource": "repo://cmd/server/main.go#L223-L226",
+          "version": "repo-lines-v1:sha256:acfa85272d11931d5836c6740ca3f3b156ee4fe098db973c2d2d1a83fa728874:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTQ2ZmU3MGI4ODZhNGQ5ZDIwNTdmNjkxZDM0YjI5NTRlMjk5YzcyNGJkNDJkNzRhZjkzZDFkMDJhMzM2M2MwZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2Y4ZmE4ZWM5YzdmMTg5NDBkZmVhZmMyNjE0MDViZDA4YWQ5OGRmN2JmMGNmMGM0ZjcwNzViNzgxNzhmZGNlYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzg0YjBhOWYzMzJkZmU2YWNkMmQ5ODdjYTQyZTQ0ZmUxZDViYjAzNWM3MDUxNjRkZmVmMzNiNTNmY2Y3Y2Y1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjhlNmE2ZDZlYTlkN2Y2ZjFiMDU2YjM3ZTc2NjhhNjU3OTVhMjZlYTA0MTAxYjFmYTMzNmEyODJjMmJiNDhlNyJ9"
+        },
+        {
+          "resource": "repo://internal/backplane/kubeconfig.go#L32-L70",
+          "version": "repo-lines-v1:sha256:9ddef55c5b8b422030d200b3e6514b4423c36ad7388a44f7af3d6f14afb92d1f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMGI0NDkyZWY0MmVlOWZlNzhlNzVhMTU3ZjM2YzVmZWEwNzA3Y2IzNzViYmUxMDgxZjA4MjU3YTM5Mjc5OTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIzMmQ2MjNkODdiM2UxNjI3ZmNhYzY2OGU5NmU4OWQ4NjZiODFhNGZkZTU3OWEyMzY0NjM4YWViMTQ3NDg0ODcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dbd1e160e2c74e218a633fa146ea6756",
+      "statement": "cmd/server selects a backplane.ClientProvider at startup: if ROSA_TA_KUBECONFIG is set it uses KubeconfigProvider; otherwise it validates ROSA_TA_BACKPLANE_URL is HTTPS, builds an OCM connection, and constructs a BackplaneProvider whose token function pulls a fresh access token from that OCM connection per call.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L223-L249",
+          "version": "repo-lines-v1:sha256:095be56f5fd1e8628c20fe699042122d85d7be0cf0451c8a2d5475ad7c058e6f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0NmZlNzBiODg2YTRkOWQyMDU3ZjY5MWQzNGIyOTU0ZTI5OWM3MjRiZDQyZDc0YWY5M2QxZDAyYTMzNjNjMGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4NGIwYTlmMzMyZGZlNmFjZDJkOTg3Y2E0MmU0NGZlMWQ1YmIwMzVjNzA1MTY0ZGZlZjMzYjUzZmNmN2NmNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzOGM0NGJlZDRmYzNmNDZlZTNhY2JlMGQxNmIxMTY5NWIyNGU1ODgyZTY1ZTAzYWI5ZTRiMDlmNzFhNWI2MzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3505c50029b34837882e4a8ea90a9159",
+      "statement": "cmd/server refuses to start with ROSA_TA_AUTH=disabled unless ROSA_TA_KUBECONFIG is set, because mock auth combined with the real BackplaneProvider would let an unauthenticated request reach production cluster infrastructure under a hardcoded role.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L179-L191",
+          "version": "repo-lines-v1:sha256:3d23dd14c45afd4b5bdb71cc5b2c6586cc59638d0a6f76eb29331d9092032a31:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YWRkMTdlY2Y0OTkxYzNiNTFhNTdjNzZjYjVkYmIyZTc4NTNmOTlmNDQ1OGVkMDg5NDUwNjNjM2EzMzUyODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0ZWZjNDk0MThkMjZkY2YxMjliMjJhNmFhMjExMDhjZWVjMzc2NzdhMzJkMDhlOWQ1ZmVlMzVkZGE2NmJiOWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiMTliMDEzZTNmMWRmYzdmMzM5ODUzMTA2OWZjNjZjMGY1ZWI4YTE1OGUwYzk4ZTBhNzA4ZDkzZjk0ZmEyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0Y2RkNzIxOWJmMGMwOTA2ZWU4OTU3YTQxNjhjZmRjMTA2NTgxZTRmN2NmNzk3ZDExMjNkY2Q2OGVlNzljYzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ce2ad76e3a2847faa72ac93973ecdc02",
+      "statement": "BackplaneProvider (kubeconfig/session for Kubernetes access) and awsapi.CloudCredentialsProvider (short-lived AWS STS credentials) both call the same backplane service for different purposes and are both wired up in cmd/server/main.go; they are named for what each obtains rather than the shared service, specifically to avoid conflating them.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L223-L249",
+          "version": "repo-lines-v1:sha256:095be56f5fd1e8628c20fe699042122d85d7be0cf0451c8a2d5475ad7c058e6f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0NmZlNzBiODg2YTRkOWQyMDU3ZjY5MWQzNGIyOTU0ZTI5OWM3MjRiZDQyZDc0YWY5M2QxZDAyYTMzNjNjMGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4NGIwYTlmMzMyZGZlNmFjZDJkOTg3Y2E0MmU0NGZlMWQ1YmIwMzVjNzA1MTY0ZGZlZjMzYjUzZmNmN2NmNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzOGM0NGJlZDRmYzNmNDZlZTNhY2JlMGQxNmIxMTY5NWIyNGU1ODgyZTY1ZTAzYWI5ZTRiMDlmNzFhNWI2MzEifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L69-L90",
+          "version": "repo-lines-v1:sha256:83f802e7502f360e8743d094ba9c408a797696abf362a871c1ec590a2499b215:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMTBjZGQzN2Y3YzlhMjc2OTEwOWFiODYyNzBmNmFjNzI2NGZiMGEwNzdiYWVlMWE1YjM3Mzg0YmZiZjNjMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhYWFkNTViM2I4YjdiZTg5YzdlNzg0Y2NiZDE2MDI0YTk3MzA0ZmFlOWNmZmVlZjU2NmIzY2UxY2UzZjBiMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NTJiOTY0ZDViZDYxNTljN2IyMGE5YTQ0MGYxNDBiMTM5ZmU4Y2Q5MDk1OTM3M2QwYjIxNWFjNThhNzc4NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4OTUzODlhZDdmM2ExYWYzNzllYzhhMjgxZDBmMmJkOWRhYTk2Nzg1ZjlmNmU4NTdjM2I1MGI0NWM4YzA3ZGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9fc955e1bc524c5da65d68dc3474ce53",
+      "statement": "tests/mock-backplane is an Imposter-based fixture mock with in-memory, deterministic cluster data (data/cluster.json), fails Kubernetes API discovery so kubectl cannot drive it, matches RBAC rules Kubernetes-style, distinguishes 501 (no fixture entry), 403 (not requested), and 404 (fixture explicitly null) so gaps in coverage cannot masquerade as legitimate results, and achieves cross-cluster isolation purely from its composite-key fixture/action-store design.",
+      "evidence": [
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L1-L37",
+          "version": "repo-lines-v1:sha256:afa611e08cc1b52abd0286612c6c7c4e039b9e280ff1f4885cfbf6c88e8af60c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExMzRjNDQ3ODhhODJmNzliYTFjMmQ3MjA2ZTg4NTFjNWQxZjY1NjRiZDAyZGVjZThkNzdiY2FmMTA5OTQ4YzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNjFhODMzMWExYzRjM2EyOWY5N2Q4YTU1NTU5NjNkZTQ0MGNlOTM4Njg4NmI1MWVhODkwYjU1NjlkZjkxY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1MTgxODVlZDBmZmMxMmUwNDcyOGNmNDFjY2NiOTg0NTc2YjExOWM2MDQ5MTk2ZWE1MWUzYTAxZGNhYjIzNTUifQ"
+        },
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L168-L212",
+          "version": "repo-lines-v1:sha256:78acd5d090957946312fe6ac34eb263fe1ede5b15094c31ccf85db3e46e28613:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlOWQzMWVjOGY0YzBmNTkwMWI1ZmE4NGE5NTcyODkxNWRmZWJmNmY2OTYwYzhmM2ViNTE3NzZmOTM3OGY1MTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmYjZkYjFhNGZmYjIyNTJmZDdlZjU0MWM3MjlhMTNjZjY5NDVmZDg2ZGI2OWYyNjZjODAxOTEwMWVlN2M3ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4ZTkxODFjMmEyNjM2M2ZiYjRmNjRjY2YzMTBiNmI3OWVjZWFhYWNiNTRkZjU2NDk4YjkxMjRlNzNmODE3MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L85-L166",
+          "version": "repo-lines-v1:sha256:b9d0617c04ecec98a05bc225ca94e94e036d864a25586b692af30fd411d9120e:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2MThlYjQyNmVhYjJiMDMyYjdkNmFkNmQ0ODFiMjQxN2YzY2JiMDMxYzc0ZDkyNTViMGNiNzY4YTBlNjQ1MzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4OGNlMWE1ODdmYTU5ZjYyZjA2ZWEyZmYxZTIxYWYxY2RjZjdlY2NiNzRjN2U5NWU2ZmFmNTBkOGNlZTg2MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhYTM4MWI2NTY5NTRkNTgwMjBhMzUzMWZkNTJiMmVmY2NmMDhkYWI2MzRiMzEwYzY4N2UxYzhjMGE5OTcyN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5NTNhMmQzNDliYzY2YzllMjc1ZTk5OGE2NWE1MmIyYWI1NWQyNTc2NGM3NDE3MjgwOGEwYzQ2YTlmMjg5ZjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_02f306d792e748e1976063cc6a0c4526",
+      "statement": "tests/proxy-backplane is a purpose-built Go reverse proxy that accepts a base64-encoded kubeconfig at registration, parses its TLS credentials to build an http.Transport, and forwards any HTTP method under the issued proxyUri to a real upstream cluster with the kubeconfig's own bearer token injected, making it suitable for exercising real cluster behavior (including writes) that a static fixture cannot model.",
+      "evidence": [
+        {
+          "resource": "repo://tests/proxy-backplane/README.md#L1-L17",
+          "version": "repo-lines-v1:sha256:744b5630facb8b80b45cff6b6bd7a9def699524b3fbda33f0c6e575fb8dd04aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmMmRmNThlY2U5YjQyNDY0OTQ0Y2M2YzEzMmEwYWJmNWE3YzAyMDAwYTliYzhhNjZlMGVlOGZhYzIxNzIxYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzYWM0NjZiYTkwMDNlMmNiYmVhMzFkMmI3NGUxZmYyN2U3NTQxNWEyMzZlYmJmZWYxMGNhZDVlOWMwZWZkYzgifQ"
+        },
+        {
+          "resource": "repo://tests/proxy-backplane/README.md#L90-L119",
+          "version": "repo-lines-v1:sha256:fc266d2d7340cdbeaa9c5da06413b225587890f114d08b5b6f862dbf96f04c62:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NGRiMGY3MDAwNzhlNDJiMzUyNTNlNmJlNGI5MmUyZmFlMjUyMTM5M2VhOGUxNjMzNWQwNjJjNzg3NTFmYjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNWJmYzRmNzUwZmZmMjFmOGEzMjdiMTQ5YWFhZDQzMDI1MWQ3YjY4NDM3YWViOGU1YjgyZjUyMTI1Yjk4NDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0NjY2MTAyODlhNmE1MDRlZGU2ZTcxMThiMTM5N2U5YjVlYzc0NmZiZTQ5ZGMxMzk1NzY3MTdjNTY5NzY4ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwZjY1YzQxYTM0ZDJiOTY1MjhlMmVlZjE2Y2Y4Yzk2ZGRhNDA0OGRlMzI2NWQ5YzVhN2Q3ZmNhNzRhM2IxYjEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

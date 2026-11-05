@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9c9ad983735addf68e94c85c9dcf9761e9d8c1107b4f89fd1d09d6dad0a259c6",
+  "claims": [
+    {
+      "id": "claim_9e0e33f1a92f426a8046f8b63d8a6cfd",
+      "statement": "cmd/server/main.go wires startup in order: load config, initialize the Postgres-backed store, select the authn/authz policy from cfg.AuthPolicy, select the backplane client provider based on whether a kubeconfig is set, select the AWS client provider based on whether an AWS endpoint override is set, assemble the executor's Kube and AWS scopes, start the worker pool, build the chi router and handler, optionally wrap it with the OCM JWKS handler, then serve and wait for shutdown.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L70-L422",
+          "version": "repo-lines-v1:sha256:a2abc9b65dc06c514948744fa5c2b59db793646cc79d87561e5fc64568b08062:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhYjk2NGRjZDM5NjViNTNkZWM5YzNmNTIzNTY5YWZjYzU5NTk2MTRmNWZlNDZmMDVhZDUzN2RiMDk5NTFiNmY0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2N2NkYTgyZGE2MDYyMzhlMDVlNjIzOTk1NjljNWVlMDM5OTM0MTk2NDhhZTVkNDNhMmJmOGNkNjM0N2Y4MjYzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyYWExOGJjYjQxN2UyZGU1ZjExZjkxMzRmOTRjYmYxMWZkMjcyNjA2MzlkNGU4ODU2YmQ3NTU2NTk4ODU2Y2FkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4MWY2NzE1YWI0MDExODljZWNiNGJhNWViM2ZhZmI2YTlkY2E0MzQ3NmQzNmJmOGNjMTNiYzE2NzE2MmJkZDEzIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_293b42251c3c41f19510822821aeec7a",
+      "statement": "When ROSA_TA_AUTH is 'disabled', the server refuses to start unless both ROSA_TA_KUBECONFIG and ROSA_TA_AWS_ENDPOINT_URL are set, because mock auth grants every request a hardcoded SREP role and would otherwise let an unauthenticated request reach the real backplane or a real AWS account via ambient credentials.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L179-L200",
+          "version": "repo-lines-v1:sha256:048c2dec7fa03a09feff70fdf8f06ef9e7b07c86aed8147c3a373188a483f172:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YWRkMTdlY2Y0OTkxYzNiNTFhNTdjNzZjYjVkYmIyZTc4NTNmOTlmNDQ1OGVkMDg5NDUwNjNjM2EzMzUyODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0ZWZjNDk0MThkMjZkY2YxMjliMjJhNmFhMjExMDhjZWVjMzc2NzdhMzJkMDhlOWQ1ZmVlMzVkZGE2NmJiOWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiMTliMDEzZTNmMWRmYzdmMzM5ODUzMTA2OWZjNjZjMGY1ZWI4YTE1OGUwYzk4ZTBhNzA4ZDkzZjk0ZmEyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyY2VhMWY0ZmUyYzZhNGUyNmUyNzViNTEzMDYyYjZjM2M2NmZmMmYyZjY4ODhlZmMwNTczNDJlMmIxZWZjMGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f41d8b739ea342b080b26029d9a1ff10",
+      "statement": "The server refuses to start if the AWS region allowlist (cfg.AWSAllowedRegions) is empty, because there is no built-in default region and an unconfigured deployment would otherwise start cleanly but fail every AWS execution with a policy error.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L251-L260",
+          "version": "repo-lines-v1:sha256:c62d9cc3ab9cb55f5c20d532864d8fc5cc6e4fb14a5611e0a2558892cb26e6ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMWYzZTExZTQzMGRlNjUxOWY5MDJmMTRjMzI1MTE0MzIxY2RlNGNkZGQ5NzAwNDFiYzQ0ZWEzNWEyNDY0NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZjJmZjVmZWVjNjBmNTg3YzhmYWU0ZTg3ZjgwOWE2NjFjZmZlZDZiNDdhYWU1ZjZkNmEyNjUzYWE4OTUyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzOGZmZDJlNWRiYmRlMTYyYWU2ZWYzN2M3ZmY3ZTVkZDQ1YTZhYTkwODlmNDY2OWIxZTkyOTU5MzRjMGVmMGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a23d050af93b4c03aa2801fe87f10fe0",
+      "statement": "The AWS client provider is chosen the same way as the backplane provider: an AWS endpoint override (ROSA_TA_AWS_ENDPOINT_URL) selects a static single-account provider for use against a local emulator, while its absence selects a cloud-credentials provider that resolves each cluster's own AWS account via backplane and requires a working OCM client/connection.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L275-L321",
+          "version": "repo-lines-v1:sha256:f4256f5b0f794a3206aacb47932c211fdbc735f513a1b20ecfb9ab1a6f7a26ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5N2U3NmM3NTE4YWQyYjExNDgwYWQ0Y2IyZmQwMjcwZWMzYTY0MGNkNDdkZDM2Y2EwOWZhMWVlZjljMjA4YTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4YzU2MWU0YTcwMTQ1ZjhhZmFhZjVlYTRjZTA1MGNmNmRjZDRkZmM2MWM0ZWVjNTkxMjFmMjg1Yjg1YTIyN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmMDYyMDYxMDliMDMwZWM4NDgzZjlkYTZmOTA3MDk0YmU2YzFkNGJkNDg2N2RlM2JhM2ViMmVmZTM3Y2ViZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e629612c8b31414fa95793e96bddcb18",
+      "statement": "executor.New registers one executor.Scope per execution domain (Kube and AWS); every registered trusted action must be claimed by exactly one of these scopes.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L323-L329",
+          "version": "repo-lines-v1:sha256:3f412f3caa7e8e87f9c9026c4a047dfdb4770954ab68b9d8267a3a9481e660f7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWQzNDdlZTk1ZGMzNDM4MmRlNjBiZjgxYmRlM2Y1ZWZlZmZmNzg2MGQ0ZTg4YzcwZDA3NDg2OGNiMjgwN2Q3YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2ZhYzE4YTNiNTQ5ODY5MDRjMjc3OGE0MGNmNWRlYzRmZWJjNTYyY2U1ZGE5OGU1NjcyYzFlYzY3NjlhYjYxOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWM2YjQ3NDNiOTliZTM3N2YzMDJlNWM3ZTc5YjM0ZTdiOTY3MjM0YTcwMzk2NWUwZWZiMjJmZjc5MGM5Njk0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZjZWNmNTMyM2I5YTQ3Y2NmYTUwZDc3YzZkOWUyOTc1M2JhMWM4ZWU1YmVjNTQ2NGNmOWM1YTZkZjgxM2M4NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9eeecdffd6074cc495b72007280ccef8",
+      "statement": "The global chi middleware stack is applied in a fixed order — logger, request ID, panic recoverer, real IP, 60-second timeout, then permissive CORS — and applies to every route including /health, which is mounted outside the authenticated /api/v0/trusted-actions sub-router.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L350-L390",
+          "version": "repo-lines-v1:sha256:77fad257a5fb8b96687496fd88262e47d04734deda95167c7c6ab79db8f5427d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3NzA4MGI4YzBiZDFiOWZlNjMyYTEzNDkxYzNlMTczZThlYWM0OWE4OTlkOGNlZmU0ZDRmODVlODJjYWMzOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YTliNWU5MDE5YzhkYjg3ODNlYzljM2ZlYmIwYTJjOTg2MmY2MWEwNWMzMDhmZTg5NWU0YTliZWQwM2VkYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyNzkyZTM5ZjNlNjEzMjNiZTM1NjJjNmVkZWIyYzYxMjc2MDhiOWU5NWQ2NDE1NzNiYjc4MzhlOWU5NzY2ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1OTczNTcyY2Y0ZjEwZWVjNjcxYTNmZDhjZTJiOGViN2RiODRmOTllZTllMmY5YWY2N2E4NjE0M2FmMWJhMmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_918304f529bf460590a5f49be0c81991",
+      "statement": "The /api/v0/trusted-actions route group additionally applies, in order, JWT authentication (AuthenticateAccountJWT), an audit logger that persists one AuditEntry per request after the response completes, and role-based authorization (AuthorizeAPI); per-action authorization (CheckActionAccess) is registered as an OpenAPI per-operation middleware rather than a blanket chi middleware.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L382-L390",
+          "version": "repo-lines-v1:sha256:ab207d57e290faf8f85e6b007b7c6b933249b30eebb714e71d30dc7cc87627ac:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2UyNjE1YzcwMWI5MTBiNGVkNDRhNzM1ZWVmMDIzOWUzMGRhZTUwN2I1OTM2MzBkNDI2YjczNTY3YzQ2YWEyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdhOWI1ZTkwMTljOGRiODc4M2VjOWMzZmViYjBhMmM5ODYyZjYxYTA1YzMwOGZlODk1ZTRhOWJlZDAzZWRiMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmU3ZDViYjY5OTAxMjA1ODE5NTAwNDRhOGRhY2IyMjU0YTZhYThjMTQyMmU1NWYzMzdmOWIzNDA4ZWUwMmQ1ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjU5NzM1NzJjZjRmMTBlZWM2NzFhM2ZkOGNlMmI4ZWI3ZGI4NGY5OWVlOWUyZjlhZjY3YTg2MTQzYWYxYmEyZiJ9"
+        },
+        {
+          "resource": "repo://internal/auth/authz.go#L42-L89",
+          "version": "repo-lines-v1:sha256:3f30766a43ec4a214cb24c6730e6b7cf48d013ab49bcdb57ae5bc157a83ee9bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYzUxOGNjYWIxMzA5MGFhZDA0OGI5NDJmODQwNGQwMGI3MzQ4NzFkZjRjMzM2OTdmYjljNTkyZGE5MDY2ZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzYmUwZDMzNzNlOTQ1NTJmOWQ3ZjNkNGJhZTlmOTkwN2U4MDBjNmJlMDY3Y2VjMTgxZjRkMDVjNTYzNmVlODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzZTE1M2UwYmM4Yjk4NmVlNmE3YjBmNjJjODNiNjNlNDVkNGRjMWQ5NTI5ODMzMjJhYWJiNzQxZDU4OTBiZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a9f3bbf04fbe4e2293305fc619f46fd6",
+      "statement": "The audit logger middleware writes the AuditEntry using a detached context with its own 5-second timeout instead of the request context, because the request context may already be cancelled by the time the wrapped handler returns.",
+      "evidence": [
+        {
+          "resource": "repo://internal/middleware/audit.go#L39-L90",
+          "version": "repo-lines-v1:sha256:62f57f20469d2353d022c954b87d3a76367ccea4adc210517ff7e39e0ef18bff:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViYmIzMjlhM2I0MTExZWFmNGVkNzU0NzMzNWEzYjg3NWJjMjFkZGQ1Mzk5OTBhOWZlZGJmOGEwNzBlMTQ1ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiYzg0NzUwMDMxMTE2YzA5Nzk2MWY0ZDEwNmU3YThjNjU3M2JhMmM0ZmQ2MDVjY2JkNTgxZDI2NGI0YmJlODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b9d097a895ca4111b1237367b3c4bfe6",
+      "statement": "GET /health is marked public in the OCM JWKS wrapper (Public(\"^/health$\")) and is only ever installed when auth is not disabled, so health checks bypass JWT signature validation and work independent of auth configuration or OCM availability.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L392-L422",
+          "version": "repo-lines-v1:sha256:be6b22db053cf421a2c49201097b68eef8dc02ae06aacc10242c6044439719c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3OTRlMjE0YTAyY2Q4NTY1NTgwNGQ5MTUwNWQ5ZGVjOTQzOWUyNmVjZGM0MmE2MjJjZDUwNDEyNzViZjkzZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyYWIzMmVlYzU2YWNhM2U3MWJjMWIxZmQzNGFmZTU2NTg0ZDlkYmU4YTA5NTUxMGJkNDEzOTUxYmUzZGE2OGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZjY3MTVhYjQwMTE4OWNlY2I0YmE1ZWIzZmFmYjZhOWRjYTQzNDc2ZDM2YmY4Y2MxM2JjMTY3MTYyYmRkMTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d98e20c51c014e8a90c8530fe86210d2",
+      "statement": "On SIGINT/SIGTERM the server cancels the worker pool's context first, then calls http.Server.Shutdown with a 30-second deadline to drain in-flight HTTP requests, then waits (bounded by the same deadline) for the worker pool to finish in-flight executions, logging a warning on timeout.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L444-L469",
+          "version": "repo-lines-v1:sha256:0b5e75814d34f0bebaf895c054f5d303be213a01e3d13a6cae1acb50d72186d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiNzJlYTZkYWZhM2QzNTE4NTA4ZTdmN2RlOTg1YWUzYTU2ODg5YjA1MjI3OGI5MTgxMGQ1ZTZkNzY2Yzg1MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzMzZjNWZiYTNlZjNmYmQ0ODRmMGQwODAxNDBjZTgyMjkzMjJmYWQzNDY2Y2E0ZDliOGRiYjA1YmJkYWI0ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhNDI2NWEyY2JiYmU2NzFjNjBlZjYyMzFiYmMzYjZjNzE2MTE0OGNmNDkxNmUzZDYyMDI3ZTM5OWIwNDRhNDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1560b356d109408685cf622963dde4d9",
+      "statement": "The worker pool wakes a worker immediately via a non-blocking Notify() channel when the HTTP handler enqueues a new execution, but correctness does not depend on that notification: workers also poll the store on a fixed interval, so a missed notify or an execution row inserted by another path is still picked up on the next poll.",
+      "evidence": [
+        {
+          "resource": "repo://internal/handlers/api.go#L25-L51",
+          "version": "repo-lines-v1:sha256:d4ad40cab2bbaa40f85d84a4b69a6ac6bbaface84f67340aa1d6d9f6006f9f6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlZGRlNmU3MzllZDg0ZjY0NTBmMTNjMmQyMDdhM2Y0NGJlNjJkNGE1NjNhMDFmMGMwOTFhZjcyZGY5NGEzNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4ZGRlMGFkMmU0MjY4MDJjYzM3NjlhNjk5NTNmZDRkOWZkZDJmMjdhMGZkMjdjZjQxMTYyMWUzYjIzM2E2NTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjYWQ4Mzg2MmMyOTNkMGY3ZTAyNzNlMjM2N2E4MWQxZDkyOWU3NWJhNjk1NDVkZGI0YzMzNGMwMGQyOWRhYjQifQ"
+        },
+        {
+          "resource": "repo://internal/worker/pool.go#L31-L77",
+          "version": "repo-lines-v1:sha256:ce5132dedb3aaa61abcae5238477a57e6d0013436fae38c8ab22c9eb83221b10:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MDUwMmQ1NDE5ZWE2YzA1MDI0NDc5MjhmN2YzYTFjZmEwMzA1NDM4M2RhM2UwNTQxYTY2MzBlYmZhOTk4MzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlYjNkZmFmYmViMGMzNzhkNTI5MjljZDllOWI1OWJiMzgwMmE4YzQwOTEzYzFjOGQ4YzRmZmU5Y2I4OTFhYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiNjc2ZDFkZjMzMWMwZTBlYWZiNTZkNzE3OGNkZDI1OWQ2N2E4ZGU5NzU3MWE4NTQ3OTgzNTBlM2Y5OGQzZTAifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

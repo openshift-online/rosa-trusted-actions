@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3cbc76c7c50b6292acf0ed6ab36a23128e4b4faf93fb573a7dd8fc018401d624",
+  "claims": [
+    {
+      "id": "claim_ffeceba7151d4c19a60a345892b68167",
+      "statement": "make deps installs both Go and npm dependencies (go mod download/tidy via deps-go, npm install via deps-npm), and make generate bundles the multi-file OpenAPI spec (bundle-spec) before running oapi-codegen (generate-api) into internal/openapi/, whose generated api.go is committed to the repo and must be regenerated and committed alongside OpenAPI spec changes.",
+      "evidence": [
+        {
+          "resource": "repo://DEVELOPMENT.md#L57-L67",
+          "version": "repo-lines-v1:sha256:80b3d3831958d50c0ba3a9fa63a5d72f5e7c24e6d6500da946e019f74793668a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljOWM4MWFmOWNjMjUxMDVlY2FmM2U0NmQzNWI0ZGUyMDU0MzdlNmM4ZjUyYmIzNGE0YWUyZmY1NGE4MWUzNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNWFjMTJhM2ZjNDQxYTdhY2UzZWE2ZWRkMTQ1MGQ3ZjlmZTg5MzRkMTg0NzUwOTc4MjAzYTNlOTM3MTQ0NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzZTQwMDVmM2U0NjY2Mjk1YWE2Yzc5MDRlNmE4YjJhNjhiYzA1ZWM3ZDBkMGQwNDJmNjQyM2U2ODBmYzRkMDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiMzQ0ZDg4ZjdlYWU0NTI4NzJhMjRkMzkzNmYwM2NjYTViM2Y4ZTFkMTM5NGU0MTMyMGZhYWZjY2RlZmI4ZGYifQ"
+        },
+        {
+          "resource": "repo://Makefile#L34-L64",
+          "version": "repo-lines-v1:sha256:878c5dea1f77071853ded2783959725704c49d5ceb54751767883d6d6adb4ead:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1NDM0YjY4OGU1ZTIxNTMxMjhmZDRlZGM0ODgyZjYyMTU5MDk2Njg3NDUwZThhNjliMDA2NjliMjQxMmFkNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMDAyYTI1ZTBiOTlhNWUzYTJmNzZiYTgyM2E2Mjc1YWIzMDI3YjIxZGI2OGQyZTNiNjAxYjgwMWVhZGRiYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMjY4YjczNmQ5NGYwMGExNmUyOGEzMDBhN2QyZjU4N2NhOTQ3OGU1YjNkMGVkZGJlOTUzZmI4YzRkOGIyMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhZWVhZDk1MTI1MWNmNWQ1MzVhNTYyZGEzMDQwMjAxNTUyZjM2NWQyMTU0NGViMmU4ODY1OTNmZmFiNGVkNTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a42628e12f5b4335be74680225d41075",
+      "statement": "make build/build-linux/run/run-postgres/run-sqlite/dev form the local build-and-run loop: build and build-linux both depend on generate; run-postgres additionally depends on postgres-up and points DATABASE_URL at the composed Postgres instance; run-sqlite points DATABASE_URL at a local SQLite file; dev auto-installs and runs 'air' for live reload.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L66-L123",
+          "version": "repo-lines-v1:sha256:260adbd65c1ba1875d3ba5fcdf8e51f877db4188ec69929c4acfbf3f2e74614f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiYzI5MGM5Zjg0ZTUzMmJkNDc3Mzc0ODAzODFmMGRiM2FmYWU2MzdkNjk2ODA2ODU2ZDk1ZDBhMTg2YmI2MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNTIzOGRlNjg4OTEyNTU3MzVhYmYwNGJiYzRjNDVmMzQ5ODA4Y2YzYzVhMTA1YzIwYzJhMTZlOGRkODkzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzNTYzZThkZDEwMTQ3ZWRmMWE2ZTdlYmQ2YWU2MjIzN2NmZmYwMDQwMzI0NGJiYTA0YjFkNjU1NDk2OGY4MTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6cfe858ec56d44f0ab2b383ce3485984",
+      "statement": "make lint installs golangci-lint if missing and runs it with .golangci.yml, which enables errcheck, govet, staticcheck, gosec, bodyclose, sqlclosecheck, contextcheck, noctx, errorlint, nilerr, nilnil, revive, ineffassign, unconvert, unparam, unused, misspell, prealloc, nolintlint, gocyclo (min-complexity 15), exhaustive, makezero, and containedctx, and excludes generated code in internal/openapi/ from linting.",
+      "evidence": [
+        {
+          "resource": "repo://.golangci.yml#L1-L60",
+          "version": "repo-lines-v1:sha256:bea9f67aec0b4a2829b11e9e76cc4b0292b2f81ceb18d858b179f6fae9e3d183:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3ZDE5ZTlhYTBkOWFkYTQ3MGQ3YmM3M2I4MzQ4Mzc1Y2E2NDM2YWVlYmI5MjgzMzdkZjM1MjZiZGU4ZWQxZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyYzgwMTRkODc2NTU5Y2IyYjk1NmU0ODJhMjE1NTA2OTQzYzFiYjdiZDQzMzc0MDEyMmFiOThiNzMwMDk4ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5YWYzODViODdhYWUzMTZhMzIyNTVlMTc1MTQxMzU5MmMyYzBkYWIzZTRiODc0ZjY0Y2VmNTViN2FhZjAyN2EifQ"
+        },
+        {
+          "resource": "repo://DEVELOPMENT.md#L145-L147",
+          "version": "repo-lines-v1:sha256:267f1d74f3a9160df6b7738aad3136ffe6e4ee6214d93eb42da88bb01390f415:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjU1MWRhOTEyNjc2Y2ZlZTliODQwMWFiNDdlOGJmMTk5OTQxMmJiMzA1ZWFkZmU5NGUwNDA1ZTQ1ZDRmZjQ0NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjQwODM1M2I4MmMwMWI3ZGRiNmExNGY5MjY2YTZlYjE1OTZkNzNlNGM1NjIxMWI5Njk3MTE4OTVjNGQ5Nzg3MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWZjN2I3ZmQ1OTgwNDExMTgwMzcwNTkwNTYwNTY4MDRiMzY4MmE2NDM5NjNkNWU4ZTA0ZTIyNDM4YzQ4ZGI3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTI4YTNhY2E3NGZhN2M0ZWM5OWUwZjliOTk4ZmI4N2EzMTJjMDY5MjVjYWMwMDBlMWNhYjRhZmQ1ODNjYWQ5ZiJ9"
+        },
+        {
+          "resource": "repo://Makefile#L231-L240",
+          "version": "repo-lines-v1:sha256:128ccb8cb25fda30bccc99528a50281fbbd242a819feb767e10c0636f3fd880d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTBlNDk1YWVkZjdmZjBmMzViMGUwZDIwMDNhZmM0ODkzODhkZTA0M2RhYzM4MDhjZDBlZWI1ZDBhMjY5YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMDFkYzZlODdmZTFjM2ZkYmMwZjM3Y2VmN2UwNzM4MDkwMzZiMDE0NzNhZjEzMGMxNDc2ZDc0YmU1YjM3YmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyMDQ4OGIxZTY2OTU1YTk0MTA2ZGNiMTdmZDk1NWEyNGUxNDg5MWE5ODQ4ZDMyNDZhYTk4YTIzOGY1MTlkNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhZmZlNjI0YmY3ODI3NmE0ZjQyMGE2NTcxNDMwMjI3MjRlYzYxMzQ3MzEyOGY5OTliOWU5MzIyM2RlNjkzN2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8f1d9e5bf0b248fea9c5d1fd041123c4",
+      "statement": "The make test family covers unit tests (test, SQLite-only unless TEST_POSTGRES_URL is set; also compiles but does not run the integration-tagged tests/actions suite), test-race, test-coverage, Postgres-backed store tests via test-postgres-up/test-postgres-down/test-postgres against docker-compose.test.yml, API smoke tests via test-api and test-integration (which starts and stops the server around scripts/test-api.sh), mock/proxy-backplane-backed action tests via test-actions/test-actions-proxy, and kind-cluster integration via itest-up/itest-run/itest-down.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L124-L230",
+          "version": "repo-lines-v1:sha256:5b296bb6cba19bc5c16f904c8940a169b75a1252a6addf30e119a05baa9335c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmYzRkMzdhOTEzMzRiY2UyMDE4NTg3MGVlYWZkZmQwOWUyZTM0MTU3M2I4MDMxZmEwOWRlMjU2ODhjZjVmZGM3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0ZWNjN2Q3ZjM2ODk0NDA0NmNlZjQ4MDVhODA2Y2RhM2U0YjdmZTg0MzI2MTEzODhhMTAyMTgzMzFmMzJlMzY5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmZDBiOWI0NmE0NTVlNGViZjUxNGZlMjQ0MzJmY2VjZDc3ZGU2MjEyODg4YTk1NjE5NzFhZDQ1NDhiMzY2ZDEyIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_c9db247fa2e548cfa69c040bb63ed93b",
+      "statement": "mock-backplane starts an Imposter-based native-engine mock of the backplane API from tests/mock-backplane/ on MOCK_BACKPLANE_PORT (default 8087, the same default port used by make run so it must be overridden to run both together), and proxy-backplane runs a reverse proxy to a real cluster on PROXY_BACKPLANE_PORT (default 8088).",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L13-L19",
+          "version": "repo-lines-v1:sha256:46ec8a5c5d7e3352d07ecc1f454ce5af7c1d50712e6300cc4d9620d96a9e9e56:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IyODYxZGIzN2I3N2U2NDRkZGQ4MGQ2Njk2ZTU3YzFhYzdiZGE2NmJiMDE1NzgzMDMyY2Y1OTM3OGYzNjU1ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NjNjU2Njg5MGYzM2I3MzljMzI4MzNjMTlmZTY3OTEyOTNiMmYyODg4ODVhYWM0MTk3ZGQ4MjNhZTIzNjQwMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGIxNzFhMzMxMTA5MjBmZWU2NjYwZmY4Nzk4ZDc2ZjdiYzM3Y2JhY2ExMTcyNTVkNjc4ZmQ1NjFiMTEzODFhOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODk1NjZmNzEzNTU1YWQwZTNhOTlkZWM2MmU4NDljMDZiMDdmYWYxODMwM2ZhNTI5MDA4NjgzZjk0ZDEzZmVhOCJ9"
+        },
+        {
+          "resource": "repo://Makefile#L216-L229",
+          "version": "repo-lines-v1:sha256:70067d8c6f67604f5790850b3cec7f598cf364c45f6b8345150c57a6df2142ac:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Njk4MzdhYmVkODZlMGExYjI4NmE3Y2Q5NjcyMGUxZjQ2MjAwNGZjZjg0NzI1ZTUzZjY2MDQyZGRjOTE1ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhMDNkYmY3NTFiMTU2Y2UyNTUxOWM4YWMyMWZiYzZhNzdlOGRiMzVhM2IzOWFlYTU4OTdlYzU5NTRlNGViODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwMjY1OWQ4MmQzZjNkOWFmYmQzMDdjYzAxMmVjNDcwODNkZDY2ZWU1ZTQ4ZWJmNGEyNmZlMWFiNmY0MGFiNGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyYmZhY2Q5YWRlMDY3ZTNiNjk1MzRjM2EzZjNjYjY2OTI0NTFmZTc1ZjI4YjAzMTgyNTRiY2YwZmUzOGQwOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36a58e439b324174a2783b1ab3753df2",
+      "statement": "Two separate local Postgres compose stacks exist on different ports so they can run simultaneously: compose.postgres.yml is a persistent dev instance (postgres:16, port 5432, database trusted_actions, named volume rosa_ta_pgdata, managed by make postgres-up/postgres-down/postgres-logs) and docker-compose.test.yml is an ephemeral store-test instance (port 5433, database trusted_actions_test, no persistent volume, managed by make test-postgres-up/test-postgres-down/test-postgres under a distinct compose project name).",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L152-L177",
+          "version": "repo-lines-v1:sha256:4394ec625cf0e23defc71d6c4ec3434f7539e5b92fc620252f647c76c2c084e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliMmY1MDcyZGU0NjRjM2U2N2EwMGIxOGQzZDU1YzExZTUzMTIzYzYzYmQyNWJhNjNhZGFlYTRjNDg3YTFmZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkOWY2ZjcwM2NiNTQ3NWViZTI5ZTFmYTM2NDk5OWM0NTY1ZWVjNjQ0OTU3MDBmNWI1ZDk1YTAyODdlMjNmZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNWM4YmZkZDU5NTJmOTMxNjk5NjZmM2E2ZDNmZjUwNmY5ZTRhMzk1MmEzYTdmNWJhOTJmZTA5MDNiYmJhYmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlOGVlYmZiMTBjODBlYTE1MWFhOTJkNjg4YmJjMjQ1NzFmNTZhYTgwYmYwYjMyZGRjNjUyMzkxODg4OWQ1ZDUifQ"
+        },
+        {
+          "resource": "repo://compose.postgres.yml",
+          "version": "repo-file-v1:sha256:1057573c9e04974aebe9c31d453e129b17cc4a8adf5c578b8b7282a6dec68a11"
+        },
+        {
+          "resource": "repo://docker-compose.test.yml",
+          "version": "repo-file-v1:sha256:20dec60dbb4971e6c2fe649b50c26d994ce7ff87152e47d841920c525e17710f"
+        }
+      ]
+    },
+    {
+      "id": "claim_7260218c37284973895bdb47460dab4c",
+      "statement": "The Makefile resolves a COMPOSE command by preferring 'podman compose' when podman-compose or docker-compose and podman are all present on PATH, falling back to 'docker compose' otherwise, so the Postgres compose targets work with either Podman or Docker.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L140-L150",
+          "version": "repo-lines-v1:sha256:56f625048d2c2565349dc956a644286cdaea2b94c7a9beec65c7a47fcb6c187c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwNDM1YzAxYzU2NTQ2ZWUzZmVmMjg3YjhmMjc4OTZjNDhmMTI5NjZiOTJiMzQxZWYyZDUwMzI4ZWU2NzQwYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkODQyYzQ4NzNmMGYzZjBhMzJiOTJhMjhmZDFjMTM5ZGNjN2M1MzA4MzdmYTVhNDgzOTMxMTU3MjIyZDdjOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhYzE2MWQ2NmFiMjFlZGZiNjc3MDJjZjMxYTc1YzEzMGE3NDBhYTkyODM1OGFjYTAxNWU0YTIwNjg0MzAyNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5NTQzYTcxNzVlY2I0ODM5YTdlNTg4NjhjYzIzOTY0ZjZhYjJhYjM1YzFiY2JkMjJiOWFhNmM3ZjZkZmMwYTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_875218d9ce0549829b6f4f291b14cb08",
+      "statement": ".pre-commit-config.yaml defines local quality-gate hooks mirroring CI's ci/prow/lint: file hygiene and YAML checks (pre-commit-hooks v5.0.0), secret scanning via gitleaks v8.18.0 configured by .gitleaks.toml (with allowlisted paths like test fixtures, *_test.go, vendor/, node_modules/, internal/openapi/, and known-safe placeholder patterns), golangci-lint v2.0.2 run with --config=./.golangci.yml to match CI exactly, and local hooks go-build, go-mod-tidy, and rbac-wildcard-check; security hooks such as gitleaks are never bypassable even via SKIP=hook-id.",
+      "evidence": [
+        {
+          "resource": "repo://.gitleaks.toml#L1-L40",
+          "version": "repo-lines-v1:sha256:ae5989d5060c03f17522b6acb07affacb5f8d2cac090f2f6181224050a114dd6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOTcxMjIzNDA2MDhlYTMzMTQyMmYxOWIxMDczNDdhNTZkM2E5MjZmZDRjZDcxOGYzYTc4ZGM3MGY3ZTU0NmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZTk0MzE4ZmM0Y2QzMjI0YzNlNTE3MjNmZjI4OTEyZGJmYjhmYWZjNjg2MmZjODQzNDViY2ZkZWQwNDEwNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1YTlhYjdkZWNlZmZjOTM4YWVmYTZhNWMxZjVmYzM5ZDI5Mzc1MzQyZjUwZGIzODIzNjJmZWRjMmVhNGFmZDIifQ"
+        },
+        {
+          "resource": "repo://.pre-commit-config.yaml",
+          "version": "repo-file-v1:sha256:458d15df74125e86d4972e22bb7841b703e6a7b788909becdd4b4cacdc3f4363"
+        }
+      ]
+    },
+    {
+      "id": "claim_cf2d36ceaacb4396a7b50827596b9207",
+      "statement": "Setting ROSA_TA_AUTH=disabled swaps in auth.NewMockAuthMiddleware()/auth.NewMockAuthzMiddleware(), injecting a hardcoded dev-user identity with the SREP role for every request with no OCM/AMS network calls, and cmd/server/main.go logs a WARN on startup to make the bypass visible; this policy must never be used outside local or CI environments.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L22-L32",
+          "version": "repo-lines-v1:sha256:39905ff264ab13e5342170dc277c9da7f092b3b11e78596ca21627214bf7712c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzNDA1NWI0NjlkZjJjNzFlNGQ0OTk4M2Q1ZmRhNDc5NWQ5ODNiNTg2MmQzMjU0N2NjYTI1MWQ5NzBiNzA5YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0YWE2NmIxNjVjMzQwY2M2ZTY2NjdhYzNmNDQxOGY2YzMzMGRlYjZhMzNmMjA4ZGViOWJhMjg3MDg0MWM4MmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMjIwNzIxMzE4ZTlmMjk1NjViNDFmNTQ2NzRkNjExNjIwNTU3MjE5OTBlMGI1ODQyM2E1MWU0ZGUwYmY1NmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZjlkMDVmNzdiZjY3OGIyN2Y4ZjQzMzQ3ZjhhMDVmZDM5ZTU1N2UyNTcwZWZkZDNhNGM4OGM4NzI0M2JjNDkifQ"
+        },
+        {
+          "resource": "repo://cmd/server/main.go#L179-L182",
+          "version": "repo-lines-v1:sha256:3c126e38d70617be6af639193451f54aca0212cf4b5735843910cb8118f3281c:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRhZGQxN2VjZjQ5OTFjM2I1MWE1N2M3NmNiNWRiYjJlNzg1M2Y5OWY0NDU4ZWQwODk0NTA2M2MzYTMzNTI4MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWI4ZjZlN2Y5OTk1MThmMTIxMmY4ZjRlYTQ1MGY4NjRiMDU0NmIyNGQ5YzAzNDBjNDM0MzYyYzhjNTU0Yzc4OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmIxOWIwMTNlM2YxZGZjN2YzMzk4NTMxMDY5ZmM2NmMwZjVlYjhhMTU4ZTBjOThlMGE3MDhkOTNmOTRmYTJlZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTRlOWY1MzA3MDE1MzQwOTg1OTZiNTZlMDBkODA5ODFiMTE3OTA5OWRkZDhkMTE5NTdmNzdlNjZkNzBkOTU0NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_64c85235e7b04d188996599341a8fea4",
+      "statement": "When ROSA_TA_AUTH=disabled, cmd/server/main.go enforces two fatal startup guards: ROSA_TA_KUBECONFIG must be set (otherwise mock-authenticated callers could reach the real Backplane-provisioned cluster infrastructure unauthenticated) and ROSA_TA_AWS_ENDPOINT_URL must be set (otherwise the AWS SDK's default credential chain could expose real ambient AWS credentials to an unauthenticated caller); together with ROSA_TA_KUBECONFIG, this produces a fully local path with zero OCM/Backplane/real-AWS dependency.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L184-L200",
+          "version": "repo-lines-v1:sha256:31a3d876ebd155ba9a39f8d79fd7f875de55233cd0de1938f0bbd114adef1c93:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwNGY2ZTlmZmFjNjgxYTE5ODI3ZTg3OWYwNzkwNTczNGFhNmQ0ZjM5N2Y0MzdlNmM2NDczMjkxOWRkYTY3MmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0ZWZjNDk0MThkMjZkY2YxMjliMjJhNmFhMjExMDhjZWVjMzc2NzdhMzJkMDhlOWQ1ZmVlMzVkZGE2NmJiOWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMDY0MzBkMjAwNWExMWQzZDJjNDVhZmE3NzZjYjViYTUwNzhlNGY5MzkzMzM0NDg2Njg2YTllZTczMTg4NzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyY2VhMWY0ZmUyYzZhNGUyNmUyNzViNTEzMDYyYjZjM2M2NmZmMmYyZjY4ODhlZmMwNTczNDJlMmIxZWZjMGYifQ"
+        },
+        {
+          "resource": "repo://integration/README.md#L11-L30",
+          "version": "repo-lines-v1:sha256:d9e72010fb16cab81b061d5c1f3da75d13636011c0eabc689597169e345c27df:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwNDZmYzNiYTU1MWFmNWEyY2M2MDgxNzQ5ZWI2MWViOTZjZDQ5NDg1MjYzMTAyMWY3YjZiMWZmYzE1ZDI5N2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5MDBmYzgzMWViODExMGFlMjUyZmZlNmEzYjMxNWJlNDBmNTM4NjRhNTA3NTVjOGY1NTBiY2QyYjU2MDFmZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5MDRkNTE5ZjI4OWExNTJkNjk5ZDU3N2FiZjhhMTE5Y2U3MWVhZjVjYmZhYjAzMDJkYTMzNzU3YTFmMWNkOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhODUyMDI5ZjJjMjczYWQwMjRmOGM5MTU5Mzc3ZDYyMmVhODljMWU4M2Y0ZGE0ZDA1ZDQwY2MwYzdhYWFkOGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5532169037714a25a0dedca87fff6550",
+      "statement": "scripts/setup-local-staging.sh must be sourced (not executed) to export staging OCM credentials fetched from Vault (vault login via OIDC, then vault kv get on osd-sre/trusted-actions/ocm/staging) into ROSA_TA_OCM_CLIENT_ID/ROSA_TA_OCM_CLIENT_SECRET/ROSA_TA_OCM_BASE_URL plus default ROSA_TA_ALLOWED_NAMESPACES/ROSA_TA_ALLOWED_SECRETS, unsets VAULT_ADDR/VAULT_TOKEN afterward, does not set Backplane credentials, and aborts early on any Vault or jq failure.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/setup-local-staging.sh",
+          "version": "repo-file-v1:sha256:ec493a64eab7f3932c18f9d592a2d568812a8b2dd4c8283e5e7f9179100d3f74"
+        }
+      ]
+    },
+    {
+      "id": "claim_3198bde475a34e5eacbfcfed3d3550a6",
+      "statement": "scripts/test-api.sh (invoked by make test-api and make test-integration) smoke-tests a running server against SERVER_URL by checking /health then exercising list-actions, describe-action, a dry-run execute, list-runs, get-run (with a random UUID), and the audit log endpoints, pretty-printing JSON responses via jq when available and failing loudly on non-2xx status codes.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L191-L204",
+          "version": "repo-lines-v1:sha256:dbbbf27de57426b8f9a999b95ed5bf60b912648786c0d4bc60af24699afceac1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiMWNlM2ZkNmY3Y2JlNzIzOTdiNmRkMzBlMDZjZjEwNjczMDVjMGQzMzUzMTNhNDViYjE3YzU0OGMyNWY2NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3Y2UxZjQ0ZTRjMWMzZmU3OTc1OWIyYjIwNWI2MzYxODA1OGNiYzA0OTc0NWMxNGFlOWM0ODI0MDI5NTliZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZDYwMTViMDZmMWRkODI2OTIxMGQzNmNkMGJkNmZjMjcxNzI3YzkxZDBkMjMxNTc4MmE3ZGZjZWNhODg3YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhYTllM2NiNDZjOWIxN2FkMjdhOTk4YTY2Zjk5NzBiZGE4MTNkNzVkMWI2N2NkOGJiY2ZhZGM1N2M5NTZmZGEifQ"
+        },
+        {
+          "resource": "repo://scripts/test-api.sh",
+          "version": "repo-file-v1:sha256:e3bd299d261d9f1ef310cc52616e216c36ef0f5ea2b221c2972cabb4e8bb24cd"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

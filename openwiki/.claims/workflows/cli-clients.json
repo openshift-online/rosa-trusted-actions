@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:7c4c8531a2e2d47c3569024bb9bd60475a160afa162ced038b3ec08276bb3f1d",
+  "claims": [
+    {
+      "id": "claim_44a25fc3afe748b88ee8cb46e9470672",
+      "statement": "rta (cmd/rta, implemented in internal/rta) is the production HTTP client for the Trusted Actions API, while action-cli and test-client are developer/test tooling: action-cli drives the executor pipeline directly without HTTP, and test-client is a thin HTTP client for exercising a running server.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/main.go",
+          "version": "repo-file-v1:sha256:c18a9afb0c37bcb31d67b068859f23e2a81c813df4ac6748f651b769751c23ef"
+        },
+        {
+          "resource": "repo://cmd/rta/main.go",
+          "version": "repo-file-v1:sha256:c7998c93962c49194b88d61db2343d62de4fafe6628355ad168467a587199416"
+        },
+        {
+          "resource": "repo://cmd/test-client/main.go",
+          "version": "repo-file-v1:sha256:937eaab0ac5ba1874c9cf2bd055a126e3037878f0cbc5563390f7c87de8a9616"
+        }
+      ]
+    },
+    {
+      "id": "claim_8143bc272bd74fd29b990038d68fc4ae",
+      "statement": "action-cli wires the full executor pipeline (authorization, audit logging, backplane/AWS client, action execution) directly against a kubeconfig or AWS static provider, bypassing the HTTP server entirely, to verify an action end-to-end.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/README.md#L1-L5",
+          "version": "repo-lines-v1:sha256:a49d6f8ccba79eba795de97e2a98d1d34b57d3139f1c9b5689b0b05d3e6938f0:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjk5MzhlZmMxM2MxZWExMjljMTNjN2IxOTBhZjM0NzE1MjU1OTcwY2EzMmRhYzgyNDE1ZmQzMDA3NTcwMTk2ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjRiMmNmODMxZjdiY2FkYTc0OWRjMDE0YTZjNzVjYjM3Y2FmOWU5ZmRkNGRlMmViNjg3ODk3MmYzZGVkYjI4NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODg0MmMyOWVjODc2NmM1Y2JlZDVhYjc3Y2QyMmM4NjM1OGVhMmY4ODZhODUwNjkyNTg3NDA0OWRiYjg1NDAxYSJ9"
+        },
+        {
+          "resource": "repo://cmd/action-cli/main.go#L91-L176",
+          "version": "repo-lines-v1:sha256:6119efa11f3d0779ac58bd71f2b3c8568bfff95aca708248992a92b897927efd:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwOGJkMzIxNmZmZWI3ODcwMDk5NjY4OTBiNzI2Y2E2OTdhOTFhOTIyMTVkZDQxNjQ3ZTc2NzdiNmM2NmQ0ZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2ODA2ZjE1NWM1YWMxYWUyNzIyY2EwNmYyYWM5Y2FkY2I4ODFiOTEyM2NiNjI0YTNjMTA0NzViNDQ0OWRjMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxNzk2MTc2MWJhMDNjNTdlNTg5ZmM3NjlhYmU2OWRkMGM0ZDBhM2E3ZTBhNzUxNTJiOTZjNzNiMzI1ZjZmMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyZDJhOGZlODhlMTdkNjEzYjI0MzRiMDI1NDM5MzFlMmE5Yjg2MzVhMWM5MWI3NjQ0NzllMzhiYjIxM2NjN2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3420d26d65414cc4828c93fb7c8ed709",
+      "statement": "action-cli enforces the same authorization rules as the server: namespace allowlisting (defaulting to --namespace), rejecting requests missing both --namespace and --cluster-scoped, and deny-by-default for secrets unless allowlisted via --allowed-secrets.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/README.md#L122-L130",
+          "version": "repo-lines-v1:sha256:9bafbad875e1b08e956e7a5aababdf6b79c409797b6ddddf7231cc8f68b2b33e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODI0MzAyNWRkODllZTQyODA2ZjY1MWZkMzEyMGMzOGJiZjAxNzBmNjliMzJjZDIzZDg2NzUyODlkNGI5YjMxZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDdjMzRiMzVmNzdjODgyYTEzZjY4YmZlZWI5ZTcyOWYxZmJjOWE1OWY5NGQzOTlmZmQzZmM0NGFmMjBjYmYxYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGNiN2E1NDdkZDY4OWZhMzA1MDQwMGVjMzY3YzUzZjQ4OWJkMzlhMjk0Zjc2NWM0YTNlMjMzMTNkOTk3MGYzNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://cmd/action-cli/main.go#L159-L176",
+          "version": "repo-lines-v1:sha256:b171e3695d22b05e1b97cfc5a4f79c0a51de94cf99f00707cc3b96ac311cb987:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkN2QwYTVjZWZjN2NkNWM0OGFhNjAyOTg4YjdlYTIyZmMxZjEwMGI0YjFmNWE1MTIzYjFmMDcxYmE0NTVjNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2ODA2ZjE1NWM1YWMxYWUyNzIyY2EwNmYyYWM5Y2FkY2I4ODFiOTEyM2NiNjI0YTNjMTA0NzViNDQ0OWRjMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5ZDFjMGEwZDZkY2YyZjZmODlhMjc1MjdhNTU3Y2QxMmJkNTZmZDg5NWI3YTIzMDQ1M2QwZDA0NGI2MTVmMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyZDJhOGZlODhlMTdkNjEzYjI0MzRiMDI1NDM5MzFlMmE5Yjg2MzVhMWM5MWI3NjQ0NzllMzhiYjIxM2NjN2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_54f564fecf674a8f808126cc091cdc4b",
+      "statement": "action-cli's AWS action handling reads its region/operation allowlist from the same environment variables the server reads (ROSA_TA_AWS_ALLOWED_REGIONS, ROSA_TA_AWS_ALLOWED_OPERATIONS) rather than exposing CLI-only allowlist flags, so the CLI cannot exercise more than the server would permit, and denies all AWS actions if the region allowlist is unset.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/main.go#L113-L139",
+          "version": "repo-lines-v1:sha256:b5f18b00f4adc5304151c301f69f3ab68961e5469258d3a0b4b0fb30cd8b645d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ZTc1YjMwMWE2MmU1ZTVmNWNkNTRhOWRlZDMwN2M1MjE0ZmI5MjA3YjJlODdiYWQxYjQ3MmI1NDc4ZDI4M2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkZTdlOTFiMWMzMDFlMTIwN2MxMzUzZDc3NjYzZDBlZTg4YzIxYWFiZjg0YzY4Zjc2ZTk0Mjk4ZWEyMzZjZTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNDEwZTNhNDBlMTY0NTQyZjRiN2QzZDZjMDIyNDVhOTEyMWU4ZmVmZmU1MmYzZjkyMTIxMDg0YzE5NzJhZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NGE2MmQ5MDUyYTdiZmFhOWRiMTA4ODBiMmFmMTM5NjJlMzZhMTFkZGU5NmNiOWM5MjE5NWI3YWRlNzU2MmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cb379b0ba1db4703bef9ba6cf3a7fe25",
+      "statement": "cmd/rta is a thin wrapper that delegates its entire command tree to internal/rta.NewCommand, which is deliberately decoupled from global state so rta can become a rosactl plugin.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/rta/main.go",
+          "version": "repo-file-v1:sha256:c7998c93962c49194b88d61db2343d62de4fafe6628355ad168467a587199416"
+        },
+        {
+          "resource": "repo://internal/rta/command.go#L14-L17",
+          "version": "repo-lines-v1:sha256:e56bc99ccdd2bb9a822000f5db3de99feaa827b0a40ba692a0e1c4dd4260fd7a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDFmYWQ5NGYyZjA1ZTJkY2I0ZGVjNjY4NGQzOWE4NzJiMGMzY2FjOTViYTU4NDIyMGE0N2ZhOWNmYjRjNThjYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmI2YjUzNWMzMmNlYzk5YjQwZDkxNTk0N2JhYThkZjBmMWZkOTE5YjMxMTAwODFkYzVjMDBmZDMxMWM1NzZkNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTQ0ZjQ3ZDA2YjRmOGQ5ODI3N2NkNjA5YmY2MWEyNWFmZDMwYTlkN2JjMGQ5MWJlNjUzNmVhMjlkZDNkNmNiNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmQyOTljMDQ3ZjUwMWM0OWIyNTM2MGQ0OThjOWY1Njk2MDRkNjNjMTBmNDY2ZGI0NGM4ZWMyNjI3MDY3OTkxMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_134df03bd7f445728b456ebf5c41f102",
+      "statement": "rta organizes functionality into action (list/describe/run), execution (list/get/output), audit (list), and version command groups, each backed by HTTP calls to /api/v0/trusted-actions endpoints via internal/rta.Client.",
+      "evidence": [
+        {
+          "resource": "repo://internal/rta/action.go#L14-L25",
+          "version": "repo-lines-v1:sha256:c3a473c256cd8f96f38c4b75147f4c4fa85ca27a650e99a9232bbc23d2827801:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwM2U5MmUxOWM5YzdmNzkzN2MwNjhiZWM2YjczYTUyMDIxOTMzNDk1YjU5NjA1MGI5MTc0NzE0OTIwYjE3ODAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4M2NiMWZjZDBmMzNhNjM0NjFhYjYzYjkyYjY2ZTYyOTNlOTRmNTgxZjliZTc5Yjc3MzNmMjdhOWI0ZjE1MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2NTFhMDQ0MGM0MjAwODQ0NjYwZDEzOWNiMzQ2Y2UyODM2MDAxYWY4MzVjODY3NjFmMmMxYmQ4NTE0YTM5ZTcifQ"
+        },
+        {
+          "resource": "repo://internal/rta/audit.go#L10-L17",
+          "version": "repo-lines-v1:sha256:bee931dc8d4b55a02b0e8ba92e3244de0b24a812e06be7959eed6b5f87b2b4b8:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGM2N2RlMmY1MDY0ZTZjZDY5ZjU3YjJhNzJhMTcwZGE3YjFhM2IzODNmMGQzNmQ3YjMyM2U1Mjk3MjRkZDA5OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTQ0ODRkYjA3MTY5Nzg4Y2UzZTA3NWMwZWE4YzlkNWYwMjQ5N2UzNDE3ZjQ5YWYxYjQ2ZTUyM2RhYTczMDUwNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTY4Y2ViZmY3MTIyZDEwNDA0M2UxYWNjMWZjNWRkNWUyM2Q5NzcyM2U1MjdjNzg2MDJhNGVhZTlhYjk3MzY5YSJ9"
+        },
+        {
+          "resource": "repo://internal/rta/client.go#L82-L136",
+          "version": "repo-lines-v1:sha256:a283294b880389abc75116f52b3b40868c65a79269fa895ba0a4510bb5b83d5b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzMmVkYjdkZjgwMDg4ZmUxYzQ4Y2Q4YzFjNDE2Yzk0Zjg0ZDE1YjQ4ZjA4MWUzYTEwNWQyODZiMGYwOGRmNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0ZWE2MzhhYzQ5NWE3M2UzNTAxMGNiMzhlM2U4NmFkNGQxNmM4MmUwNWE4YzE1MWY2ZmZiYjRmZGExMTMyNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwNTBlYTAyZWJjMGU0MTExNGE0ZjVhMGU0YzNlNzAyZDAzMjRiZmNmMzZmYzkxNDVjMGI2Y2QzZWJmZTQ4M2MifQ"
+        },
+        {
+          "resource": "repo://internal/rta/command.go#L59-L67",
+          "version": "repo-lines-v1:sha256:d139589506d840f262ac7e5cbb797cc1ba4ce3993fc5f63dfe8a0dadcfb82b13:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTUwYmQxNTY2Y2MwNzVjZGM5OTUyYTcyNTc4Y2YzMjJlNmY4M2ZlMTViOTBjZjQwODBmNmQwMWNmYTBjNTU0MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWEzZTEwYjZkNTE3NGExMDUzMGE0Mjc5OTVhYzg3YjVmZDJiMGIxYjhjZmIyMDQ4NTBlN2IyNjc0Yzk1MmMyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGRiNGNmZjIzNDU2YjYwYWUyYTA3ZDdlNWE1ZDhlMDJiZGJjNThjNmRkODI3NTk4MjhjZTMyMDNmODhjNjBmOCJ9"
+        },
+        {
+          "resource": "repo://internal/rta/execution.go#L10-L21",
+          "version": "repo-lines-v1:sha256:8c8728c69b446d8725eb9e3ac9c18c9c10838265e4dc5ef8b04f0102d84b6fb0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhNzYyNjcxMDIxYTg1NTg1ZmJlZTJhNWE4NzEyOThlOGY0ZThiYTkyNDE0MzlkZDIwZmRiZDUyZjBlMjU0MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0NDg0ZGIwNzE2OTc4OGNlM2UwNzVjMGVhOGM5ZDVmMDI0OTdlMzQxN2Y0OWFmMWI0NmU1MjNkYWE3MzA1MDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3MWM0YjY0NTYxYTVmZDZjZTA2YmRmZDAyNmMyOWUzYThlYjRkZGI5Y2JkZDUyZDA0ZGM3NGVkYTlmZjcyYmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_959785759961403ea9393cb4c6b48bba",
+      "statement": "rta resolves its bearer token by preferring an explicit --token flag, then falling back to the local OCM CLI config's access token, failing if the config is missing, empty, or expired, with no automatic token refresh yet implemented.",
+      "evidence": [
+        {
+          "resource": "repo://internal/rta/auth.go#L10-L39",
+          "version": "repo-lines-v1:sha256:6539ed3789fdeabbbb0393e3a58b369a40370c3038ca0fe88803e5520e3a80ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ZGFiZDUwMDk4NjA5ZDZhNWRkNzQ0NmJhYzMzMTk3MjE2ZDE2ZGVlZjI2M2EzOGViZDUwNWViZWIwZTRlMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMyZTE2YjY3Nzg2YzQ1ZGU3MmFkM2FlM2M4YTk4ODE1NmNjMjg3Y2YyNGZiZjE2YzY2YmVhYmY0MzE3M2Y0ZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0NDg0ZGIwNzE2OTc4OGNlM2UwNzVjMGVhOGM5ZDVmMDI0OTdlMzQxN2Y0OWFmMWI0NmU1MjNkYWE3MzA1MDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1674f51dbcfb4bf4acbb058b9ea6a920",
+      "statement": "rta's HTTP client (internal/rta.NewClient) refuses to send a configured bearer token over plain HTTP to a non-loopback host, and its redirect checker rejects any redirect that would downgrade an HTTPS request to a non-HTTPS URL, capping redirect chains at 10 hops.",
+      "evidence": [
+        {
+          "resource": "repo://internal/rta/client.go#L35-L75",
+          "version": "repo-lines-v1:sha256:d5f1c43223993cb8d6a01169ba6f7852c9cadea3782e01a98e5fb7a08c371c71:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0NTNmYjM4NDlmODNmMDQzZGJmNGRiYzE1Y2I3MjBlZTIzYjhhMThkNjVkMzMzZDc3NzllMTllMWM3YmVhOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkM2ViNjdiN2JkMTBjM2ZiODEwYTM2YzkxZWI2OWRjMTZhNmJkYWU1NTZiNDI0ZDA5ODZiOWY3MWRiZmRjY2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzNDNmMzJiOThhODM2NTIwNzk0MTM4OThiNWYxOGFiNTVkMGVmNmZiN2Q5MGY3YmI5ODM5OTU5NGFkMjM5NDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c1530afd0884ddaabf219399fed81de",
+      "statement": "rta's action run command submits an execution via POST, optionally waits for completion by polling execution status (unless --no-wait is set), and then fetches execution output to display results, with --dry-run and --force mapped directly to the ExecutionRequest fields.",
+      "evidence": [
+        {
+          "resource": "repo://internal/rta/action.go#L133-L247",
+          "version": "repo-lines-v1:sha256:27e690c3acb3ac8a73b2b8e07f4827944a0ea7cef18d591334c586ff6b489e51:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmOWJiYWIwOTk0Y2JjZWE5OTc4NjZmZDhjOGNhOWQ3MjFmMWRhZjFiMTY0YzIwOTYzOGRmY2YxZGY0NTZlNDkxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1YmFkN2NjMmRmYWZjMjE3NWZhMmQ5NzA0ZTAyMDJmOTQwODNhOWRhNjlhNTg1YjBiMThjNDhiZWEyMzYyNzVlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyYWExOGJjYjQxN2UyZGU1ZjExZjkxMzRmOTRjYmYxMWZkMjcyNjA2MzlkNGU4ODU2YmQ3NTU2NTk4ODU2Y2FkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3ZjY5OGUyOTUwZDNiZmQzNTU1OTRjZGM4MjFkNGZmMTQyNGMzYmM0ZDA4ZmFiMjI1YmVkZjM4YzE1NWE2MzIzIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_275ccf27fcd34962bef3c5a14fd019d7",
+      "statement": "test-client (cmd/test-client) is a minimal, single-file HTTP client with no subcommand structure that resolves a bearer token via --token or by shelling out to 'ocm token', submits one action execution via POST, and polls GET .../runs/{id}?include=output until the execution reaches a terminal status (succeeded, failed, or timed_out).",
+      "evidence": [
+        {
+          "resource": "repo://cmd/test-client/main.go#L133-L137",
+          "version": "repo-lines-v1:sha256:529baf0cb40d932518436556c2dc0758067518c2952b025923b7aa47967275c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGYwN2RiNDNhZmNkNzgwNzkwOGYwYzU2OGNhNjI1NmJhODUzMGFkMDAyYmI2OWU2ZmYwZWM0YTBiNDcxNmY5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzc5NDYxMWM0M2RkNDJlYWZjMzY0MGY3Nzk5ODIwMDg1NDM5Yzc3YTc4OTI0ZWU5MTFmZTZlMzkzYTNjODEyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2FkNDAyZDYxOWE4MzNjNWJlZjk1YWY5NTBiZWU0MGViZjViODNjMjlmMWY2YmNlOTcwNmYzYTI1OTVjMWRjNCJ9"
+        },
+        {
+          "resource": "repo://cmd/test-client/main.go#L22-L119",
+          "version": "repo-lines-v1:sha256:19f2a5a912ac66171983ecc677d9c1662e17a081d03edbc01f7dca68f7ffd23f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxNWQ2NGY5NzFiMjRmNzAxZDM0Yzc3ZjEyNWFkOTNkNzBiN2I0MGEwMmMwMjM2YjA0NTM5M2UyNGJmNmI1ZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4YTQxODU0NDBmYmFiNzdiMWFmNWI1ZjczZGMyMGY3M2MwNDgxNmUyNDY4NjEwMjFmYzg4ODU3MmUxMmVmNDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiMWYxNGZkZmJhMGI5NDVmNDYwYjgxMTViZmIyODg5Zjc3ZjQxYzJjY2Q2ZDc0MDk2ZTdiZTI0ZWViOTlhMGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e3884a3098834b7aa5a93e9fbc4935b6",
+      "statement": "test-client uses a plain net/http.Client with a 30-second timeout and no HTTPS-downgrade or redirect protections, unlike rta's hardened client, making it suitable mainly for local/manual testing against a running server.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/test-client/main.go#L20-L20",
+          "version": "repo-lines-v1:sha256:94eb42f11b6cd870760cf11a95fd597be1f1e0c94d11d70f01025305dde1804c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRlYjQyZjExYjZjZDg3MDc2MGNmMTFhOTVmZDU5N2JlMWYxZTBjOTRkMTFkNzBmMDEwMjUzMDVkZGUxODA0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRlYjQyZjExYjZjZDg3MDc2MGNmMTFhOTVmZDU5N2JlMWYxZTBjOTRkMTFkNzBmMDEwMjUzMDVkZGUxODA0YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTgzY2IxZmNkMGYzM2E2MzQ2MWFiNjNiOTJiNjZlNjI5M2U5NGY1ODFmOWJlNzliNzczM2YyN2E5YjRmMTUyYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTEzYmQ3ZDYwYjRiMTFhNjczNDVjNTIyNzNjYTUwYjY1NjZlNmI1ODQ3NDIwZmZjN2VkY2Q2NzliMjdiM2QyOSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

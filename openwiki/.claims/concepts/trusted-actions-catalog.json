@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e35477295c64b433c200abf621bf1a87b0fba2812b28e95582693b8b11d2eb57",
+  "claims": [
+    {
+      "id": "claim_7df45c000b2a4d2da39b79dba43a075c",
+      "statement": "A Trusted Action is a named, auditable operation the server runs against a managed cluster or AWS account on a caller's behalf; callers submit it through the API rather than reaching the cluster or account directly, and the server authorizes, provisions a least-privilege session, executes, and audits it.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L16-L23",
+          "version": "repo-lines-v1:sha256:f443640e1febce56f9d1f13efb7a6655ca95e32c5fdf059c37ad8acdeea7a12d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjVhNDQ2MmUxNjg4OGNkOTdhYWFlOGYyNDJkMzhlZDg0ZGU0ZDJkZjI2ZGVjZTY5MGQxNDg2MWViNzlkMGM3NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFmZTcxZTg0Y2Q1ZmM3MzcyMjIwMTE2NTY4NWFlZmY2MTY0YmQ2MTNkNmY1ZDhkMzFmYjVhYzllNjllOTgxZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2FiODVkMzdkZTk4YTkxNzI0MWFmNzdlMzYwYTE5OThhNzNlMTllNGExZTRjM2ViMjU2N2RiOWNlZTNmNTM3YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_80ba1b5669204ec285f5825122daaf0a",
+      "statement": "The Action interface is scope-independent and has no Execute method; KubeAction and AWSAction are the scope-specific subtypes that add RequiredRBAC/RequiredServices and Execute, so an action can only run through the scope that authorizes it and provisions its clients.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/actions.go#L73-L97",
+          "version": "repo-lines-v1:sha256:e05e42fce1c7ca7e0ff27a1f6778df6e33bd771ef5d7f49bee3e49252fd80c73:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5MzdiNmFiZmJlNjJhOTZjZjdiZmY1NTI4NzVmMzljOWMzNWIxN2Y1ZDFiYzFlYzhhYTY5OWY4ZjdlYWQxNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhYzJhYmFmNjcwMzU5ZDEzOWYzNjMzNGZmZTQ3YTMzNjEzYTAyNTdmNTNmZDUxY2JlNDYyNTUxZjlmNmJjOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhOTQwYzU4ZWU4ZjUwODgxMzZkMTBlZTc5MGNkY2NhMjY3ZDZhM2EyYjEzMTJiYTE1OTJlY2M3MjUxODVjODQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f24b9ff9eb4b4649974f6b95ffbb01c5",
+      "statement": "AWSWriteAction extends AWSAction with Operation() and Resource(); AWSScope derives the write operation to check against the allowlist purely via a type assertion to AWSWriteAction, so an action that mutates AWS state but implements only AWSAction is treated as a read and runs unconditionally without any ROSA_TA_AWS_ALLOWED_OPERATIONS check.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L95-L107",
+          "version": "repo-lines-v1:sha256:4d5daa092cbd99ab28a1cb7d8dc73fabe82873f71149dc08ea0af8783d32bd32:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNmI2NTYzNTJhMDAxYzc0NGViZDA5OTM1YzIxYWY0Zjc3MGQyYTZiMTUyMmU0MzBmZTQ4NzU0NTQ2MTVlYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1NzFmZjExZmRhN2FmNjY5NDg5N2Q0NzIxNjIxOTMzMTBiNmI0NTJlOGY1YjYwODExMjNkNzJiY2ExY2FlNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwOWRjNjFkYjNjN2Y0YzNkNzdjZTcwNmIxMjgxZDFlNTBiN2JlY2M4YWVmNzk5ZDMwZTcxN2E3NDk1MWI3MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxNzc1MGE5YWE0YjBkM2JlZjcwNjlmNDg4OTBlNjQxZjhjYTVkMmVkOThkMjdhNWVkNTM5NjJmNDhiMTY2MzgifQ"
+        },
+        {
+          "resource": "repo://internal/executor/aws.go#L100-L114",
+          "version": "repo-lines-v1:sha256:e709c293656a146e975bde0973cfdb77a2383fbc6d499519b762eb79fbbdac0b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZmJiZTg5ODk3MzFjMDY5MDA0MzU1NDljNDUzNTRhMGVmNmFhMzBkMjZhMjdkMTQ4ZDUwN2VkYTRlOTAwMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZjJmZjVmZWVjNjBmNTg3YzhmYWU0ZTg3ZjgwOWE2NjFjZmZlZDZiNDdhYWU1ZjZkNmEyNjUzYWE4OTUyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmZGY5NjVmMGQzZWZiNjc2YThiODg0MDQ3YmExZjQ0ZTQ1NzVkYjEyZmEyMGNhYzc2ZDcxMTBiMmRhY2IwYmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5ce8ffcda6c54bf4b2784b8bd238ac4e",
+      "statement": "AWSWriteAction.Resource() fixes the kind of object a write action acts on; AWSScope.DeriveTarget refuses a request whose caller-supplied resource param disagrees with write.Resource() rather than overriding it, preventing a caller from redirecting a write to a different resource kind.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L59-L76",
+          "version": "repo-lines-v1:sha256:9b1baac282fa61ddd75f1667a6dd01468b38ac743a98ac1a68377f8f2fc92865:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0MWQ2OTNjMDZkOGRkZjAwNzE2ZmJkMDcyMzA0NDdhZDc2ZmUxOWY4OWY0OWUwMDhmMzgwMjZhMDFhMWQ0YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlNDRjY2ZlZjNiYWNjYzliMDA5NmI3ZDMxN2Q0MmMwMjhlNjE0NDliOTI5NmIzOTc1YWVlNzRmM2Q2M2FkMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAxODk2ODk0Y2YxYzRiZGY4Y2NiMjUwMjM2NTNmY2Y1M2RiMjU4MDUxNjgyNTc0MzdhM2ViNjU4Njc0YTA4ZDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f60f7e4eaf464bddb10df2f24e5f49a7",
+      "statement": "Catalog Type: openapi.Write is descriptive metadata only and is never cross-checked against whether the action's Go type actually implements AWSWriteAction, so getting the interface right is solely the implementation's responsibility.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L104-L106",
+          "version": "repo-lines-v1:sha256:a388ca0b6ded9b22943247608330f4eb5331d0e32694738e855be8c8739537fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTliNmFiMzYxZmM5OGEzZDRjYzEwNTdiZjhlNGIyODhiZmE2MDM0ZjYyZjQ3M2MxOTFlOTQ4OTFmYWE2ZjdiNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzhkOTJlNmViYjdhNjY0NTFlMjU1NjkwZTAzYzU0M2M0ZjMzYjI1ZWIwMzMwZDBhZDIyYWEwYmMwOTkxZGVlNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODEzM2VlMDI2YTM5ZGVmYmM3NmEyOWVkZjYzZjgyMjRlYjM2NmFlMzczODQyYzZjODU1MGM1OTVmOGRmNDdiMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWJjOWEzZDY4N2NmZWI5YzdjYzEwNmU0YjA4NzVhMjZjZjA5NmI1YTRlMmQ4OWNjOWQ5NjRkNmYyNWE3OTc5MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_304ba053abb549789e2b6ab17e570ce6",
+      "statement": "ActionResult carries Resources ([]map[string]interface{}) and a human-readable Message; resourcesFrom converts Kubernetes unstructured.Unstructured objects directly via their .Object field, while awsResourcesFrom round-trips AWS SDK structs through JSON marshal/unmarshal because they carry no JSON tags.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/actions.go#L157-L187",
+          "version": "repo-lines-v1:sha256:b760cbe0d1ab717b3b784f0f03bb8c642f0fd9358b77641b2a576410db67e5d8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MDdmNTEzZTcxZGJhOGMxYjA2MDgwZDFmZTBjZjFlNzU1ZGEzOTIzMTg1Y2YzMTBjOWIyYTI3NjNlYTM1ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMDA3MGYzYjdkOThiOTA4ZTMxMjVjZWQ2NzEzYTg1ZjFlZGViOWVjYTI2OTU4NmUwZDIxMjU0MDI3YjljOWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlZDdiNjk0MmVjNDk3ZjcyODkzNjhmNmNlMTRlYTI0ZWFlMTQ4NTQ2NTU1ZmNmNDQwZDYxNWJhYTEzN2Q5MDIifQ"
+        },
+        {
+          "resource": "repo://internal/actions/actions.go#L68-L71",
+          "version": "repo-lines-v1:sha256:c08dac2683799ffe7a837139f244ecbde61fbfeb78b0fb7df25d1d83999dd3b1:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODk0ODFhZmFiMzYwMjEyYTJhNjZkYjkxMGE5ZDAzZTAwZTgyYmI2YWVjMjAyOWZkM2MyZmY0YjFlN2YyNmRjNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjFkYTQ1MThlM2QyNDJmMzBjMWYyMGEyNzkwODg5ZGJlZjBjZmEyMGRlYWYyYTQ2ZTBkMTE0ZmY5MGI3MTZmYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTMyODhlNWIzYjZmNDllYzQxNzM2MDBkM2ZjMjllMjg5Yzg2ZWFmNzM0Yjk0Mjk2ZDZmMTFhZDhmN2ZkMjljZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_46d2d43619624beca4cf393fb6092294",
+      "statement": "pruneUnset recursively deletes nil-valued map keys from AWS objects converted by awsResourcesFrom (since a nil SDK pointer means 'absent'), but does not strip nulls from list elements because an element's position can be meaningful.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/actions.go#L189-L225",
+          "version": "repo-lines-v1:sha256:059d8125d992a42fdc664bbf5943dfd7922c51365e1e4e0c469a7b3c57e7caa2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhZjA4ZDc2ZDA4NzliZDMxZWNlZjhkMTJjZDUxMmY2ZTE1ZDBiNDUwMmI0OTEzYzI3MGQ0MjVlZjk5OGIzZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlYjY1ODQ5MmNjMGM5ZGZkYjc4YTAyMWQ3MTRhMzRlNmQwMGExYTMwNWNlZTIxYjgzNWJhODNjMGZjY2FlMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlYmExMjVkYTFmOGQ5MTI4YTQzZmE4NDE2OWZkM2EzYTA0NDBiMGNmYmMwMGU5M2MzZjE0YTRkNjNkNTEzMmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5472b5df0ad1437495b78c52662782ae",
+      "statement": "RegisterActionFactory stores a factory function keyed by the action's Name(), giving each execution a fresh action value; CreateAction looks up and invokes that factory by name, returning nil if no action is registered under that name, which the worker treats as 'unknown action'.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L34-L36",
+          "version": "repo-lines-v1:sha256:e0f576df92306d2048dcbe18674df864c4295371b50b3e9a1de8e9e4da42ff83:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDBkMzgxOGE5ODZmNzViYmNhOTcyMzI0NjU4NWM1MWQzOGFjNTQxODg5ZDlhOTA4ZTRjODhkODkxMDNiMzY5YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg3NGQ2OTRlYzE4YTc2NjExNGJlMGY3OWRjYmU0YjNlMWRjZGNjMGMzOTI0NWJkNTVjMDcyOTY4ZmRhMWZlZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDg5YzkxZmRlZmMxOThiNjNjNjBlODM3NWUzZmExNDYzNjIxOGEzMjRjZmMxZTlkNDdjYjE4ZTNlMmFjMTRkYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjU0M2FhNjQ3M2E3MGI5ZTc3NWRiM2U0YzEwZDc3N2EyNzM5YzE4ZGYwYTlhZjc0ZTBkYjM3MDU2NDQ1MWJjNSJ9"
+        },
+        {
+          "resource": "repo://internal/actions/actions.go#L125-L145",
+          "version": "repo-lines-v1:sha256:ca62117242217eb6afa2c30b6d8842193d1f7afeaa49773e7b7b08b6b5b4d032:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMjE1N2NiMWJkMGE5YzFkMzRjYTEzN2I5YTllNTUzOGU2ODgzOTEwY2RhYzdiNTgwODQ4YjU1ZWYxZjQ3MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlYTA5ODkzZGRiNDgyYzg1Y2I0NjBkOWNhMDAxNWJjZGY5ZWNhNjg2MGI1N2U5NTM5ZDJlNDM3ODUyYTk3ZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1ZDY2ZjhhY2NhNTUyYThjYTVjZWZiZGMzNjQ5NzE5NmU5ZjIzOGYxYzZlMjNmMzA2MjEwN2FhZWFkNWRjMDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_23f4159c09a34e1582a7502e1826e94c",
+      "statement": "An action requires two independent, mandatory registrations: the implementation + init() self-registration in internal/actions/<name>.go, and an ActionDefinition in internal/catalog/catalog.go; a catalog entry without an implementation fails at worker execution with 'unknown action', while an implementation without a catalog entry returns 404 from the API handlers before the registry is ever consulted.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L24-L39",
+          "version": "repo-lines-v1:sha256:485575966450eb60b731877675813ff59fab4dabdc2928fe5fcbc095f79a4687:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNDM5MTY3NzYwYTk3M2JlMmFhYWVmN2JiZWY2NjcxN2Y5OWZlOGU2MDIzZmQ2N2E2ZTI2ZjI2YTY3MDNmMzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMyNTdlNzIxMjc3NTNlODYyN2Q3ZTE1ZGQ0NDg4NzY4NmViZDRmNmY2ZjY0ODRiNTJiZDBiMTg5Y2Q0Yjg2NTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NTA0YzY5ZTIyNWI5ZTc5MWU3ZGVhNmUzNDM5NWM3NDdjOWY2MWU5ZmM0MTFjMTQ2MTdlNzEwZGRiN2M0NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxYmMxMWRlZGNkNjBmYWY0YzkzNjQ0NGZhMzY0OTIwNjRlODRjN2RmZDJjZTEyNzY2MzI5N2EzZGFmYTZmNWEifQ"
+        },
+        {
+          "resource": "repo://internal/catalog/catalog.go#L185-L200",
+          "version": "repo-lines-v1:sha256:90f0765b183b1acda53b85b23551188d8cec25049845bbab4be32b0a3a707650:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMzJjNGM1NWM0NzNkNjRlZTE1NjA1NmI2MGM3YzE1M2JhYjMzMWRkYmZkOGU3MmY5ZmFkZDE1MzQ2Yzk2NTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0NDM0NWVhYzEzYWNkMjNjNTJmNTk0NDIwZjc1ZWE5M2M1YWIyMTEwYjkxMTdlNWE3MTI3MjhiM2M4YTc4ZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExYWRiNDFiODY2NDdkNzIwOTZkOWM3ZTFlMzRjNDk4ODMxZmQyOGE2YzE1MDdkZjRkMjExOWZjOTVhOTcwNTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6474a715648e4d3f9e04df7a8898dcc1",
+      "statement": "ActionDefinition's Params are descriptive only: the API does not reject a request for omitting a Required param at submission time, returning 202 regardless, so each action must validate its own required parameters at Execute time.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L201-L207",
+          "version": "repo-lines-v1:sha256:ade272389c12c6bb7f04af5fc87126dac75f8f0adf499ab55fdbf963ce7aa9de:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDJmODcyNzNkN2E2MWRlZGJhNWU5NTY3YjAzZDBkNzJmYzEwZWQwMjFiNzg1NTZjMGM2ODk5NjQ3MmFiZDg1ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzViNDIzYjhkZTBlZmY4MTZjNjM4YzM1NDUyMjU0OWY3ZDI1YzFkZmU5ODhkYWI5ZjJmMWE4NTVjODhlZmE0ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzRlODk0N2FkMzhlYzVjMWExZGJjOTVhZDYxN2MwNWI2ZjE1ZGQxYzY3ZDVjZjE0ZmQ1NmYzNWYzMTY3ODE0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTU1NDg2NDZjZGIwZDYzNTk2MTkyMmI5ZmE4NTIxN2U1M2Y5ZDMzYzZkNTlmODcxYjYxMWY1YzVlNjI1YTg5OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_11ae94b13e7a4eeab7db7a88cd4e0a43",
+      "statement": "aws-reboot and aws-terminate both act exclusively on EC2 instances identified by a fixed Resource() of 'ec2-instances' and call requireClusterInstance before mutating, which refuses to proceed unless the target instance carries the requesting cluster's kubernetes.io/cluster/<infraID>=owned tag, bounding a write action's blast radius to the owning cluster rather than the whole shared AWS account.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_write.go#L19-L94",
+          "version": "repo-lines-v1:sha256:a6e90446db0ebde85286b9c3094f5c30d7e0ff0df20645ec4f4152fb8650544d:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5NjkyMmM0ZDAyMzdlZWNhNmUxMjA1NzM1YWRlNzg3YzU2MzFiNDgzOGIwM2E5MTIwNjlkMzBjNjQ1YjRmNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliYWY2YWVlZjQ5OTkyNTg0NDk0MTM4ZDViODg3MDQwZjI5NmNjNWJjZmFlYTQ5ZGRiNzNmNGJjZTBiNGU0MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjZTgzNDBjMDg5ZTg0YzVmMTg4NWI1MmNlMTllNjM2Njg0ODhmOTBlMGYwZTg2OTExZTgxYzkyNDlhNDc3MmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4374743a64864ae9adf75177b2979437",
+      "statement": "aws-terminate is restricted to the SREP role in the catalog, narrower than the allRoles granted to most other actions, because termination is irreversible.",
+      "evidence": [
+        {
+          "resource": "repo://internal/catalog/catalog.go#L163-L175",
+          "version": "repo-lines-v1:sha256:70262249f39f7bb1d4440e27dc39d7f4afa6b742766c47fd6e8a4546b8c349f1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4YzM0ZDEzNGUxOTlhZTRlM2ZlOGQyMDNhNmM0ODBiNDI1ZGE2NmQ3ZWYyYzM0MTY0MjA5MjUyNjIyMzE4NjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YTliNWU5MDE5YzhkYjg3ODNlYzljM2ZlYmIwYTJjOTg2MmY2MWEwNWMzMDhmZTg5NWU0YTliZWQwM2VkYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmMTU5Yzk2ZWIwMzUwNjQ0ZTMyOThjNGM0NzgwMDVmNDg0NzJlZmY4NDFmZjNiMTM2N2YwYzMzZmU5ZTRkZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4NWMwMmZjMjJiNTM1NTYwODk5NDliZjEzN2E3N2UwMzQxYjNiMzIxZGNlMWIxYzI5NzA5ZmI2NDk1OWNiMDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d6296220c7bb48728a2a0b207555595e",
+      "statement": "aws-get is a single generic read action covering many AWS resource types declared in one awsResources registry table, each entry specifying its required AWS service client, how it treats a target id (optional/required/unsupported), and which extra params it accepts; a param the resource does not accept is rejected rather than silently ignored.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_get.go#L179-L213",
+          "version": "repo-lines-v1:sha256:93552be390610888a5d4f71b956e2e39f4e29f5ab638aab2e559966611cb15d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZmFjMzc1ZWQ0ZjYxNzdkYWQxMTU4MmVhMjY3MDc1YTAwNTBmZjExZjhmOTFkZWZhOTFkNTYzNjBjN2ZlOWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0YTJkMTY5ZDVkNGIwZjM1OGI1YTVhNmI1ZDEyY2IxOGI1YTRjZTBkOWEyZGZkMGZjYjQxMmI0OGI1NTEzNTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwMmQ1NDIzZDg4ODZkOWZiODY1YjgyMDg3NTNkMjM4OTI4NWIyYTEzYmI1NjgwMTMzMTliNmViYmYzNTMzNjEifQ"
+        },
+        {
+          "resource": "repo://internal/actions/aws_get.go#L44-L135",
+          "version": "repo-lines-v1:sha256:ae5eed08459ec3421ef539f8ce93c3b56c2afb99340f5ee47282a1d8c590686d:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0ZjU2YmFjMzcxYjBmYTg0YjA0MzY3ZmY2MDMxMzJmMTM0M2VlMjUwMmFmNzM2OWYyY2FkMGZiNzViZGJhYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiM2Q4NWY0MzRkZTA3NmJlMjAyNGIxMTcxNTQxNjIyYTcxOGY1ZTI5ZjQ1Yjk3YTM2MThjMTgwN2UwZWNlNWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1YWY5OGM1MWIxODg0OTA3ZWEyZjdmNzg2NmJlMDFkY2FjZGE1YmIyMTg2M2VjMzA4YzAyZjQ5YmNjZjY2ZWQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

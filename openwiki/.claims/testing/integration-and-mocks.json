@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:13f81aaa4c23c8606e81b17f83ac5a22743ccac0e3e17e80f4c4868340b1e49b",
+  "claims": [
+    {
+      "id": "claim_6fb70291d58f42d09aaafc8e3a26d310",
+      "statement": "Setting ROSA_TA_AUTH=disabled swaps in MockMiddleware/MockAuthzMiddleware, granting every caller a hardcoded dev-user identity with the SREP role and skipping OCM/AMS network calls, and the server refuses to start with ROSA_TA_AUTH=disabled unless ROSA_TA_KUBECONFIG is also set.",
+      "evidence": [
+        {
+          "resource": "repo://integration/README.md#L11-L21",
+          "version": "repo-lines-v1:sha256:d9c796fc34b22451d25f15a2e579d72b1d95eae77ecafbf5c6c173d05ea6da8a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwNDZmYzNiYTU1MWFmNWEyY2M2MDgxNzQ5ZWI2MWViOTZjZDQ5NDg1MjYzMTAyMWY3YjZiMWZmYzE1ZDI5N2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiMjUzNDNkYjlmNmQ0MjhhM2QxYmJhZGJmY2FjNTMxMTAxYzQ4ODdhZTFlNTU1MmNlMWUwZjc3OTE5Y2I5NTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5MDRkNTE5ZjI4OWExNTJkNjk5ZDU3N2FiZjhhMTE5Y2U3MWVhZjVjYmZhYjAzMDJkYTMzNzU3YTFmMWNkOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhMjNlOTM2MjEzMTI5MmRjOTQ3Y2Y0ZmRlNmIwM2QwNDVmZDdhOTdmNDUwYTExODkxMWMxNDIzMTgyZTQzMGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d85d091a1a754d75a64b1e4c916ee6df",
+      "statement": "With ROSA_TA_AUTH=disabled the server also requires ROSA_TA_AWS_ENDPOINT_URL to be set, because mock auth hands every caller the SREP role and the AWS SDK's default credential chain would otherwise pick up ambient host/pod credentials.",
+      "evidence": [
+        {
+          "resource": "repo://integration/README.md#L22-L26",
+          "version": "repo-lines-v1:sha256:a927c22e3c1f580a1702d46cad809c1e6bd090536f1d984e3c462d25ce17311e:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmU5ZTc1YmEyZGQ5NDkyZWIwN2I2NjIyNjViYWUwYWZlZmQ4M2Q4YzEzNzFmMTM4Yjc0NjNlNzA1NDIxNTVlYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjYwNzcxMmNmNTFkZGFiZGQ3ZmMwYjM4NTdlOTJkYWEyMmEzYzc2NWY2ZTI0YzI1NGE5M2IwYjAwOTE2YjMxNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTI0MDE4ODdmZDE4MzU4NzIwODJkNzdmNTA0YzhkNWRjM2I3ZDE5M2VlNTQxNmFhNmMzMjA3ODA3NjAxMmVkYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDcwYmU4Njk0MWNhOGZkMGQ3NmVhODJmZDc5ZDUxOTNiMWRlNjE3MTc1MWNjYTAwMmU4MzlmZDNjMjQ0ZmE2YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_82d39712236240808081b90adb0354b4",
+      "statement": "integration/itest-up.sh creates or reuses a disposable kind cluster (image kindest/node:v1.33.1, name from ROSA_TA_KIND_CLUSTER_NAME default rosa-ta), starts the LocalStack community image via podman-compose, waits for both to report healthy, applies pull-secret and prometheus fixtures, and waits for at least two Prometheus alerts to fire before returning.",
+      "evidence": [
+        {
+          "resource": "repo://integration/itest-up.sh#L1-L93",
+          "version": "repo-lines-v1:sha256:36207b7649ddadb19ac9218828520c92be9b4f90bbb73bb5f60d98f540237551:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4NzVmOTI4NTQ2YWVlNzg1NWNiMWRiOWFmYzhhYjNmMWE4YTM0ZDQzZGU1YmJkNjJmNzA3NmQ3YmE5ZjM5MTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3N2UyOWQ4MGQyNTczZTliYzdkNjkyZmIyZTg1ZDBmMTdmNDk2NTBlMTU3ZjkxY2VkMzhlYWQyZjc5NWU5ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5MDgzM2RiN2RlYzFlYjRjM2MyZGVjYjVkZTM0OTk2YjI0ODYyNzI4OWY1NGQzY2Q1MTViYjVjMTJmMjk2NWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f9163fb3bb8544438517aa4da99f144d",
+      "statement": "integration/itest-run.sh retrieves a kubeconfig from the kind cluster, exports ROSA_TA_AUTH=disabled, ROSA_TA_KUBECONFIG, DATABASE_URL, and AWS variables including ROSA_TA_AWS_ENDPOINT_URL pointed at LocalStack and ROSA_TA_AWS_ALLOWED_REGIONS (which has no built-in default), builds and starts the server binary, and waits for /health before running smoke tests.",
+      "evidence": [
+        {
+          "resource": "repo://integration/itest-run.sh#L113-L167",
+          "version": "repo-lines-v1:sha256:301071b329915f539038ab147d3b3c2c0e95f7def6a7b725f630ee2389bff80b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxNzQ3OTBjOWRkYzEzOTkzMTBlMzQ0NzAyODg1ZWNlYzIwOTYwNmEyMjQyYjhkYTNmYmEyNGZkN2FhN2U1MWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjMzNiMGUzYjE2NDdkZDNlNTY5NTk4MzUwM2EyMjMzZDY2ZmUwZmYwNjAwZDdmNzk0ZTg0ZTRmYTc3ODNiZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ODJkMzcyZTZjNTM4NjU0OTFiZWM4YjNmODA4Y2YxZGJlMzFhMDkyNDA5NWY4ODczODIwOGRkMTQ2NTY3ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExMTkwOTIxYzQzYzc3MGM0ZTQwNjQxODY1NmI2ZDRjMGI3ZGY3MTk1NjA2ODQyMjBhNjE1YjhhODZkMzg5ZTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_06b43476a18f43d887f69bdb5128ddae",
+      "statement": "itest-run.sh exercises kube-api actions (get, describe-nodes, get-pull-secret-email, list-alerts) against fixtures applied by itest-up.sh, and aws-api actions (aws-get) against LocalStack, seeding EC2 instances, DHCP option sets, and Route53 hosted zones as needed, then polls GET /runs/{id} until a terminal status and asserts response content, not just status.",
+      "evidence": [
+        {
+          "resource": "repo://integration/itest-run.sh#L169-L335",
+          "version": "repo-lines-v1:sha256:30e844ff155ed7df4d95d307cf53c0f291df5a9bbad38056224a2d8168860113:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJjMjc0MDdiNGZkNmU1YWI5MzM2MjY4YTZiYjIyOWE3MGI0Mzk2NGQ3MmI4YjRjYTNjOWMwMmE2ZmE0YWExYzg4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjN2FjOWM0ZjY0NTBmMDUyNTFjNzg0YTc0ODZjNzMyY2Y0NmZhZDFmYjBiMTQ3NDNiZWI0ZWI2ZGRlMjQxNWM1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3M2RkNzc3NDRjMWFiM2E2YTI3ZDc1NjdmODkxMmY0MWViNjQwMzE5MTY4ZWNiOGU3YzAwNDI2M2U2MjhhZTRlIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_16c1c1cfc6ea4025bacf9ddc7c3aa7d6",
+      "statement": "itest-run.sh submits an aws-get request with a parameter the target resource does not accept and asserts the resulting execution status is 'failed', verifying that input validation survives the full HTTP execution path rather than only being covered by unit tests.",
+      "evidence": [
+        {
+          "resource": "repo://integration/itest-run.sh#L336-L349",
+          "version": "repo-lines-v1:sha256:48cc06c709cff3aa72311121b85a96ba1cbd1857afce349590781b47665116a5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNTBlZTRlZTM5ZGNjZGI1NjIzYTc0Nzc5MDc3ZTRkZjYzZjFjYWY0ZDAwMTJjOWY5OTRkMTk0Y2JhNzQ3ZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxY2IyMWNiZDIyYmQ1OWQwOTRmNzYxMjYzNzVmMTNhOGU0Y2I1NzVjZmRhYmFmMDM4ZjI4YmY3YzkzZGUyN2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MGM5MDg4YmU3Njg5ZWM3YmZlYWE4ZTQ3ZGM4MTU1NjBiYjFmNTc2NGY4NmYyMDFhNmY4YjkwNGQwYWZlYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bd2b072e33d648c09463cc444e28b3b4",
+      "statement": "Five aws-get resources (load-balancers, load-balancers-classic, target-groups, target-health, cloudtrail-events) require LocalStack Pro (elb, elbv2, cloudtrail services) and are not exercised by itest-run.sh against the community LocalStack image; they are covered only by unit tests against fakes in internal/actions, so a green itest-run run is not evidence this part of the AWS read surface works against a real API implementation.",
+      "evidence": [
+        {
+          "resource": "repo://integration/README.md#L67-L73",
+          "version": "repo-lines-v1:sha256:769f3eb2b847f8115275bdc3ac1263d0b2c451129d750ade90c6e18a232e310e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTU0NTYxZGNhNTg5Yjk2OGUwNWRmM2Y4MjFlYjdjMmVjZWFlN2U5ODc5YTRiNDdkYmU1NjNhNjE0YjgwZDJhOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTkwZDExNzQxZjUxMjQzODViZGY3ZjhhMzZiNzdhNDhlZTc2YWY3NGJlYmMxN2M2NDBkZTZiNjYzM2FhYjA1NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWJjNThiYjM1NjUxOGY5MThjMzM2OGI3YjgwNjVjODQxMTk1N2I5ODZkNmQ1YmQ4ODdhMGFlZTEwZmQwMzQ2YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmYzZTM2ODI1NmQxNjU0NGU2M2MxMzMxYTU0N2FjOTgzNTc5NDFmOGM0MGVhZWFhOWFiNTIyNmY4OTQ0ZWNkNyJ9"
+        },
+        {
+          "resource": "repo://integration/itest-run.sh#L282-L286",
+          "version": "repo-lines-v1:sha256:0aa4ba401a225624daff04a4594765fcd043f29b3e0999f6cd4c5e546c6f9c29:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDZiZTNiZjhjOTM3ODVhNTlkMGVkMzY2ZjMyMjk5N2EyNjk2M2EwZGQ3N2NlZDE2MzQ5YjBkNjZkMjJlNzhhZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmQ3Yjk4NDA1ZDRjYjUyYTM5YzZmNmNhZTg5MDVkMDgwMWZjM2UxNDk1Y2NkYTI4MWNjYmNiMjZlY2RkMGI4ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWJjNmMwNGI1YmY4NjhhM2QwNWRjNTQ5MjU5YmU2Njk3OGZhNjVkYWNmZDhmM2Q4NDAwMjAzNjQyNDI0NmQwNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2YwODc4YmEwY2JhMzZkYzdlMGE0YzA4ZWQ1NDMwM2JlNjBkYmIzMDM5MDNiMjM0Y2IyMGU4MmU5YjI5MDcyYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f6306501ee064eb6a615bb3deae1d1b4",
+      "statement": "itest-run.sh does not exercise the AWS write actions (aws-reboot, aws-terminate); exercising them would additionally require ROSA_TA_AWS_ALLOWED_OPERATIONS and a seeded instance tagged with the static provider's infra ID, so those writes, including the ownership-tag check and both allowlist gates, are covered by unit tests only.",
+      "evidence": [
+        {
+          "resource": "repo://integration/README.md#L163-L169",
+          "version": "repo-lines-v1:sha256:175e1bc5a1393c172b47b85cca58faabc40e83b54f3ad82d779f811e00148df9:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWVhYzc2ZmJhMzUyMTk2NzM3NjdhNzRmNWJiYjQxOGYzZTQzYzQ3YzkxM2YyNjQ5YTFjY2NiZGI1NWMwMDNhYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjQ2M2ViZjkwYjA4ODk4NGZlNjU5ZmYwMmY2NzUxZTFkNjk0MTNkZjIyMDdjZDI0OGU4MzBhYmZiMDRkYzMwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzllOGRmZGMyOTQ4MTI4ODdkMjM0ZTYyYmEwM2QyNDgyZWIxZWQwMDgyZDNlODljZTZlMWY5MDJlODMyOTg1MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTA4ZDliODI5MTU0YzVhMTM0ZjA1MmE4YmI3MjIxOGRjZmRmOTRhNDQwYjlmZGE2NDlkZmUxOGI5YTRmZTVlYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5603adfd12ac4e9abfa62cedcb68418b",
+      "statement": "integration/README.md documents two further, unimplemented phases: Phase 2 would mock OCM (local JWKS for JWT verification plus a fake AMS AccessReview HTTP server) under ROSA_TA_AUTH=enabled, and Phase 3 would build a fake Backplane server implementing the HMAC-signed trustedaction create endpoint and the remediate reverse-proxy path to exercise the real backplane.BackplaneProvider contract, which internal/backplane/backplane.go flags as untested against a real backplane instance.",
+      "evidence": [
+        {
+          "resource": "repo://integration/README.md#L171-L226",
+          "version": "repo-lines-v1:sha256:465a41af01e3592096ee11ab2a6a066c2009ee19b8f9c383c571a11f48959148:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNjc0MTc4NWMwYjliZjliNDc2ODc4YWRlYzkyNGE2ZTBmZDA4MjI3ZWU4OGY5NWNhYzc1MDA5ODZjMDg0ZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNDI1NDMzYjA2ZTQwODkzODNmMGNkNjk4NWE1ZTFiNjhlNzc5ZTA4MDc0M2EwODJmY2E2YTU4NDUxZTM4OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkNjRiMTI2Njk3NGQ4NDgxYWZiZjVmNmEzMzUwNGRhOGI3NjYxMTdjZWU3Zjk2MmZiYzFkYmVhYzQzN2YyMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5MzI3NDUxZGRmZDFiOGU2OGI2NjU5NTZhOTViMDhkY2RmN2MxYzQ4MjQ0NTc0YjBlMTM0ODBmMDdkNzI4NWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f54437b3802b40d39a97483a33dbff3e",
+      "statement": "tests/mock-backplane is an Imposter-based fixture server (built from the vendored spec tests/mock-backplane/backplane.yaml and JS scripts) started via 'make mock-backplane', pinning the Imposter Go native engine with auto-restart disabled and holding all state in memory so a restart resets it.",
+      "evidence": [
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L19-L37",
+          "version": "repo-lines-v1:sha256:51ec9c86d0eb02c3437589e9bfe2bd2ff2b6ee4546057a960ab27bf4a8aeb26b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4MTE2M2FiMTc0NGE0OGFiODM0ZWQ5YzBkZDE0MmMyMDg2NGQ1ZmZiZjM0MTE3MjYzMmI1MzNkNjBjMTkxMmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNjFhODMzMWExYzRjM2EyOWY5N2Q4YTU1NTU5NjNkZTQ0MGNlOTM4Njg4NmI1MWVhODkwYjU1NjlkZjkxY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhZDA2ZDc2YjBhY2Y1MTQ3ZmYwYzViMjQ2YzM4NzRmN2JmNTlhOWY5Mzc1MTI0ODBmNzE2YjE0ODI2Mzg1N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1MTgxODVlZDBmZmMxMmUwNDcyOGNmNDFjY2NiOTg0NTc2YjExOWM2MDQ5MTk2ZWE1MWUzYTAxZGNhYjIzNTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8e269023c014429d9977ec3d9ebe8e6d",
+      "statement": "Both Backplane test doubles (tests/mock-backplane and tests/proxy-backplane) expose plural CRUD endpoints at /backplane/trustedactions/{clusterId} and a singular proxy path at /backplane/trustedaction/{clusterId}/{instanceId}/*, matching the real Backplane contract rather than being a typo.",
+      "evidence": [
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L41-L43",
+          "version": "repo-lines-v1:sha256:042d249c1f3f989695f2cf7fa96d9a37908617c3309e1caefe54036a767726c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc3NTdiYzdmZmJiYjFlZGU0MzlkYmNlZTNhNTc1Mjc3YWFkODcwYmI3MzNhM2ExN2NmMDNkMzg4ZDQzZDJkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2ZlYTkxMTFiODQ0MzIxMDE4NjAzZDhhM2MyMjVkM2VlMzE1YTc2NWE0N2ZkNmNiNDI4MmJjOTI1MDcxOTI0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTUxODE4NWVkMGZmYzEyZTA0NzI4Y2Y0MWNjY2I5ODQ1NzZiMTE5YzYwNDkxOTZlYTUxZTNhMDFkY2FiMjM1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjVmOGZlMDQyMjUxY2M0MzNjMTg2NmYyYTBiNjdiMjhhNzk3ZWM0NDUwMGI0MmQzZDNhNWVjN2I3MDRiMjJjNSJ9"
+        },
+        {
+          "resource": "repo://tests/proxy-backplane/README.md#L123-L131",
+          "version": "repo-lines-v1:sha256:75edc268a8999c798c1c4d0672cd3865471ee538570dbf69744088ae393c8606:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjc3NTdiYzdmZmJiYjFlZGU0MzlkYmNlZTNhNTc1Mjc3YWFkODcwYmI3MzNhM2ExN2NmMDNkMzg4ZDQzZDJkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDI5MmVkMTMzOWQyOGJmNTBjNGZlOWQwMjFjMmY0NzhjMmJlZjVmYjIxYzczZTUzY2NlNzc2MmQxZjUyZDZmOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDBmNjVjNDFhMzRkMmI5NjUyOGUyZWVmMTZjZjhjOTZkZGE0MDQ4ZGUzMjY1ZDljNWE3ZDdmY2E3NGEzYjFiMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTc0OGQ1NDY5NTMxMjZmMTJlZjNkYjhmZTI3MjhhZTRiOTJlNjFkNjk5NTgwMDA1YTA1MDNlZTNiNmNkYjI0ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_07f012d1468c4ccbba3006e01cce9dd7",
+      "statement": "tests/mock-backplane's cluster fixture and action store use composite keys ({clusterId}:{kubernetes path} for the fixture, {clusterId}:{instanceId} for actions), which gives cross-cluster isolation between preloaded clusters automatically, with no cluster-specific code required.",
+      "evidence": [
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L119-L166",
+          "version": "repo-lines-v1:sha256:3ad975fda287adc83357a716dd95101bdfb6f271bd0a44963bc148db7eac72c2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ZjAyMGNlNTdhMTI0MzBlNmUxMTFlODFhY2UyNmUwOTEyYjhiMWY0YjcxNmQ2ZDBlYTYyZWE2ZTZmMWVjYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4OGNlMWE1ODdmYTU5ZjYyZjA2ZWEyZmYxZTIxYWYxY2RjZjdlY2NiNzRjN2U5NWU2ZmFmNTBkOGNlZTg2MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwNWM2YWU3OTY1YjRhYTFlZWFkNzkzOGYzYWQxMTNmOTIyNjU1MGIxYmRiMGZkNGY4MjU1NDAzYWRmYzFmODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5NTNhMmQzNDliYzY2YzllMjc1ZTk5OGE2NWE1MmIyYWI1NWQyNTc2NGM3NDE3MjgwOGEwYzQ2YTlmMjg5ZjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_009e69e61d074b6a88f3e422e2f2bb3f",
+      "statement": "tests/mock-backplane's RBAC matcher reproduces Kubernetes RBAC semantics (wildcards, empty-string core API group, resourceNames narrowing, clusterRoleRules required for cluster-scoped/all-namespace reads) but deliberately returns distinct status codes for different gaps: 501 for a path with no fixture entry or an unmodelled subresource/non-resource URL, 404 for a fixture entry explicitly marked absent, and 403 for a request the submitted RBAC never granted, and ignores selectors while logging a warning rather than silently filtering.",
+      "evidence": [
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L85-L191",
+          "version": "repo-lines-v1:sha256:085e94900b31439c230c6e4eca53eec347c3078822968b357da9a708d22cddda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkNjE4ZWI0MjZlYWIyYjAzMmI3ZDZhZDZkNDgxYjI0MTdmM2NiYjAzMWM3NGQ5MjU1YjBjYjc2OGEwZTY0NTMzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MDliMzZlZDI5NGZkNmYxZDJmNWI3NDMxMTg5ZDEzMzQ2MDNkM2RlOGIyZTY5Mzc3NThlNjg1NzRlMGEwMGNhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3YWEzODFiNjU2OTU0ZDU4MDIwYTM1MzFmZDUyYjJlZmNjZjA4ZGFiNjM0YjMxMGM2ODdlMWM4YzBhOTk3MjdjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlYzBlNDUzZmMyMTUxOWJkNDk3NDMzNjM1OTY0ODYyZjgyNjhjNjBhYzU3NmUyMWI4OGVmNmUxZDBiZDk5MDlmIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_72e19d93bde44cd2aa98df3c6a1aa604",
+      "statement": "tests/mock-backplane intentionally deviates from the real Backplane contract in three ways: it returns a 24-hour token expiry versus the real contract's 720 minutes (unenforced so harmless), its FORBIDDEN_POLICIES list in scripts/trustedactions-post.js is a hand-copy of Backplane's unpublished validation rules that can silently drift, and its vendored backplane.yaml spec has no automated check against the upstream client spec for divergence.",
+      "evidence": [
+        {
+          "resource": "repo://tests/mock-backplane/README.md#L193-L212",
+          "version": "repo-lines-v1:sha256:b200a155f20f59da8d317bdd13289a202ab3245ad1bff57eba15f0be8ed90853:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkZTZjN2ZkMWYxZjNjYmNiM2M1NmY0NWJiY2Y4ODNjZWQ3MWI4ZTY5MGVjNDhmZDI0MjdkNjZhYWRkODM0N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmYjZkYjFhNGZmYjIyNTJmZDdlZjU0MWM3MjlhMTNjZjY5NDVmZDg2ZGI2OWYyNjZjODAxOTEwMWVlN2M3ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1ZWU5YjdiMzZhZWUyMGNhZTk3M2UyNmNlNzJhZjcwODBlZmQ5ZTcxNTQ5ZTdmN2FhYzRjZTE4ZDhkZjc1NGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9995964bc18f4bb7a44d1dc94fc9c632",
+      "statement": "tests/proxy-backplane is a real Go reverse-proxy server that registers a trusted action by accepting a base64-encoded kubeconfig, parses its TLS credentials and bearer token into an in-memory store, and forwards any HTTP method on the proxy path to the live upstream cluster with the bearer token injected, making it suitable for exercising real Kubernetes write operations that the fixture-based mock cannot model.",
+      "evidence": [
+        {
+          "resource": "repo://tests/proxy-backplane/README.md#L1-L18",
+          "version": "repo-lines-v1:sha256:c8950ddc0d2e30a30b4fa6ea70e1ce7ae0b5eb502612a97b42b33cb3d4edbb86:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmMmRmNThlY2U5YjQyNDY0OTQ0Y2M2YzEzMmEwYWJmNWE3YzAyMDAwYTliYzhhNjZlMGVlOGZhYzIxNzIxYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4MTE2M2FiMTc0NGE0OGFiODM0ZWQ5YzBkZDE0MmMyMDg2NGQ1ZmZiZjM0MTE3MjYzMmI1MzNkNjBjMTkxMmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1OWI0NzA5NGIyZDEwMGJjZmE0ZjZkYzEyMDNjMTNmODNjNTdmN2YwMTczODYxOWE3NTk2NTJkNzNmNjQ1OTIifQ"
+        },
+        {
+          "resource": "repo://tests/proxy-backplane/README.md#L90-L119",
+          "version": "repo-lines-v1:sha256:fc266d2d7340cdbeaa9c5da06413b225587890f114d08b5b6f862dbf96f04c62:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NGRiMGY3MDAwNzhlNDJiMzUyNTNlNmJlNGI5MmUyZmFlMjUyMTM5M2VhOGUxNjMzNWQwNjJjNzg3NTFmYjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNWJmYzRmNzUwZmZmMjFmOGEzMjdiMTQ5YWFhZDQzMDI1MWQ3YjY4NDM3YWViOGU1YjgyZjUyMTI1Yjk4NDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0NjY2MTAyODlhNmE1MDRlZGU2ZTcxMThiMTM5N2U5YjVlYzc0NmZiZTQ5ZGMxMzk1NzY3MTdjNTY5NzY4ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwZjY1YzQxYTM0ZDJiOTY1MjhlMmVlZjE2Y2Y4Yzk2ZGRhNDA0OGRlMzI2NWQ5YzVhN2Q3ZmNhNzRhM2IxYjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_89b59dd5f9e1422c8826849c1466c024",
+      "statement": "tests/actions (build tag integration) provides end-to-end action tests distinct from the in-package internal/actions/*_test.go unit tests: TestMain probes MOCK_BACKPLANE_URL and PROXY_BACKPLANE_URL for reachability, honors TEST_BACKPLANE=mock|proxy to require one specific double, and exits with an error if neither double is reachable; proxy-backed tests additionally require a kubeconfig via KUBECONFIG_B64 or KUBECONFIG.",
+      "evidence": [
+        {
+          "resource": "repo://tests/actions/main_test.go#L43-L104",
+          "version": "repo-lines-v1:sha256:61cd8fc41eba6216e4c0b7cbc4f52b1da12503bbb037eaf4c16e8c0f5b9a1b15:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjNmRkNTc0MDQ0M2JlOWMyMDRmZDE4MTRjYjZhZTJkMDMxNzQ3MzYzOWJhM2NiNmFhMDM4YWFjYmMwNDYzMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiNjZmY2I4MWFhMDM3NmQ3NzZlNTc2NGFlNjhjMzgwMDEzNDE3Njc0MGQwNDFmNmI1NDNhYzM1MjM3N2M5ZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxOTJkNzk3NWMzMTcwMzdiY2E2ZjhmYmNjNmM0ZjE2MjEyMWY0Y2Y4ZWExYjQwMWRkZmY3MTAzYWRjZmVlMDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5d38c97f679c4b63b77bc6ea9726c1c1",
+      "statement": "The Makefile drives tests/actions via 'make test-actions' (TEST_BACKPLANE=mock against the Imposter mock) and 'make test-actions-proxy' (-run Proxy against the real-cluster proxy, requiring make proxy-backplane and a kubeconfig), and starts each double with 'make mock-backplane' (requires the imposter CLI) or 'make proxy-backplane' respectively.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L206-L229",
+          "version": "repo-lines-v1:sha256:20726cfbcc8dbdf02b32ed9455f6d3871bee79e6e1d33eafe7cd4e1a3c1d8d1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZDc5YWU5ZDA1ODE0ZWU1ZGNlZjEwMmNlNTAwYjQwMzE0ZGQ4NWUzODQ1ZGY1N2IyOGQ2Zjk5YzU3NGZjMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhMDNkYmY3NTFiMTU2Y2UyNTUxOWM4YWMyMWZiYzZhNzdlOGRiMzVhM2IzOWFlYTU4OTdlYzU5NTRlNGViODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0NzczOGI1NGE4YTUwNzhhNmZhNzU1YWVmMWMxZTc4MmI2NDE2MDRlMjc4ZTFjMTg4ZWJjZTE0ZmQzYzkwN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyYmZhY2Q5YWRlMDY3ZTNiNjk1MzRjM2EzZjNjYjY2OTI0NTFmZTc1ZjI4YjAzMTgyNTRiY2YwZmUzOGQwOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_764597f8a0d042b5868e46555fd9a38d",
+      "statement": "scripts/test-api.sh (run via 'make test-api' or 'make test-integration') is a thin HTTP-only smoke test that checks /health, lists and describes actions, and executes the get action with dry_run true against an already-running server, without standing up a cluster, LocalStack, or either Backplane double.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L191-L204",
+          "version": "repo-lines-v1:sha256:dbbbf27de57426b8f9a999b95ed5bf60b912648786c0d4bc60af24699afceac1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiMWNlM2ZkNmY3Y2JlNzIzOTdiNmRkMzBlMDZjZjEwNjczMDVjMGQzMzUzMTNhNDViYjE3YzU0OGMyNWY2NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3Y2UxZjQ0ZTRjMWMzZmU3OTc1OWIyYjIwNWI2MzYxODA1OGNiYzA0OTc0NWMxNGFlOWM0ODI0MDI5NTliZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZDYwMTViMDZmMWRkODI2OTIxMGQzNmNkMGJkNmZjMjcxNzI3YzkxZDBkMjMxNTc4MmE3ZGZjZWNhODg3YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhYTllM2NiNDZjOWIxN2FkMjdhOTk4YTY2Zjk5NzBiZGE4MTNkNzVkMWI2N2NkOGJiY2ZhZGM1N2M5NTZmZGEifQ"
+        },
+        {
+          "resource": "repo://scripts/test-api.sh#L1-L80",
+          "version": "repo-lines-v1:sha256:4d55e61feda07b8b96c799493d5e91104418c076445c3d9432ec00191148afbb:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4NzVmOTI4NTQ2YWVlNzg1NWNiMWRiOWFmYzhhYjNmMWE4YTM0ZDQzZGU1YmJkNjJmNzA3NmQ3YmE5ZjM5MTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1MGE1ZjliYjI2N2VlYzAwMTdiZDQ1MDhlNTE4MWM0OGE1NDQzMjNhOTJkODFjNmMwODEwMjdlZmY3MTU5ZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwYmZhMmE2MTNmMGEzZTVkNmE3N2EyZjI0ZTljNGY1Zjg0MDg4OTM1MjE1NjkzMzhmNzY0ZTMxNWVlYzc2MDUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

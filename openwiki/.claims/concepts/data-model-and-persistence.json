@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8246db4d19679c2b74a61086acefd2a5d0b36892c68f5e3007dcf2e65dd73153",
+  "claims": [
+    {
+      "id": "claim_bcc3b2d0b45d4a9f9bbe3246a56f93fe",
+      "statement": "store.New selects the persistence backend purely by inspecting the DATABASE_URL scheme: a value prefixed with \"postgres://\" or \"postgresql://\" opens a PostgresStore, while any other value (including an empty string) falls back to SQLiteStore.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/store.go#L57-L65",
+          "version": "repo-lines-v1:sha256:345e8051f171cef0a4564722d96853a411af5cf69cd6bb167f37910db2b54e7e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTE5OWExM2FjNzI0NDZhZWY2MDE1YTY0NDVlODE0ZGU3Njc3OTI0Nzg1MGU3Y2FjMjEyMDYxMmUxZWE2ZDYzNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTExMjE5NjBmZWQyNzc4M2M1OTBmYmYyYmU1NWE1MzExMWUwMGUzMGY0NTNmNmRkYjg3ZDY2NzJkNjc2MzkyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M3NjU5OGIzNDFiNTVkYmViNjcxOWJkMWFiMmYxZGQ5MmMxMGY5OTk3YmJkMzM1NzE0NjRjNGI0ZTRhMGQ2NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_73f4edee882e4e17a6eda3c818005ca2",
+      "statement": "The store.Store interface (CreateExecution, GetExecution, GetExecutionOutput, ListExecutions, UpdateExecutionWithResult, ClaimNextExecution, CreateAuditEntry, ListAuditEntries, Close) is the single persistence abstraction implemented identically in behavior by both PostgresStore and SQLiteStore, with ErrNotFound as the shared not-found sentinel.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/store.go#L15-L82",
+          "version": "repo-lines-v1:sha256:f6b81588b6a24d14c98ded6ab609ff93bf373f3cedca2f497b9c394c19caaf71:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwY2Y2Yjk1ZDE3ZWZlYzUxZDUwY2I1YWU3ZWRkYzliODkzZTI0ZTFkNDllNWNiZjlmYzBjNDU3ZWQwOGRjMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4ZjM5ZTA3ZTRmOWZjODNjNWZmNzg4ODQ2YWIwMzI5NzMwNDBhMDI3NDA1NGQyNGRiYTZmNjg3MmE5YzUzYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a1ee28a751fa46719ec0dcc0066023ab",
+      "statement": "models.Execution tracks a status lifecycle (pending/running/succeeded/failed/timed_out from openapi.ExecutionStatus) and an independent approval_state (not_required/pending/approved/rejected from openapi.ApprovalState); ExecutionFromRequest always creates new executions with status pending and approval_state not_required.",
+      "evidence": [
+        {
+          "resource": "repo://internal/models/execution.go#L13-L34",
+          "version": "repo-lines-v1:sha256:e57ac2e6e710df88c27d2e8213bfe6015ee7677c0bb58543e744d25f06eeb0f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5MThkZjFjYzE4OTU2ZmY5MzdhYjM4YTNiMGQwOTkzMWE5ZDcyMGE3NGVmN2I4MjE5NGM5MDY4MDQ2NGRmNTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4M2NiMWZjZDBmMzNhNjM0NjFhYjYzYjkyYjY2ZTYyOTNlOTRmNTgxZjliZTc5Yjc3MzNmMjdhOWI0ZjE1MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkN2EzMjI3NjEzYzZlMjMzOWZmMzg1M2EyNjY3NjlmZDVkZmI2YzdmYzFmZmE5ZWYzZTQyMGEzMWI0YTBlYzkifQ"
+        },
+        {
+          "resource": "repo://internal/models/execution.go#L81-L108",
+          "version": "repo-lines-v1:sha256:e79c8afc8fed3f59cc41c44b10aa0987d30a4fd726e92d84a722c03729647dae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmOGQxNjc2ZGVkZjlhZjI4ZTNkZDVjZjAzZGZlOGIwNDdhOTE0MmYxNGI0YWQ1YTQ0MmFkNDg5MzJiYTVhMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmZWRiMmE5YmI5OWM5MDFkNzc2NzY0OTJiM2FjOTRmNzI2YmQzNDc5NGUxMjJiOTVmNjhhNGM5MTgzYjI0YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://internal/openapi/api.go#L107-L128",
+          "version": "repo-lines-v1:sha256:6cc14388189fbd233693ded5939335cbfb6f0859aa2e467960ea25b9d7dda9a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyYjcyYWM5YjNmMzA2M2IyNTRlYjlhZDE5MTk5OTJiYjMyNDdiYzM4YThkN2RiZGZiY2QwMTgzNTk0MThhYWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyMjhkM2FmMTlkOTlkOTljNjE4NjkxYWEyNWNhYmFjZGExZTdhMTE1MGM3YmEzODUyYTNlNjVkMzNmMjgxMTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlMGM2M2JlNzJmZGUzMmYyNTY5MTE4MTcwMDdhOTgyYjZhNTk0ODM2OTdlZmI0MzE4NGM2NDdkZmQxYzY4NzEifQ"
+        },
+        {
+          "resource": "repo://internal/openapi/api.go#L35-L52",
+          "version": "repo-lines-v1:sha256:7eb6e32a61c7d9d74e75e86facaa65de76514755e3171e536e199753dedbccc7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMTEyNjZiNDhkMjkyZjk5YThkOTBmMzQzNGZlZjk1Y2JiNzVkZjlkNTI2Mjg3MDlmMmRlMmU2ZWM1YTI4MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkYTJmMzQ2NDRjMjk2ZTI3YjQ3N2E3Mzg1YTFjZTQ2MTE3ZmY3YTBhMTNlODk0M2M4YzFmZjE5NjA2NjVlN2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc0YjU0OWFkNDE4OTc2ZjdlMmM5YWU0MGRjZjM2MzQ1NzY3MGVlZmFkZWQ2YTQ2YjUwOGRlMWNlYjgzZjJiMDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_46cb4c81481b4b8d98eb43e473ca19b0",
+      "statement": "models.Execution includes forward-looking fields ManifestWorkName, RunnerSeconds, and UploadSeconds that are part of the schema and the public API response but are not populated by any current writer in the codebase, reserved for a future ManifestWork-based runner.",
+      "evidence": [
+        {
+          "resource": "repo://internal/models/execution.go#L13-L34",
+          "version": "repo-lines-v1:sha256:e57ac2e6e710df88c27d2e8213bfe6015ee7677c0bb58543e744d25f06eeb0f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5MThkZjFjYzE4OTU2ZmY5MzdhYjM4YTNiMGQwOTkzMWE5ZDcyMGE3NGVmN2I4MjE5NGM5MDY4MDQ2NGRmNTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4M2NiMWZjZDBmMzNhNjM0NjFhYjYzYjkyYjY2ZTYyOTNlOTRmNTgxZjliZTc5Yjc3MzNmMjdhOWI0ZjE1MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkN2EzMjI3NjEzYzZlMjMzOWZmMzg1M2EyNjY3NjlmZDVkZmI2YzdmYzFmZmE5ZWYzZTQyMGEzMWI0YTBlYzkifQ"
+        },
+        {
+          "resource": "repo://internal/store/postgres.go#L83-L109",
+          "version": "repo-lines-v1:sha256:4c26a3aa6c7f81010463f2870431f6b2c68d8258e7b45c08274366a4533955bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1MmZlMmNhOWU5NThmZTJjMGI0ZDRkOTYzYTRmM2NiY2FjNjRiNzBjNTQ5NmI5N2JlYzRmZmRiMTZhMjBmOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiNDdiYWU2MjdkY2U2YzMxZTk5MzdmNTQ2ODBjYWY1MzQzZTA3MDJiODY5ZTM0MTQ2M2I2M2IyZTE2MTdkYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwNjFmMWY3Yjk0NjcwYTEzZmMwM2FiOWFlOGJhODNmYzhjMWUzMGRlZTM3ZGNmYjg0MTI1NzFiNmIyMmE4OTAifQ"
+        },
+        {
+          "resource": "repo://internal/store/sqlite.go#L75-L107",
+          "version": "repo-lines-v1:sha256:0334311829c547f08733d4953d2b0746a5b521762fe23ab1638a8783eeb9cb0e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MjIzNTg5ZWQ3MThiMGE0MjY2NDFiNmVhMzIwYTg4ZDE5MDRmYzBkYjdkN2VmMjA1MmExYjhkNjQ5MDI3NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxNTI3YTJlOGVjMmM2YzcxMmRhNjE4Yzk1NjBiNDM2MTI1ZGVhYjg0NzgyZGU5NWRkYjVmYWNlMmVmNTcwNGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3MDFlMjYxMWM1ZDg0YmY5OTZiZGUyNDk0Yjc3ZTVlZmM4NTQyOWM3MzE0MGRiYmE4YmYwYWE0MDQ4YzlhMGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c7b4ce4813a649d0b12904ea1bc0dc2a",
+      "statement": "models.AuditEntry represents one per-request audit record with ID, Timestamp, Method, Path, Username, StatusCode and optional request-derived context fields Action, ExecutionID, Jira, ApprovalState, TargetCluster.",
+      "evidence": [
+        {
+          "resource": "repo://internal/models/audit.go#L12-L24",
+          "version": "repo-lines-v1:sha256:045e6547c355d3058ab2af9f1566aab8ce46d6826c4987cd8f6bfef0ace783af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2OTdjNjQxYmE5MzY2NjAwM2I2YjUzODAwNWMwNjFjMzU0MzNkODI5YzRiMDEzNGU2ZWY3NmQ1ZjU5ODFiYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4M2NiMWZjZDBmMzNhNjM0NjFhYjYzYjkyYjY2ZTYyOTNlOTRmNTgxZjliZTc5Yjc3MzNmMjdhOWI0ZjE1MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1Yzc1YmIyZDQwZjg4ZDVlNTk1ZDQ5Y2Y3YjJiY2VmNmI0ZWZlODRhNmUxN2M2Yjk1NGQwM2ViYTdkYzhlMWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_769bf46baff546e6ba1c14474bc30b3c",
+      "statement": "models.ExecutionOutput holds a Message and a list of Resources produced by a completed action; OutputFromActionResult normalizes a nil Resources slice to an empty list so actions like delete still serialize as an empty array rather than null.",
+      "evidence": [
+        {
+          "resource": "repo://internal/models/output.go#L8-L29",
+          "version": "repo-lines-v1:sha256:91a1df5275a8baa5a35aba085154c7236b1b8d8699a49f8d52ae7aa3e52e6113:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxYjgwM2U0Mzg1N2QyODg0ZTBhMWM2Nzk1NDMyNjRkMGQ3OGY2MDNhMDVjZmU3NjA5M2I4YzQ5ZWIxZDYyM2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4M2NiMWZjZDBmMzNhNjM0NjFhYjYzYjkyYjY2ZTYyOTNlOTRmNTgxZjliZTc5Yjc3MzNmMjdhOWI0ZjE1MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwZTdlMTI5MTlkZmZiOGRmMmNjZDZkY2ViMTdmYTA0MjlmMzIzOGNlZTZhOTFjOTFkOTI4ODFlODJjOGQwODkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_08dd68769d3d47a085495de0b1869c65",
+      "statement": "internal/store/shared.go centralizes the executionColumns, outputColumns, and auditColumns column lists used identically by both PostgresStore and SQLiteStore for SELECT/INSERT statements; their order must match the corresponding *Row struct field order because sqlx StructScan binds columns positionally.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/shared.go#L1-L14",
+          "version": "repo-lines-v1:sha256:66bb929ae654baf72531715e9ede9aec76f162fe4ca68390d4857e845c80d9ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5Mzk4ZjQwZWMzMWIxMTc2NjA5Yzk3MmI0ODMzNDBhYmY0NjI1OTA0NTFkMjgwZTIxMjIxNzZhYzFiYTY1ZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYTBiODAwOWQzOGFjNTU5MjIwNDZhM2QzNTUwZWYwMTA2MTUzZTY5M2ZlMzkxOTQzMjJhZjQ1MjRkYTUxYmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiNmQ3NGUxYjVjMzIxNDE0Zjc0NjQ0ZDI4MjBjNjNjNzY2ZjY1OGI2MjMxZjk2ZTllYWMyNjQwMzAzMDE2OGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_24d96e1a4c544123bfea8dc8471ca047",
+      "statement": "buildExecutionWhere and buildAuditWhere in shared.go build the common WHERE-clause fragments shared by both backends using \"?\" placeholders, which PostgresStore rebinds to \"$1, $2, ...\" via db.Rebind while SQLiteStore uses them unchanged; both helpers intentionally exclude the Since filter because timestamp representation differs (native time.Time/TIMESTAMPTZ for Postgres vs. fixed-width TEXT for SQLite), so each store appends its own Since clause with backend-appropriate formatting after calling the shared builder.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/postgres.go#L141-L146",
+          "version": "repo-lines-v1:sha256:2eaf961301b1200966855a85aff846106364eaf619f2979bd9b5dd4e64ad10d4:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWQxNWQ5MzZhMjJkMzVlZjJmMmY1ZjQyMzQwZWFlZDRhNjZiYTJmNDhlZDgwMWIyMGE2NWM3YWI5YTg2YjIzMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGU0ZmYyNzA5NzQ4NDlhNWQxN2Q4NDYyMDk1YTE1NjM2Zjg5YmExMjE2NTE3ZTY0ZmE4MTcyZWYyMGJmN2QzOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzZlNTZlZjVjYTI5ZmQyZTU0ZTBlYzVkMjRiYjgxZWVhODczYzc3NDU2YjcxMTQxYTFkZDQ5YjI3MjRiOGY5YyJ9"
+        },
+        {
+          "resource": "repo://internal/store/shared.go#L16-L94",
+          "version": "repo-lines-v1:sha256:f818a281cb80e2f34bc33a622469a96ee900cb075aacd229e392adcd39a3225a:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4ZmVkODMwZTk5OWI4NDQ0MTE0NjIzZDhkY2NmYWU1ZGIzYWQxZGUwYTQ1MzYwODI5YzA1YjkxNTgyZTZlYTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1ZGM4ZjU2NzU1MTdhMTA4ODQwNTAzMWE4NTFiZjgwNjc4NzViMDExZGI4Mzc1MDk3ZWI5ZWMwZDIzMDA5YTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://internal/store/sqlite.go#L137-L142",
+          "version": "repo-lines-v1:sha256:31797b715f0ec96ace4b625535143d5e6ead219a64860c7586e1a256e6022ece:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTE1M2I3ZDNiNjU3MGVjZTc5MjA4ZDNhZjhiNmEwOTlkOWViNmE5OGY4N2I1MmFhZTE2NjU5MzE5MGZkZTAwMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGU0ZmYyNzA5NzQ4NDlhNWQxN2Q4NDYyMDk1YTE1NjM2Zjg5YmExMjE2NTE3ZTY0ZmE4MTcyZWYyMGJmN2QzOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzZlNTZlZjVjYTI5ZmQyZTU0ZTBlYzVkMjRiYjgxZWVhODczYzc3NDU2YjcxMTQxYTFkZDQ5YjI3MjRiOGY5YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9303897801ff484bafe5754f89958383",
+      "statement": "SQLiteStore formats all timestamps with the fixed-width layout \"2006-01-02T15:04:05.000000000Z07:00\" (timeLayout) before storing them as TEXT, so that lexical string comparisons used for ordering and range filters sort identically to chronological order; PostgresStore instead stores timestamps natively as TIMESTAMPTZ.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/migrations/postgres/001_init.up.sql#L1-L22",
+          "version": "repo-lines-v1:sha256:ad481880348e52900ac901dcdfa01862ece491f5a6df3eadcae4a59f12116047:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNDk0Mjk2NTYyMmYyZjBjOWJlNmE1NzEwZDlmOWVmM2ZhNjkxYjI1MjYzOGU1NzkxZmQyMWUxMzcxODA3ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhZWE2ZmJlMDVhZjlmNjQ4ZmUxNGJlNjg1MWRkMjEwNjM1ZDIwMDhlZjVjNDdhYmZkNmZiMjBiYzJmZGNjYTAifQ"
+        },
+        {
+          "resource": "repo://internal/store/migrations/sqlite/001_init.up.sql#L1-L30",
+          "version": "repo-lines-v1:sha256:9d9a4a5242387ffcc9b83bb034cf04112a1acb476d8eb5e838b10ba1c4cdea4e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwZmU0OWVmZmNkOGQ0Mzc0OTFkYzNjOWIzYzNmYjViZDk0MjViMmY1ZjExNjRjNTA4MGViZGIxZjg0ZDA2YzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiZTkzNGU1NDIwYmI5YjY4MjA3YjZiYzE1ODE3MTNkNWVlY2RhOWM5YmI5NjEyMjliMTE4MGJkNzE3OWM0MTMifQ"
+        },
+        {
+          "resource": "repo://internal/store/sqlite.go#L20-L22",
+          "version": "repo-lines-v1:sha256:9d56f0ec59498b7e2939830644ed1f3a94f9e38af6bf8af20aa0ed8d3871c93a:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGNmYjY4ODQzYTA0NGJjMmU3NzExNWY1NTU4NTE5Mjg5NDhhOTQ3Y2QyNDBjYTM2YjVlMzI2MzU3OGEyNmI0OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTM2NmNkNzJlNmYxOWMwZWE0ZmFiNjgzY2I5OGMyN2JmNjk5ZTY3ZTMwNjNhN2UwMGFhNDg5NWRhMmM5MzIzZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZThmMzllMDdlNGY5ZmM4M2M1ZmY3ODg4NDZhYjAzMjk3MzA0MGEwMjc0MDU0ZDI0ZGJhNmY2ODcyYTljNTNhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGUxNDQzZWU5YjhiNzJmM2U0MzlhMmZiZTEwZDQwYmEyMWVhOTE1NGYzMjMwNWVmZTQ2NzllZmYwNTY1NTA0NiJ9"
+        },
+        {
+          "resource": "repo://internal/store/sqlite.go#L96-L102",
+          "version": "repo-lines-v1:sha256:1b519ff98345d757a6e872b1c8330abd426a4cac5f5ce2de4d1d34e04be5dc3d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTU1MzZiZTY3MDUyODliZTU4YjNlNGQzODZlMjMxNjJmYTAzOGNmMmE4MGM2NTNlZjJkNzRhMGMwYzA5NzI5ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2ZhYzE4YTNiNTQ5ODY5MDRjMjc3OGE0MGNmNWRlYzRmZWJjNTYyY2U1ZGE5OGU1NjcyYzFlYzY3NjlhYjYxOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTAxNDEyNjU3ZWFlNWU5ODEwYzMwYTY2MWYyOWE3OWVmMzZhNDZhOGYzNDhhNWI0ODI4MDIyZDY3ZWZkOWNlMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGYxZGUzNTQxZDRlNzNjZDE5OGY3Y2UwODNkODcwMTkyMDVlOWM2NGU0YmVjNWY2Y2FjMjdjYjNlY2U4ZGZlNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_17dd798408424a6897cfa4695b5d0547",
+      "statement": "SQLiteStore calls db.SetMaxOpenConns(1) on its underlying connection pool to avoid \"database is locked\" errors on file-backed SQLite databases and to prevent an in-memory (:memory:) database from being split across multiple independent pool connections.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/sqlite.go#L48-L50",
+          "version": "repo-lines-v1:sha256:e694fb49f9bf240b2a9a3f8e58dae2d79da2effcc53f9eb1c0d6916a1ba66abc:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWUyMzcyYzFkMDE5ZTE3NmFhMWUyNjE3MjkzNGZkY2E4MmVjMjc0YTg1NjdkODg3Yzg1ZWMzODUxOTNjYmU5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWVhNmM5YTU3OTVmNmIwZTY4ZjI3NmM1NWJjMzE2OGE1YzcwMWJkZDA4MDJjNjMxM2MzYThjZmZlOWQ4ZDZhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjlmNmE3MDE5N2Q5OGViNzk3ZmYwNjQ4YjFhMDEyMjc3ODU5YjZiM2Y0YThlODNiNmNlYWUwZWVkNGExMTc0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODc3MGI1YjU3NmRhY2UxN2JkOGYwMjcxNWNkMGQ5NmQ0OGRhNTk0NzRjZmE4MDM5MjE4NWY5NTI0Mjk4Y2Q1YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d33e0decab644d5b25c7870a6c9b441",
+      "statement": "ClaimNextExecution atomically dequeues the oldest pending execution and transitions it to running: PostgresStore uses a transaction with SELECT ... FOR UPDATE SKIP LOCKED so concurrent workers each lock only the single row they claim and skip rows already locked by other in-flight claims; SQLiteStore relies on SetMaxOpenConns(1) serializing all connections process-wide to achieve the same safety, since SQLite has no FOR UPDATE SKIP LOCKED equivalent. Both order candidates by created_at ASC, id ASC and return store.ErrNotFound when no pending execution exists.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/postgres.go#L231-L274",
+          "version": "repo-lines-v1:sha256:00a4edab11ba9e8625c4b218263b77bbca74255992db5b6578bbac4dc6505491:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlOWU0ZWVmM2EzYTE1NzE3MDRiZDdkZjBmMDcwMzVjMDExYjY0ZjViMTcyYTFiNDU1NjM0N2JkNjhhNjFkNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MzFiNmUyY2EwN2Q4YmFmMGViNDRlNzQ5ZGJmNDkwYjM5MmUzYTUzNGVmNjEwMjI3NzExNDZjZGY5YWYxYTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3YTM0NTE3N2I3MWNhOGQ2MWE2MDU4MTUzNDgzNDdmOTRlOWM1YWJiZTc5MTBjOTJhYmMwNWIwMjRjMThkNGUifQ"
+        },
+        {
+          "resource": "repo://internal/store/sqlite.go#L238-L250",
+          "version": "repo-lines-v1:sha256:69eee7c3f2d3759db544d7ffd6b9466b3bd27c399d3e99d55af9e19af2570586:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4ZWZmMDFjNjgxM2M3NDg4YTQ1YTYwNTAxODM1NzEwMGU2MDQ3YWY1YjlmZmVjMWU1YmIyMjMzMzAyOTI3ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2ZGM4MWIzYWEzNDljYWFmMGJkZDIyYjdmNmYyMjRjOTkxZWU0MmViZWE0M2E4ZjY3MjU1Y2I5Zjg3MGMyNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MzFiNmUyY2EwN2Q4YmFmMGViNDRlNzQ5ZGJmNDkwYjM5MmUzYTUzNGVmNjEwMjI3NzExNDZjZGY5YWYxYTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkM2U1MzMxYWE2Mzg2ZDY1YmM3YTllMmI0YjhiOWJmOGNhMDYzZmUxNGIyY2Q4YjYyMGEzZjhiYWM1NzA4MzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ed98b1946b94d6ca49b38bbb03667e5",
+      "statement": "UpdateExecutionWithResult transitions an execution to a terminal status and replaces its ExecutionOutput atomically inside a single transaction: it deletes any prior output row for the execution and inserts a new one only if output is non-nil, so retried or re-run executions never accumulate stale output rows; it returns ErrNotFound if no execution row was affected by the status update.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/postgres.go#L184-L229",
+          "version": "repo-lines-v1:sha256:de9ae52362afe7ee86d99478c8d14842ac2a0a369f2b4c5d2ea1555f5205ad66:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExZDc1MDBhOTFkYmRhZDZiNWJhMTM2NzBhYzMwYjZhNDgwMjg2M2EwN2RkOTAzMjkyNTdmNjdkOWIyNTc1MWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlNGRhNjU3ZTEyMDVjYTQ3MWE0MGM2ZmMwMzA0YmZiMGQ0YjhmZTA4ZTk2M2MxNDBhYTk2NGIzY2Y2NWRhMTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5MTY0NDg2YjM1ZmI1ZTgxY2I2ZDAxMzBiZjhjMjUxNjNiNzNhZjhhYmU0YTUxOTk4OGRmZTk4NjE0ZGMzNjkifQ"
+        },
+        {
+          "resource": "repo://internal/store/sqlite.go#L178-L236",
+          "version": "repo-lines-v1:sha256:eef0b5c87f12c9039149620d111c09b1be6cade63aa15492c9c573fb4d53989a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNWM0NDk2NTk0ZWI3OWE3OTE3ZjAyMjgzMWE3NWYxNWNjMDliZDc1MjNiNWIwMDUyY2UwNzBlNDFjNTc1YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlNGRhNjU3ZTEyMDVjYTQ3MWE0MGM2ZmMwMzA0YmZiMGQ0YjhmZTA4ZTk2M2MxNDBhYTk2NGIzY2Y2NWRhMTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMWY2Njc3MWExM2ZjOWVlZjUzNDlmZWY0NjdhYTM3Y2VmODdmMzM0NzZiZGRiN2NiZmJiYTg2NzhiOWFkNGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_061eefef3d1c4c86875c6a3effacc3ed",
+      "statement": "Execution lifecycle state is tracked only as the current status/approval_state columns on the executions row itself, with no separate execution-history table; this is distinct from the append-only, per-HTTP-request audit log written by middleware.NewAuditLogger via CreateAuditEntry, which records method/path/status/caller identity plus any handler-attached AuditContext fields for every request regardless of whether it touches an execution.",
+      "evidence": [
+        {
+          "resource": "repo://internal/middleware/audit.go#L39-L91",
+          "version": "repo-lines-v1:sha256:7493744722dc66b7def6498320674530840f558ecca67d744894d25fd9cacc18:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViYmIzMjlhM2I0MTExZWFmNGVkNzU0NzMzNWEzYjg3NWJjMjFkZGQ1Mzk5OTBhOWZlZGJmOGEwNzBlMTQ1ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiYzg0NzUwMDMxMTE2YzA5Nzk2MWY0ZDEwNmU3YThjNjU3M2JhMmM0ZmQ2MDVjY2JkNTgxZDI2NGI0YmJlODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://internal/store/store.go#L67-L80",
+          "version": "repo-lines-v1:sha256:5c9e65fe3f6079d87263cdafd170595236d5cd4f8d2601d6ace471e389be2055:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5NjhkMWZkMTZiZTI4OTM0OWU3YTNjYmJlMTI2NmRmNmFlMmNkMzFiYmI2Yzg1MGI0ZGM0MzQwZTlhMGY3MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0YWQ3MGUwOTg4NTQzY2E0ZjRhOWM4ZTgyZWJiZDA2MTY1MzE3ZDM2MjFmNDNhMGFkYjU4MmNkN2Q0YjU1ZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2N2NiZTg5MDAzYTE5OWEwMDM1ODk3MWY4YmFhZDE0NmM5MDU0MGNjYzY3M2E3OWQ0MjA5NzdiNDA0OTk2NWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8d50000360c54c07b767caa9de22e41a",
+      "statement": "Migrations are embedded per-dialect (migrations/sqlite and migrations/postgres) as paired up/down SQL files and tracked in a schema_migrations table; for Postgres, runMigrations acquires a session-level advisory lock (pg_advisory_lock, fixed key 0x526F7361) on a dedicated connection before applying migrations and releases it via a background context on return so replicas starting concurrently do not race, and so the unlock still runs if the caller's context was cancelled.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/migrations.go#L16-L103",
+          "version": "repo-lines-v1:sha256:39bd49a26a5adbf64f57957c09d49f148343029297cebe2acf3c19f6667486ac:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwMTM1NWE1YTEyNDgwNGMwMDU4NWQzOTg5YjRkOWM4ZDcxM2E3MDllYzc4MGE4YmE5NmI4ZjEzMmFmZDkzNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjODZkNmYzMGYyNzc0Y2M1YTg2ZjM0ZmYxODUzMWM3YjExZTEzOTM1ODcxM2UzYTY5ZDhjMWUwOGE2NWZhYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1NGJhY2E2MjU0NTU0NGFlYWViYTEwNTE2Zjc5YzRkYzg5NjA4M2Y3N2VjZjcxYmRmZjc5NjIwY2NkYWFhMWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b4ed94963e340f280b5bb62ff1d1862",
+      "statement": "RollbackLastMigration and rollbackMigration provide an explicit down-migration path: they look up the most recently applied schema_migrations version, execute its paired .down.sql file, and remove the schema_migrations row, all within one transaction.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/migrations.go#L105-L150",
+          "version": "repo-lines-v1:sha256:45a0c6ea2b4b5e825fa72b6e9d53630d149ad509ad813e55242776d55cf88bfb:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0MjdlMzRkM2E4ZDA1Mzc2NmJjMjUzMjRiZjM1NmU4MTI2ZGJiN2VmNTcyOTdmOTMwZmQ1NmYxYWU1OGJiOWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MzFiNmUyY2EwN2Q4YmFmMGViNDRlNzQ5ZGJmNDkwYjM5MmUzYTUzNGVmNjEwMjI3NzExNDZjZGY5YWYxYTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhNWRiN2VkYWM3MDg2MWZlYzliMTY3OWE0ZDE3NWU5MzEyODJmYTI0ODE2YWJhMjNmNjRiNDg2ZmZmNmIyZWMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

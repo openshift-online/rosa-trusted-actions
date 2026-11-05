@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:06189dd95517c5f50d0828bff9ddf575a67959e7e7012a057e280b01c6326f77",
+  "claims": [
+    {
+      "id": "claim_1d8364d1335a46a7a099a6a658f69586",
+      "statement": "terraform/global is applied once per AWS account and owns IAM roles/policies, the Secrets Manager app secret, and the ACM DNS-01 validation CNAME, while terraform/regional is applied once per AWS region and owns VPC, ALB, ECS (EC2 host + EBS), S3 bucket, CloudWatch→Firehose audit logging, Route 53 Private Hosted Zone, and the regional ACM certificate.",
+      "evidence": [
+        {
+          "resource": "repo://docs/deployment.md#L5-L16",
+          "version": "repo-lines-v1:sha256:6c9b2ac5a4e25f9ae798cf7fcc1cf60c390f6bb38bcc793d12cde9955fb90834:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjNGY5OGZmMjdkMTYxMzRiNTEyM2IyMTg3ZDM3MjUxZWMwMmY5MjdlODJlMzgxMzU1NDVhYjU2MmFlNDJjMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwOWFhYmFhMzI1NDIxMWNkNzA0ZDc2NTA4YWU3ZGMyNTYzYWUxZmMwMmYwMWU2ZjgyNmU0MGMwZmNkOWE4NTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1ZWQxODAwZjc0NjE2OTk1Njg3Y2Q0ZWM4YWIyYjBmZDZjZGUyNzE1YmMzOGUxMDRjODdjOWY1ZDk3OThhN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0Y2UxNzIwNTE4YzEwOGEwMTc3NjRmOWE4NDc4OTBkODNlMDg5NjJhYWY3ZDJkOWQ2Mjg4Nzc5MmM2NWRhNmQifQ"
+        },
+        {
+          "resource": "repo://terraform/global/outputs.tf",
+          "version": "repo-file-v1:sha256:5cd180c982168387e42b6b8d682893482a98895696aaa906add1ae329522c524"
+        },
+        {
+          "resource": "repo://terraform/regional/acm.tf",
+          "version": "repo-file-v1:sha256:84dfcf27cf394c079ade7859734be4c3c098100282898fcde1f263df044e6ae4"
+        },
+        {
+          "resource": "repo://terraform/regional/route53-private.tf",
+          "version": "repo-file-v1:sha256:0bdf4949b57f84f3f9f46175462f86a3d8241a5d54b8863d1987992b5ec7c8f1"
+        }
+      ]
+    },
+    {
+      "id": "claim_a4976feaad374ef78e05aba3e70c2a8f",
+      "statement": "The regional Terraform root reads IAM role ARNs and the Secrets Manager secret ARN from the global workspace's state via a terraform_remote_state data source (aliased to local.global), rather than receiving them as plain variables; this requires the global workspace to already have state and to share it with the regional workspace.",
+      "evidence": [
+        {
+          "resource": "repo://terraform/regional/remote_state.tf",
+          "version": "repo-file-v1:sha256:97a83ef3c4e3896719232c1c04505c0741cf2004a6a83bfecc56bbac50e8f625"
+        }
+      ]
+    },
+    {
+      "id": "claim_774d16ddd2d64265acfc5bac177af4d3",
+      "statement": "The S3 bucket is created in the regional Terraform root (not global); s3_bucket_name_suffix must be identical in both roots so the global workspace's IAM wildcard ARN (ACCOUNT-ENVIRONMENT-SUFFIX-*) covers the bucket each region creates.",
+      "evidence": [
+        {
+          "resource": "repo://terraform/global/outputs.tf",
+          "version": "repo-file-v1:sha256:5cd180c982168387e42b6b8d682893482a98895696aaa906add1ae329522c524"
+        },
+        {
+          "resource": "repo://terraform/regional/variables.tf#L63-L67",
+          "version": "repo-lines-v1:sha256:deb616578f8257884560b80ba140bb838175284128c5a6e098d87b88b1bab3cc:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2JmMmZjYTBkNWY0YWIxOGNiMDg0ZjUyMWJiNmJhY2FmNGZiMDA2ZTFmNTNhY2I2ZjcwNjM2NWUzOGFkYjAzYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2I0NTU1OWEyMTM4NzVjNmJkOTc2M2E5OWUyZTIwZjI0ZWY3M2NlZDBjNTI0MWI1YWY3MWE0MjI0YmM2OTMxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTQ4MzRmMzE1MjRmMDE4NWMxZTVjMTg1MjVjZmRlMDY4YmVhNjNlNTAwYjlmNzJlMTAyNzlkYTViYWUwYTQzOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b87433e7ba04704b2041d125e5222aa",
+      "statement": "Because terraform/global exposes IAM with wildcard resource ARNs rather than per-region ARNs, adding a new AWS region only requires changes in terraform/regional plus a new HCP Terraform workspace; terraform/global is never re-applied for a new region.",
+      "evidence": [
+        {
+          "resource": "repo://docs/deployment.md#L309-L326",
+          "version": "repo-lines-v1:sha256:57f9bde84eea6afee32221f21dccd860fe5c9d842a093b654bb513a04b23ff6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExZDJlOTFiMjgwZjM1MjBkMjFkZDZiMjgxMmQ2NWQ5NGI0ODQ5M2UwNjYxMWZhZGNjYjVkNmY4NmZmMGIwYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzZjE2ODdiNDI1ZmRiMDY0MTgxNDVkZDMyODBjYjg2YTcxNWFiZWRmZjU5ZDE3MjZjMjNhYTY5ODI1NWM3MTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhOGZmZWVlYWY1NmYyNmI3MWQxMGQ4MTMzYjRiODYxZjgwMTIxNmNiZTAzZGJiNjNjYmQ5MTNiYzlmNGZiODgifQ"
+        },
+        {
+          "resource": "repo://docs/deployment.md#L62-L69",
+          "version": "repo-lines-v1:sha256:c6e7803df903eca7ebb916f49e207cda76042a2ac54ea4346c65ca418f0e9836:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZThmNmI0MWM5ZDc0YzAwM2M0NWFkZGVhZjQ2MjNlMDBmZmJhMWUxZjIyNGQ3ZDRhZjk4NWQ3MWU2MjU5ZjM2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjZiMmZhZTJkZDE1ODM4OWM2YjIyNzYwYjEyMmY2MDg1MjUyNjU1ODU0YzU4MTJhZjhmYzhiMDA1NWYwNzgxZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDI0MmY4ZmE5YTY4MmU4ZTYyMDFmMThkYjZkOGYxYzBkZjViMGJlMjNhOWE4ZTI4MmEwZmI3ZGMzYzdiYTYyNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWQzZjJiY2I4ZGFkNTY1YmQ1M2U2MzBhZTIzMDlkOTIyOTczMzg4NTE1ZmM4Yjc3NmI4ZTNiZjFmMGQyNjUzNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_33d1b1b4b06e41ccaac58ae1a6679e56",
+      "statement": "HCP Terraform workspaces for this service are declared in hcp-terraform/rosa-trusted-actions/main.tf via the hashicorp/tfe provider and a shared workspaces module; the regional workspace (rosa-trusted-actions-stage) declares source_workspaces = [\"rosa-trusted-actions-global\"], which creates an automatic run trigger so a regional run queues after a successful global apply, and the global workspace declares remote_state_consumer_workspaces = [\"rosa-trusted-actions-stage\"] to grant state-read access.",
+      "evidence": [
+        {
+          "resource": "repo://hcp-terraform/rosa-trusted-actions/main.tf#L108-L125",
+          "version": "repo-lines-v1:sha256:e284379dfbc807de9ea4a64146041aeda8000b74b0954f5eef37b061865af8dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NDRlMTRkZWM4NTIzMmE2MTJmMThjODI3ZTgzNzBjZDQxMDIyZDYxYWNhOTg1NmUyNmU0NmEyMDc5MmU1YjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNzkzM2ViNjIzZTY2MGMyM2Q5MjBmZTY0ODNiNTQwZjk4ZWUzMTM5NTgwM2JkOWZiZTkxMGIxYjMwYWM0NjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ZTQ4NmQyNGRlYWRjZjRiYWU0MzNjYjE2OTA2OGYwMTkzODM4OTRjMTUxYTRhZTRhYmU3NzE5MTYxNGMxNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NzUzMGMxNzQyMDliNTdmZWVmN2I4ZWZmNDA0YWU5YjVlYjc2ZGE1MmZkOWIyNWI2OGE5OWRiOWJkNWZiOTEifQ"
+        },
+        {
+          "resource": "repo://hcp-terraform/rosa-trusted-actions/main.tf#L39-L50",
+          "version": "repo-lines-v1:sha256:6878e25ca60c50dbb38ba1c7e00f754d022ad91e624e5a62ec42e034bec1ee34:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmN2E1YTMzZWY1MTE4NzAwNTEzMjQzZWZjMmMwMjE2YzcxY2Q2Yjg3NzQxNzYzZjIwYmY4ZDVlZjY1Yzk3YTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxNzhiM2U5MzUyZGRkYWFjYTRhMTc5MDNlOGQ4ODhhZmI5ZTU0YzgwYmQ2Zjc4MTlmZjI3Mzg2YTIwZWI4NDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YmI4OWU3M2VmMjI3NGU0MWQ4OGVmMjAzNDYyZGM1OTVkNzY4NjQzMGRkNmUwOTYxNTViMjBhNjE0MDMxZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NzUzMGMxNzQyMDliNTdmZWVmN2I4ZWZmNDA0YWU5YjVlYjc2ZGE1MmZkOWIyNWI2OGE5OWRiOWJkNWZiOTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a456ab08e69a4b22b4f34ce255b2f463",
+      "statement": "Both HCP Terraform workspaces set auto_apply = false (plans require manual confirmation) and attach to the rosa-trusted-actions-rosa-boundary-stage-rosa-trusted-actions-aws-dynamic-creds variable set for AWS credentials; s3_bucket_name_suffix and internal_fqdn must match between the global and regional workspace variables for a given deployment.",
+      "evidence": [
+        {
+          "resource": "repo://hcp-terraform/rosa-trusted-actions/main.tf#L114-L182",
+          "version": "repo-lines-v1:sha256:5b885869d7f55f06c22f9d9618d5a6e30c864606346f5474716f0368ad262cc9:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNDNkZWMxMmFjMzZmMDRlZmFmNWMyN2Q4YjVhYTRhMDRkYTc5Y2NhNmMzMGU1ZDNiYzAyYjJhZTdkOTg1OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5M2ZjOTc4OTQxNDA2MjMwOTZjYTlkYjcxNTQ0MjJkNDA0NGNkZGJmYzk1YWQ0MGRhYTc4NWY5YjkzNDJjZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhMWFjM2MyNDI1Y2QxOGRiMDUwMTA5ZTM2YzhjYTFhN2QwZGY2N2IzODIwOTdlMDY1MmEyNGY4YWU2ZTkyODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNWNlMmRjY2VjNGZlZjM0ZGE5YWEyNDZjNzljZDM0Y2NkOTVjYjUxMzRiOWUxOTEyYTkyNmNmY2Q0MTgyYWQifQ"
+        },
+        {
+          "resource": "repo://hcp-terraform/rosa-trusted-actions/main.tf#L39-L67",
+          "version": "repo-lines-v1:sha256:5ad3de02e033c4155e1fc854017828d6bec7b1199f981058a845add4384d5a31:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmN2E1YTMzZWY1MTE4NzAwNTEzMjQzZWZjMmMwMjE2YzcxY2Q2Yjg3NzQxNzYzZjIwYmY4ZDVlZjY1Yzk3YTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNjczYWJkNDU3YTk3ZWVhMTdhNjAwNjJlYjBmYWVhNmJkZjA5NDg2OGNjNmI4ZjhjMGViZGEyZjYxZWQ0MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YmI4OWU3M2VmMjI3NGU0MWQ4OGVmMjAzNDYyZGM1OTVkNzY4NjQzMGRkNmUwOTYxNTViMjBhNjE0MDMxZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjMWYwODcyY2E3YjViOGUxMTAwMzIxYjRiMTYzOGU4ZGE4MjMyNjllYzIyZDM5ZWZhOGEwOWI4MThhYjU5NjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3fc7defeac204bd2ab4ce79a8ff59aa2",
+      "statement": "IAM role ARNs and the Secrets Manager ARN are deliberately not declared as regional HCP Terraform workspace variables; they are obtained exclusively through terraform_remote_state from the global workspace.",
+      "evidence": [
+        {
+          "resource": "repo://hcp-terraform/rosa-trusted-actions/main.tf#L108-L226",
+          "version": "repo-lines-v1:sha256:4c32087b3bc41e8b651255dfcdd1ee9d433be8d5532c64f8982b8cfcb18581a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5NTQ0ZTE0ZGVjODUyMzJhNjEyZjE4YzgyN2U4MzcwY2Q0MTAyMmQ2MWFjYTk4NTZlMjZlNDZhMjA3OTJlNWIxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxOGU0ODZkMjRkZWFkY2Y0YmFlNDMzY2IxNjkwNjhmMDE5MzgzODk0YzE1MWE0YWU0YWJlNzcxOTE2MTRjMTYzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmYjU4MGU5NjRmODNhNDczZjQzZDQ0Mzg0NjI5NDlkNjhiNTYwMGZkYTc4N2YxNjM3NDVkMDBkZTg5Y2JmMzZhIn0"
+        },
+        {
+          "resource": "repo://terraform/regional/remote_state.tf",
+          "version": "repo-file-v1:sha256:97a83ef3c4e3896719232c1c04505c0741cf2004a6a83bfecc56bbac50e8f625"
+        }
+      ]
+    },
+    {
+      "id": "claim_390b0cae2c694442a28492638fb64584",
+      "statement": "For local CLI testing without HCP Terraform, a gitignored terraform/regional/local_override.tf (an _override.tf file that Terraform merges last and that fully replaces a same-named data block) swaps the regional root's terraform_remote_state backend from \"remote\" to \"local\", pointing at ../global/terraform.tfstate, so a locally-applied global root can be consumed by a locally-applied regional root without modifying any committed source file.",
+      "evidence": [
+        {
+          "resource": "repo://docs/deployment.md#L149-L268",
+          "version": "repo-lines-v1:sha256:db56714ea6bc9c5355c14729344ab1c4b786cf12ee510839d1665e749a18ed8b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NGYzOGVjOTEwNGU3Yjc3MDhkYTBmMDllZTlkYWZlMDBhNjEwNDdkMWRiZTAyZDdhZjViMjFlNjFmMjNlMjQ0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0N2MwNmM1NjFkNWMzMjczNDM2ODUyNjhhNDZiMzM5MWYzOTk4ZWVlODkwZDJiZTUxZjBkMjFjYzRhNTNhZTZkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwMDFmMmVjMTc1OTNjMTA1NGViNDYzNjdkODQ1M2VmMjRhMTczY2U5NmI3MTE3ZDkxZjlhNjhkNDRmZWY4YjAxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiYTA0YjhkY2VlYmE1YjRmMjE1NjRkOTRkMmMzZWI1ZGM1ZTcxYjNlYzM5NTZlYjQ5NTMxNDBjZmE4NGQ3ZDY3In0"
+        },
+        {
+          "resource": "repo://terraform/regional/remote_state.tf",
+          "version": "repo-file-v1:sha256:97a83ef3c4e3896719232c1c04505c0741cf2004a6a83bfecc56bbac50e8f625"
+        }
+      ]
+    },
+    {
+      "id": "claim_952fbcf0a8cc44d19a9a77c9e6069ad8",
+      "statement": "Local teardown order is regional before global, because the global root owns IAM roles that the regional ECS tasks depend on at runtime.",
+      "evidence": [
+        {
+          "resource": "repo://docs/deployment.md#L270-L280",
+          "version": "repo-lines-v1:sha256:e803b6478b90a11160cdef87d55b813ba19233352e974ab5e929372c2d87218e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMzA3OGQ0ZDI2MGJiMmNmMzQ2N2IxM2FjMzUxMWNkZTcwYWM1OGU1MTZiYWJjY2U3YWIyMDVhMDhjMTg1ZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlY2NmNzJhMGI5YWEzNzIzNjdkNGYxN2UyZDVlZTNkMTcyYzE3Y2VlMWNkYWJhYTY0NDgzMGY1Y2I0YmRiYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1acc600f238a472b8fa9d17f7ab478ef",
+      "statement": "The container image is built from a two-stage Containerfile: a builder stage (registry.access.redhat.com/hi/go:latest) that runs `go build -o bin/rosa-trusted-actions-server ./cmd/server`, and a runtime stage (registry.access.redhat.com/hi/core-runtime:latest) that copies only the binary, exposes port 8080, runs as non-root user 1001, and entrypoints rosa-trusted-actions-server.",
+      "evidence": [
+        {
+          "resource": "repo://Containerfile",
+          "version": "repo-file-v1:sha256:3bea84bc641210f54ad040f74af02b22af10665c51aa0cf121d7a567aef9e25d"
+        }
+      ]
+    },
+    {
+      "id": "claim_298a6b5d07c3453e9df66e7098649c8d",
+      "statement": "The container's exposed port 8080 and /health endpoint are the same values the regional Terraform root's ALB target group uses for its health check, so changing either requires updating both the Containerfile/application and terraform/regional/alb.tf together.",
+      "evidence": [
+        {
+          "resource": "repo://Containerfile#L16-L16",
+          "version": "repo-lines-v1:sha256:68d8f9b669398abe805c8d757bc3c610cc2f2a7684732580eca9d6d349ac481a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjhkOGY5YjY2OTM5OGFiZTgwNWM4ZDc1N2JjM2M2MTBjYzJmMmE3Njg0NzMyNTgwZWNhOWQ2ZDM0OWFjNDgxYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjhkOGY5YjY2OTM5OGFiZTgwNWM4ZDc1N2JjM2M2MTBjYzJmMmE3Njg0NzMyNTgwZWNhOWQ2ZDM0OWFjNDgxYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmY2N2RjMGJiZDc2NzIyNzk2MTA5MzY4ODM0NWVmODczNDI0NzYyM2E2ODk2YTM3ZTA0Y2RiOGQ5NmRhOWJhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjRiOGEwOGYyM2MyYzc5NTFkMWUzMjY2MzlhMWE0MGZiZGY2OTVmNWQ0ZmNjNGM3Y2M5NDJkNDRlZDMwZmNjMyJ9"
+        },
+        {
+          "resource": "repo://terraform/regional/alb.tf#L14-L29",
+          "version": "repo-lines-v1:sha256:81b892388dd7e7bbb1177ac090805e3b643b70065462c6860c36e9be5b13e969:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzNDE0ODBjNjdhZjE0MWRhMzZjNjJlYTZiNjY5NWI3Mzg3NTE3NDJkYTQ4MzIzOTJjMDdjNTdhYmNiYTg4MTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmODA1OGNjOTc5YTU0MzE0ZDFkMjhkODFiNzI0OWVhODY1MTM0ZjU5MzE5ZjZhODU4YzgyMGZhMjNhNzVjMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwZWZlZjdhODVjMDE2OGM5Y2M0OTUwYmM3Y2Q5YjNhZjU4NTFmYjNiY2E0NWI0NTllOTY2NWEzMDhjMTljOTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9d3239ce2f794ea6b417c6d38845bf46",
+      "statement": ".tekton/rosa-trusted-actions-pull-request.yaml runs on pull_request events targeting main and .tekton/rosa-trusted-actions-push.yaml runs on push events targeting main; both build the container image from Containerfile using a shared buildah-based, trusted-artifacts multi-platform pipeline (init, clone-repository, prefetch-dependencies, build-image-index, build-source-image, deprecated-base-image-check, SAST/RPM-signature checks, apply-tags, push-dockerfile), with the push pipeline publishing to quay.io/redhat-user-workloads/rosa-tenant/rosa-trusted-actions:{{revision}}.",
+      "evidence": [
+        {
+          "resource": "repo://.tekton/rosa-trusted-actions-pull-request.yaml#L11-L11",
+          "version": "repo-lines-v1:sha256:7576e743d9838c22d7f4857df00d691d7dab2ff86298d1345fbd46b9aecc684b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzU3NmU3NDNkOTgzOGMyMmQ3ZjQ4NTdkZjAwZDY5MWQ3ZGFiMmZmODYyOThkMTM0NWZiZDQ2YjlhZWNjNjg0YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzU3NmU3NDNkOTgzOGMyMmQ3ZjQ4NTdkZjAwZDY5MWQ3ZGFiMmZmODYyOThkMTM0NWZiZDQ2YjlhZWNjNjg0YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTlmZjdiYjUwMGZiZmU2YmNiMzlmZWI2NTY5NGIxZTIxZTIxZTczODZlYWE3ZDE1YmY2NDAzNzgyMDhjNGMwNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTEyYmUxMWFiYzgwNzNmZmVlOTkwNmE0MjhjYWMwNTgxN2E4YzQ4ZmUzYTVlYmY1ZDE0ODA3NTJlMGEwZmI1YyJ9"
+        },
+        {
+          "resource": "repo://.tekton/rosa-trusted-actions-push.yaml#L1-L32",
+          "version": "repo-lines-v1:sha256:9c23a6cdcfadf43f4567bd2d8dd48b84f9c9b6a5026b04911bf54212dd07b26e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YWM3NzA1OTk1NjJlNTdhNGI5ZWYxMjU0MWVlYTM3NTcwZjBiNjNlODc1YTVjZThkMzI1NjczNTk2NzUzOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYzYzNmM1MjVhNWM3MjQ2YjU0NDE2ODQ1OTNkNDFjNDVmNzAyZWUyMzQ5ZGY0MTk5MTk4MGJkOWY4ZmExM2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzMzdkNDNhMjcyYmFlZDRkZTI3MDVkY2JiMTgzYTI2ZmQxZTRhYjJhOGIwZGUzODlmZDUwZjBmYTA3YzQzNGUifQ"
+        },
+        {
+          "resource": "repo://.tekton/rosa-trusted-actions-push.yaml#L137-L527",
+          "version": "repo-lines-v1:sha256:93b8a50a6961067932e10ff64e3ebd32bb9f27b873dcd590d74d26c441e75740:eyJzZWxlY3RlZExpbmVDb3VudCI6MzkxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJjMmRiNmQzMDEyODVhNDJmNjhiOWE2YTE1MmQxMGRlYjkwZTI5OWEzYzkwOGE3NDczZTY4MzA5MTQ1YWU5YjVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyYWIzMDc4ZDdiNDAyMTI0MTEwNzM1MGUzMjUzYTI2MjdkMzRjNjI0ZmJjOTA2MWFhYzBiMzExZjc0YjMxZjFkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4ZTc1ZmUwYjFkN2I0ZjMyZjgzYTQyZmFhNGY0YTIyMzNhOGQ5ZGYxYmZhZjkyNzIyMTkyZjlkOWNiNzg5MzUwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMWExNGM2MjFiZDFhYjhiMmI4NjQxN2Q4ZTBmOTgzZTU0ZjViNWM2MGIzOThlY2M4MWU3Yjc3NjljYWFhNDVmIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_c9409cf3b9024e7b9b553285fb52d8f1",
+      "statement": "Each AWS region gets its own self-contained deployment (VPC, internal ALB, Route 53 Private Hosted Zone) that all answer to the identical service FQDN; the PHZs share the same zone name but have distinct Zone IDs and are each associated with exactly one VPC, so a VPC's Route 53 Resolver only answers from zones associated with that VPC and cross-region DNS leakage is structurally impossible.",
+      "evidence": [
+        {
+          "resource": "repo://docs/networking.md#L22-L36",
+          "version": "repo-lines-v1:sha256:867e8a18dacd339ebdb87bfe401bc3b3390eeaf2369660fbfe54c17502b9c753:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxMzNiYjY0ZDViYjk4NzRlYmY5N2NiZDZiYWM2Mjc0OTU2ZGUyNzNmZDE4Y2Y2OTdmZjBlMDcwMjhkOTI2OTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1NDM1YzdkZjM2ODgyOTIzY2E3M2UxZTQ0ZGRlNjE1YzQxMjVmNzlkNDg1ZTc2ZTg0M2ZmOTBhY2VhMmJmNTcifQ"
+        },
+        {
+          "resource": "repo://docs/networking.md#L80-L89",
+          "version": "repo-lines-v1:sha256:15033e5b0db6cdcf835b5a33808c2c1e8ae5143de5e77569ce9fdc22b4b490b9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1OGYxOTZkNTg0YmUyYjIwNDc4NmI1MTA0NDk2MDQ2ZTU4MTRkZDRmYWJhYjc0M2UwMWY4N2RmZjQ1YzdjY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1YTdlNjQ1NzQ4MDY5YTcyNGY3MjQ3N2I2M2QyM2NlNDJiYzdkYmM0NDNmOWZjMjI4NDZiZGMxZjM3ODFlZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhOWRlMWUyMjE1NmJkYjlmZTE5NWIyM2RkMzk5MDRjNzU1MjE4ZWE4NWUyNjMwZmQ1NzBlODYyYmRhMDAyZmUifQ"
+        },
+        {
+          "resource": "repo://terraform/regional/route53-private.tf#L1-L32",
+          "version": "repo-lines-v1:sha256:fe91d50c60c5371de119b344fb6e9ed7b5f31f3164c5216882b51eb33e534a5a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MWJkOWIyNDUzODlhMTExMjA5MmYwZDcyM2VjYzk3YmQ4OWU5MDAxYWNiOGNlOThhN2QxZGQ0ZTg4MDBlZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1NTgxM2E0NzkxNGY0OWI1Nzk4NWY3MmE4OGUzODU3MmUyYTExMGQ3YzkzZTFhY2JjZWNiMzUzMmQ0ZTlkYzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_deaeeae2f02040669b9a765b243e6143",
+      "statement": "The public Route 53 zone for the service's internal_fqdn never contains an A record for the service name, only the ACM DNS-01 _acme-challenge CNAME, so the service FQDN is NXDOMAIN from outside any of the VPCs.",
+      "evidence": [
+        {
+          "resource": "repo://docs/networking.md#L86-L89",
+          "version": "repo-lines-v1:sha256:e3afeba35ad78688a7d6fa49026a9266be6fa9633524bf65a9d4677b42637dd0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTcyNjc5MTFjNjA2N2UyZGIwYzE1YTNkNWI0OTEzZmJmMjY3YjY1MTM5MWFlNjUwYjZjYWZmYTU0YTI0NjBhNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDRiY2FhNTNmMjBlNjgzYTFjM2Q4NGJkN2ZkMzVhZDM0YTc4N2M1YThhNDhhY2YyYmFhMDE3ODEwNmFmYWExMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2E5ZGUxZTIyMTU2YmRiOWZlMTk1YjIzZGQzOTkwNGM3NTUyMThlYTg1ZTI2MzBmZDU3MGU4NjJiZGEwMDJmZSJ9"
+        },
+        {
+          "resource": "repo://terraform/global/dns.tf#L1-L30",
+          "version": "repo-lines-v1:sha256:e56ff4ac026aed367806e158c8c528d22725c3691fedb218b7c3060d896828f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5MDkzMTc3YmIxODdhNjY0NzNjYzZlNmY3ZDU4ZTAxMzk4MDM5Y2IyYTNjZjI3MGNlY2VjZDQwZGEzYmU3M2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0NmRiN2M2YTBjZDQzYjQ2NTMxNDRjZDg5YzZhNmFmMzRjNTIwMjgwNDBiOTQ2N2VmYjM0YTEyNWMwY2FhZmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_96d04c83e6a24b339e50116c751746bf",
+      "statement": "The ACM DNS-01 validation CNAME for the shared internal_fqdn is created unconditionally once by terraform/global (via a minimal, never-attached 'validation-anchor' ACM certificate and an aws_route53_record.cert_validation keyed by public_zone_id), superseding an earlier per-region manage_validation_record flag; each regional workspace then requests its own regional ACM certificate for the same internal_fqdn and waits via aws_acm_certificate_validation for ACM to report it ISSUED against the already-existing global CNAME, letting all regional applies and destroys run in parallel without racing on a shared Route 53 record.",
+      "evidence": [
+        {
+          "resource": "repo://terraform/global/dns.tf#L1-L41",
+          "version": "repo-lines-v1:sha256:510e084a100e3fdd88b60725d3f854db743a7a4df93215a99d00d1f36f1ba577:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5MDkzMTc3YmIxODdhNjY0NzNjYzZlNmY3ZDU4ZTAxMzk4MDM5Y2IyYTNjZjI3MGNlY2VjZDQwZGEzYmU3M2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://terraform/regional/acm.tf#L1-L34",
+          "version": "repo-lines-v1:sha256:0c4c1286487f7750b023663ceb3ce49d3ca163ca9815cc157e61068ef45ca7c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5MTMyODFmY2M3MTkxNTc3MTRiNGEwMDBmMTUzYzVmMjVjNzZmNDcxNDk5YTYwNzY5MzMzNDFlOGZlZmU5YjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlNzYyNjU5MjcxNmM4YWY5N2RhYTg4MDMwNjcyYjBkYWEzZTFkNzZhOWFiMzY3MGM1NmZjNGZjZDNiZTA1YWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_267fd45b73c9466c92dac34f98bc6a01",
+      "statement": "Because the global workspace unconditionally owns the shared ACM validation CNAME (and the IAM roles/Secrets Manager secret the regional ECS tasks depend on), the global workspace must be applied at least once before any regional workspace's first apply.",
+      "evidence": [
+        {
+          "resource": "repo://hcp-terraform/rosa-trusted-actions/main.tf#L35-L50",
+          "version": "repo-lines-v1:sha256:9956f3139295a3b23fe09d8c06bd93607aec90efe07fdbac8a24369344897d05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjOTFkNjliN2FjNjU3MjEyNzIyYjk3YzE3MGY1NzJlODk0OTU0YjFlNzMxNTZiYWVjYWJiOWZjMGYyZDFmNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxNzhiM2U5MzUyZGRkYWFjYTRhMTc5MDNlOGQ4ODhhZmI5ZTU0YzgwYmQ2Zjc4MTlmZjI3Mzg2YTIwZWI4NDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1M2Q3OTRiNDA5YTI5ZTZiZTgyY2UxNzc5YTdkZTY3MzFkZGIxNjAyNTZiM2EzZDg1ZDVlMjg4OWI0Yjg2NzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NzUzMGMxNzQyMDliNTdmZWVmN2I4ZWZmNDA0YWU5YjVlYjc2ZGE1MmZkOWIyNWI2OGE5OWRiOWJkNWZiOTEifQ"
+        },
+        {
+          "resource": "repo://terraform/global/dns.tf#L1-L14",
+          "version": "repo-lines-v1:sha256:6041551624a59b8cb406a1a2da7be5681df799fd843b21f1b13d18f2e70dc111:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5MDkzMTc3YmIxODdhNjY0NzNjYzZlNmY3ZDU4ZTAxMzk4MDM5Y2IyYTNjZjI3MGNlY2VjZDQwZGEzYmU3M2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlMTdjNzQ5ZDI3YTU0NTlmNzZjYzVkM2Y0ZmFkZjllYTY2ZDIyNDY1NzBjNjExMjI2YWEzMjM1NzYzNzE2NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhNDM1ODVjYjAzOTg4NGY0MmY2MDU4MTY5ZDhiY2VjNjc5NjVjZWQ1Yzk5NWQ1MDMwMDllMWIxMjQxNGEzYmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1e24a20d6e18437f9f102c46769fb851",
+      "statement": "A regional HTTPS ALB listener and regional ACM certificate are only created when both internal_fqdn and public_zone_id are set (local.https_enabled); otherwise the ALB serves HTTP only, and an operator can alternatively bypass ACM entirely by supplying alb_certificate_arn for a certificate managed outside Terraform.",
+      "evidence": [
+        {
+          "resource": "repo://terraform/regional/acm.tf#L36-L43",
+          "version": "repo-lines-v1:sha256:f5eb1ee601bb100cb77d315004d41aad4ddff9604f61eb39e209cf4c09b240b9:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDBiMzgzYjE1NDNiOTFhZGU3MjUyYzA5NmNmMGU0NDkwMTA4NDk3NzMwZWE2Y2QxMDIzYWNmMDJmMjdmZjRmZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTYyNjc5MzVmYzYzMzQ2NWQ4NDhiNDBhNGVkNjk2N2U3YjdhMzIzZjgxY2Q1M2MxMTBhZTIxMDI5Njg3YWExMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjM4ZDMyOTQxYzliYTQ1YzNlYmNmZjBjOTI2ZDFmZDAxYWJiOWJkNDgwY2FiNzdjZmZjZmE0ZDUwZTYyNDMyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://terraform/regional/variables.tf#L106-L116",
+          "version": "repo-lines-v1:sha256:d9ebd938b4f37ba0e8061896b04165a25155607860df5ad93ace3012d2de722d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMzMzNjMyOTEwZjY1NTE0MGIwZGU0ZTlmZWMwMzdmOWY1MjI2MDA0ZjViMTkxZWZkMjc4ZDVkZGJjMTJmNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4NTkxZGZhZTgyZjk0YTY3OTc4NTdiYzhhNWJiNDY2N2QzM2IxZTk5YmQyN2E1N2Y2NGVhMmUwYTFmM2ZhNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1ODcwOGZmM2M3ZmQxMGNiMjU0ZDE1NzU0OTkxNzQ5OWQ4NmMzNzRkNTM2ZjhjMzY2ZDYyM2IzNDU0OGU0ZGEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

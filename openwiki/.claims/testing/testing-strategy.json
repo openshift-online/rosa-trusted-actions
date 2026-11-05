@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:131da4138980c4c302d97d65082cca614a9839f6d838671a2b7204d35d3dade1",
+  "claims": [
+    {
+      "id": "claim_069b6622f456401b8eeb7326226f1505",
+      "statement": "The Makefile defines make test (compiles integration-tagged tests under tests/actions/ without running them, then runs `go test -v ./...`; SQLite-backed store tests run by default, Postgres-backed store tests are skipped unless TEST_POSTGRES_URL is set), make test-race (`go test -race -v ./...`), make test-coverage (`go test -coverprofile=coverage.out ./...` plus `go tool cover` HTML rendering), make test-integration (starts the server via make run, runs scripts/test-api.sh, then stops the server), and make test-api (runs scripts/test-api.sh against an already-running server).",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L124-L204",
+          "version": "repo-lines-v1:sha256:007075d1ef2e52f4e8fb4bb0ad1fd7c7dd19580fca25ea75a4c4e571b2a72332:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjNGQzN2E5MTMzNGJjZTIwMTg1ODcwZWVhZmRmZDA5ZTJlMzQxNTczYjgwMzFmYTA5ZGUyNTY4OGNmNWZkYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3Y2UxZjQ0ZTRjMWMzZmU3OTc1OWIyYjIwNWI2MzYxODA1OGNiYzA0OTc0NWMxNGFlOWM0ODI0MDI5NTliZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlY2M3ZDdmMzY4OTQ0MDQ2Y2VmNDgwNWE4MDZjZGEzZTRiN2ZlODQzMjYxMTM4OGExMDIxODMzMWYzMmUzNjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhYTllM2NiNDZjOWIxN2FkMjdhOTk4YTY2Zjk5NzBiZGE4MTNkNzVkMWI2N2NkOGJiY2ZhZGM1N2M5NTZmZGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_187084a11ca2477b85299655a5e1c56e",
+      "statement": "Project documentation (TESTING.md, CONTRIBUTING.md) states a patch coverage policy of >=80% on all PRs enforced by Codecov, with internal/handlers/ and internal/config/ called out as the primary coverage targets; however the repository's codecov.yml actually configures Codecov's patch target at 50% (threshold 1%) and project target at 35%, so the documented 80% figure and the live Codecov gate diverge.",
+      "evidence": [
+        {
+          "resource": "repo://CONTRIBUTING.md#L25-L25",
+          "version": "repo-lines-v1:sha256:f8ee1d55ee5d0054692e17d1f8aa57bc6d55ed0ba1baf5eac072f6ce2226d53e:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjhlZTFkNTVlZTVkMDA1NDY5MmUxN2QxZjhhYTU3YmM2ZDU1ZWQwYmExYmFmNWVhYzA3MmY2Y2UyMjI2ZDUzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjhlZTFkNTVlZTVkMDA1NDY5MmUxN2QxZjhhYTU3YmM2ZDU1ZWQwYmExYmFmNWVhYzA3MmY2Y2UyMjI2ZDUzZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODhlMWZmMDg5MDQyY2M3ZjA5ZmQzZWFhYWRlMjVlZTIxMDQ2ZDM4OWM1ZmEzMGE0YjJmNDQ3OWVjODYwOWFlMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMThmOWI1ZDMwNzUyMzc4Zjg4ODU2YjBiYzMwOTYzNmEyMTJmOGU3NTM0ZGNhMTIzNWE1YjVhYzc3NTFiNTgwNSJ9"
+        },
+        {
+          "resource": "repo://TESTING.md#L94-L97",
+          "version": "repo-lines-v1:sha256:063e7323657abd60655a9a2799fffcba6b0cb66764e9ea764d552e5b8438fbf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGJmYTE5OGE2NTEzMzA3NzJlYzVmMGJlMTgyZDA5N2Y3ZThlODgyMWM5ZjA0MjYzNjMzM2RjNGI1NDdjNDg2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjgwMjAxMDZlODZhZjgxZWQ2NDJlNzQ1MzA1NGMyOTdjNDMzOTkyNDNhZDkzMjEzODRkZTcxMDFiMTUzZjUxZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDQ1YzcyNjNiOGE3NmU3Zjk3Njk4YzBlMWFiNWUyMzhlN2U4NzZhZDQyZWViNzc0NTIxMTU3NzRjZWUwYzhkNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDU4OTMwZTFlZjZkYWFmYWE3NGY3YjNjZWQ2ZjM4ZTE5NjJhMzlhNWQyMjYxYzI3M2FmOTVkNGI3YTIzZmVlMyJ9"
+        },
+        {
+          "resource": "repo://codecov.yml#L1-L21",
+          "version": "repo-lines-v1:sha256:6c26d896a97dd0458823e199b7bd687d2009e7c028d6146f4152e51282a154c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhMmMyZjRjZTQyYTc5MTgzNjllYWEyYjUwY2ZkMzNkMWEwOTIyYjAzOWQ3MmI2YjA5NDU2ZDgzNjhlZDhmYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMTQzZjJlNjI4NzM3ZDZkMDY1ODMxOTExMDYyNTY0NGUzMzIyN2FjMTA5YTY4MmZjNzg1ZDJjMmU0YzhmZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhY2UyNjhlNzViNDUyN2M2OTNmM2FjZTA3Yzg3M2Q0ZmJlMTE0OGRlN2VmYjE1Y2IyNzExMGNjYWNjZjY3YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_94af7e2ad1b84e5b80a562c9b0f2aef3",
+      "statement": "Codecov is configured to ignore **/mocks and **/zz_generated*.go, and TESTING.md additionally documents excluding vendor/, node_modules/, internal/openapi/ (generated), **/*_test.go, tools.go, and docs/ from coverage accounting.",
+      "evidence": [
+        {
+          "resource": "repo://TESTING.md#L110-L119",
+          "version": "repo-lines-v1:sha256:0acf64363782b3597e1b45258fbc0599152c9eaff0d85580e80fa493727b6d3a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiYWVlOTVjYTRiMTU4ZThiMGY3NTRjMjQxNGNkYzgxMmM3Yzg2N2FjMTY0NTA4NmFkZjIzYmRiZjJlZDE4YTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyZTZkYjgxZWM1MTY1ZmUxMWZjMmNhYWI5ZTVkNTE5NDVlNTk0NmE2NzIzNmE3ZWUwOWZmNWJkZDkxMDIwNjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwYzU2MjFiYjllOGRlM2QwZmNkZDc3ZjcwYjM3MDhhMTNiM2JiNmY5ZDE3MzZiYjEwMzBmZTZhNzg5NGM0NzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzYmZlMTg1NDgxZmMxNGYxMDBjMGZiODY2YTZkNzI2OWE5ZTFmNTAzOWRhYTcwZWEyZGZkODFmYjU5ZTIwNWMifQ"
+        },
+        {
+          "resource": "repo://codecov.yml#L36-L38",
+          "version": "repo-lines-v1:sha256:202fa80cd74a170dfcc03f0336bf3bc2dbc7b596a0cb3ec0613e2eb11c6efce5:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDI1NDdmM2IxNTlhZDkxYWE4NjE4NzhhMWI4MTdmMjFjMjdiMmJmYjFlYWJlYTMxNjEzNjExMGQ0NTI4OWQyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWNjNDU3NGVhZDFmMzJmZmI5YjQzZjdiNjQ4ZWJhYTJjZGVlYTZiZmQ3NTdhOWY1NjMyZDk3NTMzNmM3ODgyMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGQ5MWJmMjI0Yzc2NzVhZWU2ODliZDQyZWNjODBkNjczZjAzNWQ4M2JiOTMwMmMxOTY1OWI3YjNkMTgxODMyMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6e181ae2ef974a899fb2ceb39eb4ab40",
+      "statement": "TESTING.md's documented unit test conventions are: no third-party test frameworks (stdlib testing + net/http/httptest only), table-driven subtests via t.Run, Test<Type>_<Method>[_<Scenario>] naming, per-test isolation (each test builds its own handler/store instance and logger, no shared mutable state), and t.Errorf for non-fatal checks versus t.Fatalf for preconditions that would make further assertions meaningless.",
+      "evidence": [
+        {
+          "resource": "repo://TESTING.md#L53-L90",
+          "version": "repo-lines-v1:sha256:3495e45754047afed401523683e412d787e42287d4148bd869c5ce0576682d9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyMGFmZTQzMTgwMDk5Y2Q3ODAwZmU1ZGI5MzBjNDhhODQzZjgyZGZhYThhMjlmZjAxZjg0ZGQ3Mzg3ZmRlMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4MDkxOGFjNjQzMDcwNDAzMDA0MzI3OGFiYjE2NzAwMWM2ODM0M2ZjNWEzYWRmN2Y4MmI2MTY5NTI5Yjg0YWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0NWM3MjYzYjhhNzZlN2Y5NzY5OGMwZTFhYjVlMjM4ZTdlODc2YWQ0MmVlYjc3NDUyMTE1Nzc0Y2VlMGM4ZDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1e24ed9810fc4a83857f56ff8d923b86",
+      "statement": "Despite the stdlib-only convention, internal/handlers/api_test.go and internal/store/store_suite_test.go both import and use github.com/onsi/gomega matchers (dot-imported, e.g. g.Expect(...).To(...)) in some subtests, meaning the no-testify/gomega rule is not uniformly followed across the codebase.",
+      "evidence": [
+        {
+          "resource": "repo://internal/handlers/api_test.go#L13-L13",
+          "version": "repo-lines-v1:sha256:7ce9f2eb75757dea9d02b132c2677821a19733164a4e134107fdf684e210b1d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NlOWYyZWI3NTc1N2RlYTlkMDJiMTMyYzI2Nzc4MjFhMTk3MzMxNjRhNGUxMzQxMDdmZGY2ODRlMjEwYjFkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NlOWYyZWI3NTc1N2RlYTlkMDJiMTMyYzI2Nzc4MjFhMTk3MzMxNjRhNGUxMzQxMDdmZGY2ODRlMjEwYjFkMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTk0OGQxODA4NTA4NmNhZjQ5YWY1ZjUzMmExNGZkOWQ3ZDQzNmQ0NGUzNzcxODI2M2UyOWQ5OWQ4ZjQyNDFkNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTNhNGJiZmYwOTBjNDkyYzA1ZGY5Y2I0NmNhZDZhN2FiZTZjNjU0ZGRiMDFkZjM3NzQyZjk0OGQzZTA3NzExNiJ9"
+        },
+        {
+          "resource": "repo://internal/handlers/api_test.go#L292-L292",
+          "version": "repo-lines-v1:sha256:bef17bb92e45bd30c86fc1fc285db3e063d4514715d8eb3a1c0cd4c7cd097e70:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmVmMTdiYjkyZTQ1YmQzMGM4NmZjMWZjMjg1ZGIzZTA2M2Q0NTE0NzE1ZDhlYjNhMWMwY2Q0YzdjZDA5N2U3MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmVmMTdiYjkyZTQ1YmQzMGM4NmZjMWZjMjg1ZGIzZTA2M2Q0NTE0NzE1ZDhlYjNhMWMwY2Q0YzdjZDA5N2U3MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU3ODNiNTBjYjcyYTEyMTFlMjc4Zjc5OWJhZWY4MmM3NzFlYzZlZmFhMjJhMWFhNjM0OTRjNDA4ZDhmYzRiMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzg3NGU3ZmQxN2M2YTA3MGJkMTE0MGQ1YmQ5NmRmZGFkNzY2MDUwN2QxN2Y1NDMyMjg0Y2EzZGE4NzIxMDZiYyJ9"
+        },
+        {
+          "resource": "repo://internal/store/store_suite_test.go#L16-L16",
+          "version": "repo-lines-v1:sha256:7ce9f2eb75757dea9d02b132c2677821a19733164a4e134107fdf684e210b1d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NlOWYyZWI3NTc1N2RlYTlkMDJiMTMyYzI2Nzc4MjFhMTk3MzMxNjRhNGUxMzQxMDdmZGY2ODRlMjEwYjFkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NlOWYyZWI3NTc1N2RlYTlkMDJiMTMyYzI2Nzc4MjFhMTk3MzMxNjRhNGUxMzQxMDdmZGY2ODRlMjEwYjFkMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTEyNmMxYzRhY2Y3MTc1MDY1OGJlODY2YzkwZWQ2Y2JlZDRmMmYyNGMwZDc3ZDFhYzcwYjgzNjkyNTAzYTAxYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGM4OTZjM2FjYWVmNWIyYzA0MDBhNzhjMzg1ZGYzYzQ3NTQ2MTU0MzU0MGE2OWE1ZWMwNmEzMzUwYWM2YTg3YyJ9"
+        },
+        {
+          "resource": "repo://internal/store/store_suite_test.go#L270-L297",
+          "version": "repo-lines-v1:sha256:6bd6ccf9a061345ca4b8e6c365e1cb4fd475dfc779f8490f470d5f01adb045c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwMzZhOThmYTU4ZWE1ZjZiYTgzNzI3YzNiNTEzYTI2OTBiNGQzYTJkMjEwZTcxMGZjZmZlMjA3NGQxOWFiMGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4MThjM2ZlMzE5NzI1MjE0OWI3NGVkNTMzODA4MTM4NTIwMzQ2MjJhYzdkMTg3Mzg1OWIzNmM2YjZjNWY1NWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ebe58b977e04966a0832edea56d7deb",
+      "statement": "internal/handlers/api_test.go's newTestHandler helper constructs a fresh in-memory SQLite store and a new APIHandler for every test, registering t.Cleanup to close the store, demonstrating the per-test isolation convention in practice.",
+      "evidence": [
+        {
+          "resource": "repo://internal/handlers/api_test.go#L40-L52",
+          "version": "repo-lines-v1:sha256:1c03ade08541bca8d6c08eef58f62566b411b692f28da211cbaf24aed04b66fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwYjE3MzQyZWI4YTJlM2ZhNGI4NjI1NWJiYmQ0ZDRhMDQ5NGM2YTcwZjYyNDMwNzliNDJlM2JiNzRlZDkxMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxMTBhYzAyMWU3ZTMxZWE4ZWE5MGI0ZTI4NmNjZDIwM2Q4N2E2ZTAwMDZiM2Q0YzE5NWJiMjc0NTgyYzZlM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkMmViNDQ1ZDYwMDRlMzdlMmEwYzgyMjU1YTFhZjVkYjljMjg5NzM1MDU1ZDYxNmEzNWEwMDY5ODFjZWNlOWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32f447999900420283166d11c31fc18d",
+      "statement": "TestScopes_CoverEveryRegisteredAction in internal/executor/scope_test.go is a structural invariant test: it wires an Executor with the real KubeScope and AWSScope, iterates every action name from actions.GetActionsNames(), and fails if exec.scopeFor(action) returns nil for any registered action, guarding against an action being registered without an execution scope able to run it (which Execute would otherwise deny at runtime rather than execute unauthorized).",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/scope_test.go#L14-L43",
+          "version": "repo-lines-v1:sha256:69dc44808837ca3b3c834f1cc8cc99bee0b88f6721eea4b53ed11f7e38a04533:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1MzdiYjJlZDhmOThiYmVmZWI5ZTVhYTE4OTA2Zjk2NDhmNjc1ODRiN2FiODUzNjhhY2EwMzI2NDVmZDk3NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlNTQyNGUyMTlmOWRlNzczZjYzOTc5Njk2NGFjOTJjZTU4MzdjYmNkMjg1NDA2YjRkMWFjMDNjZmNjODczYjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_79d8c2aa4fc04435aef1019ac83dd290",
+      "statement": "internal/actions/*_test.go files (e.g. aws_ec2_test.go, describe_nodes_test.go, list_alerts_test.go, aws_cloudtrail_test.go) establish the per-action test pattern: each action's tests exercise its name/RBAC/parameter-validation logic and cover both success and error paths, serving as the template for testing newly added actions.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_ec2_test.go",
+          "version": "repo-file-v1:sha256:a98269c4c0601c3e73df1a0af9ac85136f27954779f5593ad31e2875ff6bc19c"
+        },
+        {
+          "resource": "repo://internal/actions/describe_nodes_test.go",
+          "version": "repo-file-v1:sha256:236073462472ba38fc770113ec47ac28ca72629fe13726b7342ed0e257820950"
+        },
+        {
+          "resource": "repo://internal/actions/list_alerts_test.go",
+          "version": "repo-file-v1:sha256:dba0fc0177867d1da14512baa597e50face6fbd56507c35b1ea149f039c7389f"
+        }
+      ]
+    },
+    {
+      "id": "claim_d95826e5b9814ee2a9272fbb6180166c",
+      "statement": "internal/store/store_suite_test.go defines runStoreTestSuite(t, factory), a shared behavioral contract for the Store interface that registers one t.Run subtest per Store method/scenario (create, get, list with each filter, status/output updates, claim-next, audit-entry creation/listing/foreign-key enforcement) and calls the supplied factory once per subtest so each subtest receives a fresh, empty store.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/store_suite_test.go#L40-L64",
+          "version": "repo-lines-v1:sha256:b1e9c521f7cc83cdba2bb3dd06d46592e6378cbd551ab767f3fbad82e14971d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjcyNTgwNDc3OTBlMzI2NTRlODAzODQ0ZDkzNWU0NmEzODczMzM3MDYwODFkNzA3YTg5MmNkNGQ1NGQxMzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxNGE3MWYwM2I5Njk4NWRhODQyYjk1MGQ2ZWU3ZWNmYTk5NGU2N2UzZTA5ZWUwMzExZmZjYTk4MTg5Njk3NDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_77d9b2f9d93c47e8a859307fe67aa875",
+      "statement": "internal/store/sqlite_test.go's TestSQLiteStore and internal/store/postgres_test.go's TestPostgresStore both call runStoreTestSuite with backend-specific factories (an in-memory SQLite database closed via t.Cleanup, and a real PostgresStore against TEST_POSTGRES_URL with schema tables dropped in t.Cleanup respectively), so the same behavioral contract is validated against both the SQLiteStore and PostgresStore implementations; TestPostgresStore is skipped via t.Skip when TEST_POSTGRES_URL is unset, keeping make test fast and Docker-free by default, while make test-postgres sets that variable after starting a disposable Postgres container.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile#L172-L177",
+          "version": "repo-lines-v1:sha256:3ee8ad09f71dfb67a78c93c5d364cffc27ec8e1d5f00acd3e7b4a0e35b4c4c8a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDQ3MWFkZDY4MzgyMzVlM2U3MzE3NWVjNWFjMzgwMTYzZmNkZWIyNTYxZjAyOTNjYzA2M2U3MGI0NDYxOTdjZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQ5ZjZmNzAzY2I1NDc1ZWJlMjllMWZhMzY0OTk5YzQ1NjVlZWM2NDQ5NTcwMGY1YjVkOTVhMDI4N2UyM2ZmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODRjNmRlYjM2YjQ4ZTY2YWE2MjA5NjEyZTIxYjQzYmFiM2ExYjkxNTY0YWZkNjIyMjY3MjMzNzc3NzY0ZTI4ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmU4ZWViZmIxMGM4MGVhMTUxYWE5MmQ2ODhiYmMyNDU3MWY1NmFhODBiZjBiMzJkZGM2NTIzOTE4ODg5ZDVkNSJ9"
+        },
+        {
+          "resource": "repo://internal/store/postgres_test.go#L11-L49",
+          "version": "repo-lines-v1:sha256:4f2491a1f8207691832bc2b4ab0dae526b02a2dfc7d043b855c795f9e1e15c2d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlM2IwZjYxMTU3MmI5Y2NlODk0ZTkxZmRlNzBlMTFjZWVlOWUzNWFmY2JiNDczMmVkNGE0Yzk4MTdhZmQ5MzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjODZkNmYzMGYyNzc0Y2M1YTg2ZjM0ZmYxODUzMWM3YjExZTEzOTM1ODcxM2UzYTY5ZDhjMWUwOGE2NWZhYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwMjk5ZmVmNTYyODdlYjYzZTBiNjBmM2ViOGIyMjMzZWIwY2FiZWI5YmNmM2RmZDY0NWY2YjMzMjAzYTQ4YjQifQ"
+        },
+        {
+          "resource": "repo://internal/store/sqlite_test.go#L10-L29",
+          "version": "repo-lines-v1:sha256:50812951bc26cb7dc6fd9dc2754e1ebf16e587381ea69189a7fc89e26f818f6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZTkyYzRmZmZhYjkxYWIyZjEzNWE5NGE2YjM4N2U3MjEyYjAwZDBjYjQ3MDgxNTVhZGQ4YjhjM2E2ZjcwNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjODZkNmYzMGYyNzc0Y2M1YTg2ZjM0ZmYxODUzMWM3YjExZTEzOTM1ODcxM2UzYTY5ZDhjMWUwOGE2NWZhYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNWRlMWNiZmE3MjA0ZDUzZjE0NzZlYmYxMTRhNzgzNTk5N2RiNWE0NGM5MzJkMmEyYzc1NDZkZTgxMjlmZTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef5434385da245bb94f582e61aa73222",
+      "statement": "CI runs golangci-lint, then `go test -race -coverprofile=coverage.out -covermode=atomic ./...`, uploads the coverage profile to Codecov for patch coverage enforcement, and only builds the binary after lint and test succeed.",
+      "evidence": [
+        {
+          "resource": "repo://TESTING.md#L132-L139",
+          "version": "repo-lines-v1:sha256:97dd170c4666a01154f181c7c664c11c85beea6f1465c0e6056f52bde0bdad34:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWE0NjM3NzRiNTU3YzY1ZGZkODU0NGNkMjg3NGZhNzk3OTI2ZDlmNThmNjgwMjNlOGMxMWUyY2YyMGJiYTA3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2ZjMWNhNDM3NTQzZjk2ZjgyYTdkZjYzMDUzZGZlYzMwZGIxODI5ZTE2MmY0Y2E2NDlhNzQyZDM5NWU4YjhhOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTBmNWY5ZDYyMTQ0NTQxMzgwOTg3ZmRlZGM1MWRmZmEwNTAyYTY1Mzk3Y2RhZGQwZjdkNDZiNWY5M2NmMzNlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}
