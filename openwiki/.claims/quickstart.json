@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:78203a82f1d2aa89e053634d669a2f50d1b0fd4b72d3cc203e85cc02c1543cb9",
+  "claims": [
+    {
+      "id": "claim_08bad333f2cb455e96d5f369fdcf4920",
+      "statement": "The server bypasses live OCM/JWKS authentication and authorization by setting ROSA_TA_AUTH=disabled, which injects a hardcoded 'dev-user' identity with the SREP role for every request.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L22-L32",
+          "version": "repo-lines-v1:sha256:39905ff264ab13e5342170dc277c9da7f092b3b11e78596ca21627214bf7712c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzNDA1NWI0NjlkZjJjNzFlNGQ0OTk4M2Q1ZmRhNDc5NWQ5ODNiNTg2MmQzMjU0N2NjYTI1MWQ5NzBiNzA5YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0YWE2NmIxNjVjMzQwY2M2ZTY2NjdhYzNmNDQxOGY2YzMzMGRlYjZhMzNmMjA4ZGViOWJhMjg3MDg0MWM4MmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMjIwNzIxMzE4ZTlmMjk1NjViNDFmNTQ2NzRkNjExNjIwNTU3MjE5OTBlMGI1ODQyM2E1MWU0ZGUwYmY1NmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZjlkMDVmNzdiZjY3OGIyN2Y4ZjQzMzQ3ZjhhMDVmZDM5ZTU1N2UyNTcwZWZkZDNhNGM4OGM4NzI0M2JjNDkifQ"
+        },
+        {
+          "resource": "repo://cmd/server/main.go#L179-L182",
+          "version": "repo-lines-v1:sha256:3c126e38d70617be6af639193451f54aca0212cf4b5735843910cb8118f3281c:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRhZGQxN2VjZjQ5OTFjM2I1MWE1N2M3NmNiNWRiYjJlNzg1M2Y5OWY0NDU4ZWQwODk0NTA2M2MzYTMzNTI4MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWI4ZjZlN2Y5OTk1MThmMTIxMmY4ZjRlYTQ1MGY4NjRiMDU0NmIyNGQ5YzAzNDBjNDM0MzYyYzhjNTU0Yzc4OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmIxOWIwMTNlM2YxZGZjN2YzMzk4NTMxMDY5ZmM2NmMwZjVlYjhhMTU4ZTBjOThlMGE3MDhkOTNmOTRmYTJlZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTRlOWY1MzA3MDE1MzQwOTg1OTZiNTZlMDBkODA5ODFiMTE3OTA5OWRkZDhkMTE5NTdmNzdlNjZkNzBkOTU0NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d2f9e34493c1479cbc22e673a6613f70",
+      "statement": "When ROSA_TA_AUTH=disabled, the server refuses to start unless both ROSA_TA_KUBECONFIG and ROSA_TA_AWS_ENDPOINT_URL are also set, preventing a mock-authenticated caller from reaching real Backplane/cluster or real AWS infrastructure.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L198-L198",
+          "version": "repo-lines-v1:sha256:6ae357def97174c8e10a35e9e86161c02a01ff67062c922711be5e13c078e76b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmFlMzU3ZGVmOTcxNzRjOGUxMGEzNWU5ZTg2MTYxYzAyYTAxZmY2NzA2MmM5MjI3MTFiZTVlMTNjMDc4ZTc2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmFlMzU3ZGVmOTcxNzRjOGUxMGEzNWU5ZTg2MTYxYzAyYTAxZmY2NzA2MmM5MjI3MTFiZTVlMTNjMDc4ZTc2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODIzZTQ3NjJkYTIzZGE1ODI4MjFmNDZmMzhlNmY0YjYxODUxMzJhYTE1OTNmNzU1MjkyYjZlZDVkYWU1NWNiZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzk5NTliNjczYjI0OGNmYzg4ZThiYTFhOTI2OTFmMWI5MGJmZDljNzAxZjNhZDFkY2I3ZGQ4NWYyZGMwMWM4MiJ9"
+        },
+        {
+          "resource": "repo://cmd/server/main.go#L302-L302",
+          "version": "repo-lines-v1:sha256:9cf5d11792660c2afc15c6eda37630e85148cb74caf9cf779e9baecc89f37a0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWNmNWQxMTc5MjY2MGMyYWZjMTVjNmVkYTM3NjMwZTg1MTQ4Y2I3NGNhZjljZjc3OWU5YmFlY2M4OWYzN2EwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWNmNWQxMTc5MjY2MGMyYWZjMTVjNmVkYTM3NjMwZTg1MTQ4Y2I3NGNhZjljZjc3OWU5YmFlY2M4OWYzN2EwYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmE2MDE0YzE1MzY3ZDAwNDM2MmEzYjkwODc3ZmRlNGRlODE2NTliOGMwNDI3MmQ3NTJkZGI1N2EyMDUwZTk0MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDlkYWI3NDRjMTIzOTU5Y2I1MWZiMmYwNzhkNDI4NzNmNzVjOTBkZjc3ZGYwZWM5MThkZjBlOGUwYmU0YTJkMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6250eb5d6f9349d395ddb485dc9887fb",
+      "statement": "The ROSA Trusted Actions Server's HTTP API surface (routes, types, server interfaces) is generated from OpenAPI specs via oapi-codegen, with hand-written business logic in internal/handlers implementing the generated ServerInterface.",
+      "evidence": [
+        {
+          "resource": "repo://ARCHITECTURE.md#L24-L36",
+          "version": "repo-lines-v1:sha256:e263ed6be80fe8c95d75c172aa1e004b11fbe087648dc2274d92dd855966f9ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMGY2ZGEwY2MzOWUyY2NiMWI0MTM2ZDM0Y2M5MGNkYzkzZjIyMmFmYmYxOTE2OWY4NGE1Yjc5YjVjYTY0ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxZGI4ZTE3ZWIwMTkzMmQ1Njk4MzIxOTMzYmFmOWVlYWUxOGFiNjNmYWMzYzBkZGFiM2UyM2RjOGM2N2Q0OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzNjQwNTk5MDM4YzY1Mjg5Y2VhY2NmZjU1ODQ2YzYwMmE5OTIwNjQwZjc5OTlhODQ3MjA0Zjc3NDU4ZTYyZjUifQ"
+        },
+        {
+          "resource": "repo://README.md#L1-L3",
+          "version": "repo-lines-v1:sha256:ded7b78b0e93adaef4dfff6a59a372704eca6e731582eacde5d9c086126ffd51:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2E0OGU1N2I5MDM1YjgxNTE1NWVmYzA4ZTcxNjBmY2U0Mjk5YmE5NjAwNTk3OTJkODNkZTJhNDU4NGI2OTE4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDdlOWE1Njc0N2IxOTRlZWE1ZmQ0ZGQwMTkyZTIyNmQ3YjcxMzA2N2IxNGM0ZGM0NmJlYmEzZjhjMWFhMWQ5NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODY4OTRhZWI2MmRmZTdiZDJkMGJlYzJmZGQzNzJmZGQ4ZTM1ZDM0NjdkYTBmNmZhMjFjZTA1YzFiZTE5Y2E4NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cf61a51a5e09466bbe580082716844d9",
+      "statement": "Submitting a Trusted Action via POST /api/v0/trusted-actions/{action}/run returns 202 with status pending and executes asynchronously on a background worker pool; results are retrieved by polling GET /api/v0/trusted-actions/runs/{id}.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L119-L131",
+          "version": "repo-lines-v1:sha256:184dd8e3a3227574040e2a9953925180fa5e11a5984203a88afd0347cc4b3469:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExZmVhMGM3MTc3NTlhOGE4OTQ4ZjkwZDMyMWNkMzJkZDVlZjZhZTllZmM3OTlmZTE0NDFjMWRmYjRmNzk2NTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1MDEyMjU0YjgwNDFmYzZhNTRkYWUwMzFiN2QyYmE0YzUzMjNjMDcxYmU2MjA2NWVkODQ3MjJiNTIwZjU2NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5ZWY5MDc3OTVmMGU3MWJkMmM5OGQ2MzBmOGFjNzA1YmY1NWJjMDdhODAxN2NhZDdlOWU1Yzg0NmQyZDlmMTIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

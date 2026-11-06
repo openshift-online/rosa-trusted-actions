@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d4cdd8499d08cda0e8cb9966c18b3de02a3e27270dfe778c239643267e6782d0",
+  "claims": [
+    {
+      "id": "claim_42622c4473524507851ab176f51fae94",
+      "statement": "Every AWS action implements actions.AWSAction, declaring RequiredServices(target AWSTarget) []awsapi.Service so AWSScope.Run builds only the AWS clients the action actually needs rather than every supported client.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/actions.go#L90-L97",
+          "version": "repo-lines-v1:sha256:34a193c9b41e054bee5e837206c30c4bb4b3244684f5d2b281bf7c05d53a554e:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODIzNDYzZTdiY2VlNWY4YWIzY2EzZWM3NjAyZmI4NmRhNDRmMjMxZWZmOTQ2OTg4MzQ4MjlmNDNlNWUwY2M0MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDA4MmNlZWFlZmU4ZmE2NTEwODlmOWU4YzgxZDQzOTJmYzQ5YWRhNjgyMWQ1NDczN2RkMDM4NWNjY2NmYmM0OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWE5NDBjNThlZThmNTA4ODEzNmQxMGVlNzkwY2RjY2EyNjdkNmEzYTJiMTMxMmJhMTU5MmVjYzcyNTE4NWM4NCJ9"
+        },
+        {
+          "resource": "repo://internal/executor/aws.go#L126-L132",
+          "version": "repo-lines-v1:sha256:ddef828be7188750173133a44288cf0100b1ecb442d656e9b6ad4367cc6fb253:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDgzZDA5YmRkOWMzMGEzMTUwNWVlZDBmNzcwMTA4ZjM3YzY5Y2YyYjJjOGQwMjUxZDBiODE2ZDBmMzg3NDNlNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjY2MzE2Nzg5NDYzNDJjNTRjMzVkNDZlZTg0ODhjYjUyM2VhZWY5ODc0ZDNmZTg5OGIzMmVkMjgzYTdhMjU4OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzdhMmYzYzJjODIyNmQzZDA3M2M2YmZjMGZmNzlhNDliZDJhNWM0N2IyYmUyMmRkYWEyNWM2MGQ2ZWUzMDU3ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_829e09e66ec44c648dd668e55c99b0d4",
+      "statement": "aws-reboot and aws-terminate both declare only ServiceEC2 in RequiredServices because their pre-write ownership check (DescribeInstances) and the mutation itself are both EC2 calls, so a write needs no client a read does not already have.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_ec2.go#L109-L111",
+          "version": "repo-lines-v1:sha256:9001e922d1c03cc5f1700e733cbeb9df62572d7bb5a1cb29e737e297ef300a45:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjRlZmM0OTQxOGQyNmRjZjEyOWIyMmE2YWEyMTEwOGNlZWMzNzY3N2EzMmQwOGU5ZDVmZWUzNWRkYTY2YmI5ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWU2NGQ5MTNlZjUxNGQyNzYzOWZmY2EwZjM3Yzg3ZDA2YjUxMWVlNWQ4ZWI0M2UzNTg4N2FhZTM2ZTRiNmNiYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDQ4ZjYyZjE5NDk1NzA2MDM5N2MyNDhlYWI2NzYwMjRmNTcxYzVjNGJhMzIyNjgwZWVhYTAxMTQ2MjBiYzMyMiJ9"
+        },
+        {
+          "resource": "repo://internal/actions/aws_ec2.go#L153-L155",
+          "version": "repo-lines-v1:sha256:a05a14b003aeb8a6ebde29ecd1c6ac6a0419d7e5d38a60a5915e298fd6bf65f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDBiZjFiNDM4NDAyOGNmMDY4MDFjNGFhZTM3YzE4Nzc3OWQ0MjhkZmZmODU0YzYyMGEzODMxY2EyMTQ1YmIzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDYwYmU3MmIxYzU0MDM4YzFhMjQ3ZmU1NzBlNjI4MmIwYWQzZDRlZjhhZTQzNTE2NWI3YWI5NjRmOGJjNzE1ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzY2YjAzMDZmMjA2NWJiMWM1NzExMWRhODlmMWQ0NzljNzhmZjg1NTZhNDg0NDJiMTY3OWZmYTA3YmU0OWMzMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTE1ZGFiNGMwNzIxMDU0NjMzMTc5NDJiODRjYjNkMTFkY2I0ZWU5MWI4OGU0YjA4MTI2MDQ5NjRlZjQ4ZWY3MCJ9"
+        },
+        {
+          "resource": "repo://internal/awsapi/awsapi.go#L42-L48",
+          "version": "repo-lines-v1:sha256:401cdc40ba2de10f8a8fa487026981b7fc56e3e8475dd465912d18741226fb19:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTAyNTIzZjZlMjYwNDgwYTk5MDk5ZDZhMTRiZWE2OTVjMWY1M2FjNmFkOGJiOGMxYTA0ZTZhYzIyMjA0NDBjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmM2ZDMyOTc3NjQ0ODkzNzhkZTRhNzkyZjdkNWJmYjhmYjhhMWY1NTJmYTRjODU5ZGEwODZiYzQ3MmIxZDY3ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjVjMDg4NzM3ODM5NTQzNTgwOTk1N2Q2ODRhZDRjZDJmZWY1NDZkOWU4NDRlZGU2YTliMmE4MjE1MzhjZmZmOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_78a7688e6ff54668aa5dbc1b1a505ebd",
+      "statement": "AWSWriteAction adds Operation() and Resource() to AWSAction: Operation names the mutation checked against the server's write allowlist, and Resource fixes the object kind acted on; both come from the action itself, never from the caller's request, so a caller cannot relabel a terminate as a reboot or override what resource is mutated.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/actions.go#L99-L123",
+          "version": "repo-lines-v1:sha256:87352c852a0e645446a4e4e31fc8f3047e86cd2fcd7f0ead8f7e494caf570f59:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0MjdkM2VhOTgzNWFiZjk4ZmFhM2Q2MTM0OGVmMWQwY2Y3NzQyZDFkOWNiZTUyODNmZDgyOGI2ZGUzNDkyOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjNjA5OTlmYjE4NGU4YWI2OTliZDY5NjczZmFjZDg5MzkxZmJkZWEyNzkzYmU0YTQyMjcxNDkyZTBiZGU2ZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4M2QzMzRkMTBjZmE1MWEyODhiZWJiM2Q5YjJiNTc4YTQ1MGM1YmZmOGU1NDRmM2ExZDU3MmI4NTI2MWRjNjQifQ"
+        },
+        {
+          "resource": "repo://internal/executor/aws.go#L100-L107",
+          "version": "repo-lines-v1:sha256:594d93947424047349d87f5df9d8ff4251a75e181962441636f3d73d5b460154:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGZmYmJlODk4OTczMWMwNjkwMDQzNTU0OWM0NTM1NGEwZWY2YWEzMGQyNmEyN2QxNDhkNTA3ZWRhNGU5MDAxMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjJmMmZmNWZlZWM2MGY1ODdjOGZhZTRlODdmODA5YTY2MWNmZmVkNmI0N2FhZTVmNmQ2YTI2NTNhYTg5NTJlZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTUwZmFlZmFlNjRlM2FhOTg1NGRlZDVmMWJhMjVlYWQ5YmZmZTU0ZjRlMjJjNzI5ZTZmZjFhYWVjYmIzYTUzZiJ9"
+        },
+        {
+          "resource": "repo://internal/executor/aws.go#L64-L75",
+          "version": "repo-lines-v1:sha256:f35281a45792b54063ea2594bec0e23bdfe6db4846274d674fa3d7f3a2077dd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzMjE3ZTE3NzM0ZjcwM2U2MmZiOGI5NjczMTk4YzExZDlmZDAwNzMwMWEwOTA5NWMwZTA1OTBhM2M4NjllZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlMDA3ZDI0YjA0OWE1ZTU3ODI1OTA1M2JlYmVhMGMwYjZhMjlkMWI1MDc5MjdlYmI1OTQ2YWU1ZmYwMzIxZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0OGUxZDBkMjQwYmIzYjMyZDA3NDlkZDg5NTY1NjU0ZDBjODIwYjdmZTY4Yjk1OGFhOGYzNzVhNWEyMzRkMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5MzlkYTM1MGQ5YzVmYzVkYjMwODY4OWM3MDQ0MDNiMTYxNDY4YmM3NjFjODgxNzQzOTlmNTJkZmE4ZDkyZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0320d0b7969c44f79aef403cc162beaa",
+      "statement": "authorization.AWSAuthorizer.Authorize enforces two independent, fail-closed allowlists: AllowedRegions gates every AWS request (read or write) and AllowedOperations gates only writes (non-empty Operation); both default to empty, meaning an unconfigured deployment denies all AWS reads and all AWS writes.",
+      "evidence": [
+        {
+          "resource": "repo://internal/authorization/aws.go#L18-L36",
+          "version": "repo-lines-v1:sha256:6152ee501796a1e3bc62c148c848323d6242ca6000df9913b9f793388bb8cc9e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NjM0ODFjOTY2M2JkNDk1MTNjN2VkNTMwNmFlZDIxNWFjNTk0MWQyM2Y0YjZjN2QzZmMzMzU5MmIyMTJiNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2ZDdiMWIwMWNjNjkxNDQzYjQ3OGM3ODUxN2ZjNTkyMDJjYTliZjU2OGE1NGNlNDAyZTY2ZTIzNmJiYzQ4NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ZmZlM2IyM2QyNDFmOGUyNzgxNTljN2E3MmEyNWZmZTI1MjY3NjNmNjhhNTdlZTRlMjUxYTY1ZmYwODRhZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0M2ZiMzE5NzFjMmU5YjUyMjcxZmE1ODI5YzZkYTU0NDQ3OWMxZTczZDgyYmJkZDEzMDRmMmQ1N2JhZDU5ZWUifQ"
+        },
+        {
+          "resource": "repo://internal/authorization/aws.go#L79-L124",
+          "version": "repo-lines-v1:sha256:64674c6ee309eabd578e3bbd280f26a20a8c4e28c0861cc63f7666a11f810613:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzNDdkZTY4ZTdjYjBjODRkYzhhMzk4ODY3ZjkzYTE2ZmExMzJjOGE2ZDQzYTU3ZWI1NWJkNGE4MDA2NmM5NzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhMzUxYzY4NWIwNGEyNmRjNzNmZjc3NjQ4ZjRmNDc2YzdkYmQ5ZDM3MzVjNmU0MDYwM2Y0OWM5MjIwMGUzNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a1a44121485c468fa9cce7bae4767434",
+      "statement": "aws_write.go's requireClusterInstance enforces per-instance ownership for reboot/terminate by describing the target instance and requiring the kubernetes.io/cluster/<infraID>=owned tag, refusing the write if the tag is absent, the value is 'shared' instead of 'owned', or the target's InfraID could not be resolved at all; this bounds a write's blast radius to the cluster rather than the whole AWS account the credentials can reach.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_write.go#L24-L94",
+          "version": "repo-lines-v1:sha256:7f5ac96daa580a365a7a38fbc85149e9983a5e79f47485fb2635e52849615983:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MTQ1ZWEyY2ZhYzRlNDdkYzNmZTYzNWI2ODM3NjE5NTA5YzEwZTIwZjA0YTU2M2Y5ZTA0MWNiNDIyOTMxNmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMGI4NTMyY2YxNDQ0NTE5ZTgzYTEwNGYzMzk1ZWQ4MWU4MDk3NTM5OTQ5YzhhODkwZmM2NjA5NDgzM2EzMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjZTgzNDBjMDg5ZTg0YzVmMTg4NWI1MmNlMTllNjM2Njg0ODhmOTBlMGYwZTg2OTExZTgxYzkyNDlhNDc3MmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b6ab7e560364b4792c919de4a8219af",
+      "statement": "awsapi.ClientProvider.DefaultRegion and ClusterInfraID both return an empty string without an error when the provider cannot determine an answer, and callers (the authorizer, and requireClusterInstance) must treat an empty answer as unproven/denied rather than as permission to proceed.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_write.go#L54-L60",
+          "version": "repo-lines-v1:sha256:6fc50ccdb630771235d82beb318b16027205f26eae035be03ea0ec74020d9a65:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzk4NjNlMjQ2NzUzMWMzOTIyNDU0Zjc2MWM4ZGIzMDM1MTlmMTRlZjcwN2I4ZTcxZGExN2E3NDA2Yzk3YzQ0YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWU2MDExZWJlMmZlODg5NDZkOWFkYWRjZDJjZjg4YTllZTVhNzEyZDJlOThiZjUwODg1ODZhZDE4ZDU5MGYwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODI1OThkMzJkZTkzZmU4NzgyYTE5NDI0ZTdlNmRjZWVlZjM3ZjA4MWYwYzJkNDQ1YzdjODFjODk3MDIzYTc5ZiJ9"
+        },
+        {
+          "resource": "repo://internal/authorization/aws.go#L95-L100",
+          "version": "repo-lines-v1:sha256:4ec8a89ed46d12c13dd65b9d66bb3f5716ab0ae26f6a732fec30efa3f151df77:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjYzYzE0MjEyZTE5MWVjNWRjMDJhZWIyZjZkY2M1NzUxYjE1NjQ4OGQzODY0ZDlkNzgxNjg3NTI5MzQwNTk0MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGRhYWIzNjcyMzYyZmJkMzA1N2RmNGI2MGM2YzEwMWY0ZTcxNTk2NjAyZjNlNjEyZWMwZDkzMWVlMjg4MjE0MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTRjZTlmMGRiZjVhZTBhNGNiMWZlNmRiOTE4MzQ5YzBkNGJmZTJjOGZjYzE0OTE1ZDYwOGI0OWFmZmE2NzM2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjk3ZmFmMGE4YTY2MmE3NzUwMDgwZTRkM2IxMjViY2FhM2ExN2UyNjdiN2U3M2Q4OTY4MjJiMGE5ODg5OWE5NyJ9"
+        },
+        {
+          "resource": "repo://internal/awsapi/awsapi.go#L90-L116",
+          "version": "repo-lines-v1:sha256:488550c8d50408252e0b1bde189fb306904088ce0f294be7715cb1ff5124d010:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxNTlhOTMwMDQ4NDRhMjRjMjZiYzAzMjA0Njk2NTVjNWE4NzYzZjQ2MGVkOTk3Y2I2YTQ3ZGFjZTYzNTY4OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3N2UwYWEwYmNhMzk4YmYzZDRkZDg1YTY3NmVjMjQyZTE0MzM2Njc3NzBlNjI3ODhjYWI1OTYzMDg2YjRhMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwMTQ5OTg4NjVkMmExYWU3NTgwYzQyMWE0ZGFkMWY2ODEzNTU4MzIzM2U4MGI4NDJhMjRmZTM3MjE5NmFmZmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_db7f6266aca044e094abbbb44cd8ed5f",
+      "statement": "buildClients is a single shared switch statement used by both StaticProvider and CloudCredentialsProvider to turn a requested []Service list and one aws.Config into a populated Clients struct, ensuring a new Service added to the enum cannot be silently unimplemented by one provider.",
+      "evidence": [
+        {
+          "resource": "repo://internal/awsapi/awsapi.go#L118-L141",
+          "version": "repo-lines-v1:sha256:6dd70841dd096e5b9aab4ceecd8d886e628469b017a385760cc5138e43bf9da0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MjY3NmZjNGQwMmYzOWQ2OWU1YjcxYjQ1Zjk2YzYwOTUxMDlhMGE3OTk5NTdmNDkzMDVjNDA0YzUyMTBjY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3ODBiODhjNzc5MTk4OWI1MWI0ODZjNzQ4YTUxODcwM2RhNWUwMTg2Y2IxYjU3NWYxY2JiNmEyZDViOTFkYzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L207-L213",
+          "version": "repo-lines-v1:sha256:7fa0b6a70ecd790a9533e52c13787dedab6f39d2317b06ebe645752c545073b2:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmQ2MzIwMThhYjZiYThkMTM3OWRhMTg4ODkzZTc3MWQ2Nzg4YTc5MzI1NDliODdiOTk1MjY1OTY1YzkzZDQ4OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGMyYjUwZjZlMDJmZjkwZTY4MGM1MTRjMTZmNzRjNTA2ZThjZGJlNTFmZWNhZTIzNjU0OGRkZGI5Zjk4MWRmMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjA1M2MxYTU2ZGE3ODg0NjI3ZmUxYThjMjAzOWU4YmIwMzBiNjk5MTJhMWY0OGJiZjAzNDA2YmNlN2Y4MDdkYyJ9"
+        },
+        {
+          "resource": "repo://internal/awsapi/static.go#L83-L89",
+          "version": "repo-lines-v1:sha256:f36e98d85236082a599bde6f9c8044f1c7e92fea0aae2c55212f81e5a071d9bd:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzBkZTUyNmM5ZTJlYjYwMjYwZGRjMDczNGQwNjJlM2JmZWU4YTc3NzJjMGY2OGIzYmZjZjQwNDJjM2VjMWRlNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmIzZWFiNmYyNThiMGNjMGJiNDdkZjU4NzM3NWExYzBhOTlkOGUwOWVlNmMzN2UxZGE0MWIyNzI4OTFlMjUzNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2ZhNzhjZWE0M2FkYTFhODliNjVmMDczOTU3NDQwOWE4Y2U1ZjE4ZGY2ZjZiNTllNzI4MjZmYmRlZDAyMTE1ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5cb654b35d34442caa7dba906d007943",
+      "statement": "awsapi.StaticProvider builds every client from one fixed StaticConfig (region, static credentials, EndpointURL override, and a single configured InfraID) and ignores clusterID entirely, so every execution reaches the same AWS account regardless of which cluster is named; it must not be used in production for per-cluster isolation.",
+      "evidence": [
+        {
+          "resource": "repo://internal/awsapi/static.go#L13-L67",
+          "version": "repo-lines-v1:sha256:cbd972870c24178616214e5a96320e137e23a97f8b61dc98b1fbdb342b1f42e0:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZDNkNjEzZTIzNDk4MzY2ZDNiZjVlNGJmNjViYzI4M2JmN2NiNmQ1OGMzNmYwYjc5MGQ5ODlmOTQ0ZDAyY2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjODZkNmYzMGYyNzc0Y2M1YTg2ZjM0ZmYxODUzMWM3YjExZTEzOTM1ODcxM2UzYTY5ZDhjMWUwOGE2NWZhYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5M2QyZDMxNmRhNDE5MjI1MjA5MWY4YzQxMGUwNTJkNDFjM2I3ZWI5OTlkMjg5NzVhOTllY2Y1NWNmNmE0M2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_aa2185cc6a5842808a92fc85ae8ec4d0",
+      "statement": "cmd/server/main.go selects awsapi.StaticProvider when ROSA_TA_AWS_ENDPOINT_URL is set (an endpoint override can only sensibly mean a local emulator such as LocalStack) and otherwise selects awsapi.CloudCredentialsProvider, logging a warning in the static case; the server fails startup if neither an endpoint override nor a usable OCM client is available.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L275-L321",
+          "version": "repo-lines-v1:sha256:f4256f5b0f794a3206aacb47932c211fdbc735f513a1b20ecfb9ab1a6f7a26ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5N2U3NmM3NTE4YWQyYjExNDgwYWQ0Y2IyZmQwMjcwZWMzYTY0MGNkNDdkZDM2Y2EwOWZhMWVlZjljMjA4YTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4YzU2MWU0YTcwMTQ1ZjhhZmFhZjVlYTRjZTA1MGNmNmRjZDRkZmM2MWM0ZWVjNTkxMjFmMjg1Yjg1YTIyN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmMDYyMDYxMDliMDMwZWM4NDgzZjlkYTZmOTA3MDk0YmU2YzFkNGJkNDg2N2RlM2JhM2ViMmVmZTM3Y2ViZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5dd4721c0da47ba812493cde8971772",
+      "statement": "awsapi.CloudCredentialsProvider resolves a cluster's AWS account by caching the OCM cluster record (ClusterCacheTTL, default 5 minutes), confirming the cluster's cloud provider is aws, then calling backplane-cli's GetCloudCredentials to walk the SRE assume-role chain from the payer account into the customer's own account and obtain short-lived STS credentials scoped to it.",
+      "evidence": [
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L253-L300",
+          "version": "repo-lines-v1:sha256:72ffa79000eb892e3a213e98a15c7c6db55338240e774760c413f94e2a04a0c2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzZWEzODQwZTgyMWFmNzNkYTcyNTI2MjkzYmFkOTkxZDcwZDc0MmI1MDE2N2NlNmU4MmZkYThlZDZiZGIzNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE4YmQwODUxMjgyZDI5NWE2ZWQwYTc3ZmQ1MGRkNzdmMWNkZWNiNmI1NWMxNTMzNTIzZjFkYzhhZDRiZjZiM2UifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L29-L33",
+          "version": "repo-lines-v1:sha256:6bceab309390caf3296a379d722b10bbfb504d67142ff85a95a5593e4f688c77:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg0NDI5NjNkOWUyMTUzOGQzNDdiMTUyOGEzZDAzMjAyYTg3NWMyZGJiMjU0OWJiZDc0NjA3ZDk0YjQwZTczYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTc0MzEwOWExMzE2MTgwOGVkMzU3MTg2OTMzMWEyMWY3Mzc1MGFmZjM5MWM3NjZiZThlODU2ZTg5Mzg0ZDYyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGQ1MTAzM2UwMDE2OWU4ZTM1YWNiZjBlZDZhNWNhZTBhMmRlMmRlYmMyNmFjNjBmMDMyMzExM2IzZjM4MjVlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmYwY2QzYzMzZjg0Y2ZiZTRmYWUzMDUwZWU0MGQ2MmNmYjkxOTYxZjkyYWNmYzM1OWQ4Y2NhMzA1OTkyMzk4NyJ9"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L302-L334",
+          "version": "repo-lines-v1:sha256:32baf576787024a418a01dcc86bd04f520f45d3c281510ae5536846c7948ec90:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYzQ4YmNiYjM5ZWNkNmQ2NmE1OWI5OTQxMTM1OTc0NDBiNzU3OGVmMGUwZjcxM2ExMjgxMzRmZGM0MzAzMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwMTAyZTlmMzg1NGEwMDI2ZGU0MzhjOTU5MWI2NGQyNDhiMDVmYmFhZWRkY2I1ZWNkYTllYWQ5OGJlZjE1ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwYzI1NjljNjNlZWI5Y2U5MzdmYTk5OTM2NjMxYTBmMGE1OTlmN2VhNzI4YTVhODJhZDQ0MzUxNDYzYTJhMjEifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L69-L123",
+          "version": "repo-lines-v1:sha256:ca7d5efb8976345ffabd1cb0ed25b67bd2ea6a215db16e943eba1796b44b8a43:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMTBjZGQzN2Y3YzlhMjc2OTEwOWFiODYyNzBmNmFjNzI2NGZiMGEwNzdiYWVlMWE1YjM3Mzg0YmZiZjNjMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NTJiOTY0ZDViZDYxNTljN2IyMGE5YTQ0MGYxNDBiMTM5ZmU4Y2Q5MDk1OTM3M2QwYjIxNWFjNThhNzc4NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2ZjFlYjMxMTI2MjJhNjU3OWVkNjI3ZjY4Y2Y4M2M2ZDNjZDczZTFkMTI4NzY2Zjk5N2RmNjUyYTRjZTBhNWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_725f09024482432fba85b8250a45f54f",
+      "statement": "CloudCredentialsProvider fetches AWS credentials fresh on every execution rather than caching them (unlike the cluster record), so revoking a cluster's backplane access grant takes effect on the very next request; it also requires the server's egress to be within OCM's trusted IP range or routed through AWSProxyURL, since the assume-role chain only grants credentials to trusted callers.",
+      "evidence": [
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L161-L213",
+          "version": "repo-lines-v1:sha256:d3eb26e6e9257bbba003b4b0cfd1b0fb32b87a6434047bd151382eb28a871173:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYzY5OWY1MDRjNTk5NGIyYzZkY2NjM2IwY2Y0YmVlMjE1MWU1ZjYzZmVlOWEwZWM1YjI1NGYzMTQ4Mzg4NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxMGY0ZGQ3YTA0Mjg5ZDIxNjRiNTExM2I5NWJiZGQ0NjA0NzVkYjMxZTFiYjRlMTU3OThiZDA3MjhmZmUzZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwNTNjMWE1NmRhNzg4NDYyN2ZlMWE4YzIwMzllOGJiMDMwYjY5OTEyYTFmNDhiYmYwMzQwNmJjZTdmODA3ZGMifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L80-L105",
+          "version": "repo-lines-v1:sha256:be228a475dac3cba037aced72df020284015c35cfa878ad8da43422942a4503a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZDYyYWY4ZTc0ZmViNTViNzc1M2U5ZTViNjk3YTNmNDQxMDY5Yzg1MGI5OTJhNDM4YzE5ODNhZjYyNjdiNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmOTU1ZDY0MGFlOGM3ZGU0MjU2M2VmZTQ1YjA2OWFjYmY3MjE3MWM2ZWQzZjM4NjNjNTA2MGI4OGI3ZDkwNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkYmU5Yzc1YzU0MTI1MGJmMjMwMWU3NWVhMDk0NWNhMGE3MGNjM2NkN2EyOTE3ZWY4N2FhMDdhZTE5ODBmNmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c98e305894ca4c3b9059ff2f71ce420c",
+      "statement": "CloudCredentialsProvider's backplane-cli credential call accepts no context.Context, so awaitCredentials runs it in a goroutine and returns early if the execution context is cancelled first; the result channel is buffered so the abandoned goroutine can still send and exit once the call eventually completes, bounding (not eliminating) the worker-goroutine leak a slow backplane/STS call would otherwise cause.",
+      "evidence": [
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L220-L251",
+          "version": "repo-lines-v1:sha256:0736533a36df79e9986cb80fc6ba84ea344007e0e3a81fc090be7e1fb9ab6765:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0MDMyNDgzNjFhMGYxOGIxNzg1ZDUzOTc3NTNhOGI5NThjZjRiMjgxNWU2NTUyNjNkNGUzNjk2NGE1NzI3ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczZjA5NmY2ZDIxZDkwZWE0MTZiOTBmYjEzNGQ5YTU0YmUzYjZkMDk0YTY3ZmZiMDkyM2YxZTMxZjIxMWVlYTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzNGNmYmM1NjliYTY2ODM2YWI5ZjlmMDQ4NmI1MjE5OGU1MGExYTYyODE1M2JlYmI5NTViOTA2NGY1MTNkYjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6ef939d8395c4af19c0c74a62ae541e8",
+      "statement": "NewCloudCredentialsProvider takes an OCMConnectionFunc (a func() (*ocmsdk.Connection, error)) rather than a single *ocmsdk.Connection, because the server outlives any one OCM connection's finite-lived token; resolving a fresh connection per credential fetch lets the owner hand back a refreshed connection without awsapi needing to know refreshing occurs. cmd/server/main.go calls ocmClient.Connection() once at startup only to fail fast, then passes the accessor function itself to the provider.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L305-L320",
+          "version": "repo-lines-v1:sha256:7e2057533ae5d81ebc19c73a18a5596f8eb4b2d37cfc3f7c430b0a2111ddf61e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmMGEyZDkzMjY1ZGIwZTY5OWUxYzMzNTJhMjM2MWYzM2FmY2NiZGQ1YWFhYjQ4OWUzOTQ0ZWYyZmM0NDAyYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyNzg4NDk1ZDFmZTBlMDhlODg3ZGJiOTgyNGVmNzdmMzgwODU3Nzk5MjYxZTYzMjEwNGY2ZWMzYWVlYmI4OTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5NGQwZjJiODFiZDRiZTM1NDBkMGQ3ZDQ1MmVjMzYxOGYwZjExNDE0MGQyZTkwMjM2ODhhMDkyOGMyMzJkZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzNjQ2ZTMwYjJkNWZlOGQ5ODhlODJiMjRjOTRmNjVmODgwYmUwOWRiZTNmZDgyMmNiM2NjMmY0NWZiZTBjMzMifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L262-L268",
+          "version": "repo-lines-v1:sha256:e00d7d7897a1d4d26a35f68bda48282a9e80bff9cc90f6ca8b96b06f046817fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDc3ZTI1OWQ3NjJjZGMxZDkzYjY4MDhmNzY2Nzg5N2IyNTVkOTU5MDNjNjlmZGJhNzFhYmRhNWM3ZjE5N2NhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2VlZTRkMDVkYTE5ZTJlN2ZlOGYzZTZmYzkyYWQ5YWNlYWRkMTE0YjA1MWNkNjU5YjgwM2FjYjg4ZmIyZWJlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzg1Mjg4OTdmM2FmMDcwM2UwMGFjNjhmNDY3N2M1N2I0MzIzMzkyMzdkMGIwOTc1YjYxMGY4ZGFmZGI5YjQzMyJ9"
+        },
+        {
+          "resource": "repo://internal/awsapi/credentials.go#L59-L67",
+          "version": "repo-lines-v1:sha256:a18a514048696aada3cfc330df89d57075a34f11375a9804b0c38d1dc7bfffad:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTA5YTM2Njg5MDU3NzY0NTIzODk3NTI1YjNmN2U2NzM1NDBhOWMzZGM3M2UyMGJjY2ZmYzgyYzVhNTMxN2JhYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjUyOGYxYjg3NzBjMWMxZTIwNjQ2MDhmYjNmM2NiZWMzMTRiMWNiNjU3ZGIwZDQzMmM5M2YwMmE5ODI2YzY2NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWNiZDYzODhlOWM0YzA0ZmUzM2VmNjAzN2EyNzg4YTdkN2M5YzdlNTg0Zjc2YjFiOGNkNzU0Nzg0ZmM1NTg4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDhjN2NjZDE3NmNjMDgxZWU1ZDljMmM3Y2NkNDBhMTNmYzAzNzdiMzVjMzI0YTRjMjg5NjI0ZjYzYjJkMjQ0OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6c351c689b48477d93eac9f4b6350f7c",
+      "statement": "AWSScope.DeriveTarget calls ClientProvider.DefaultRegion before authorization runs for every AWS request, and calls ClusterInfraID (storing it on AWSTarget.InfraID) only when the action is an AWSWriteAction; both resolutions happen from the same authoritative cluster lookup rather than from caller-supplied params, and a failure to resolve either aborts the execution as an executor.Failure.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L33-L89",
+          "version": "repo-lines-v1:sha256:4fb645f9b60f8c19d1e488925b1ea793455858e1e747c77ac0b990613e127bd6:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNzAwMTdkNzAxNjYyMzhmMDkzOWUzZTI4NWE2NjQ5MDI2ZDZiM2QwNWRkNmFhZWJkYTZjYzYyOTJlMmI3N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmNWI2MzQzMWZjMDA0ODc4YWVlNzlmYThmZDQ1OGM1YTU4Y2Q5MjhmODAxY2UxYzMyZDA1ZWM0MDkzYjk0MzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiNTg1ZGI5MTM4NDA0MjQwYmUxODZiZjY0OWU1MTViMTFmMzdlZWIxNmM1N2IzZGFlNTYwZmFmMWZhZmU2MWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_59af842324df46059fe95dda20fb1c43",
+      "statement": "The region AWSScope resolves and authorizes a request against is exactly the region used for the subsequent GetClients call and the action's AWS calls, because callers never supply a region param themselves — a caller-sent 'region' param is rejected as an unrecognized param rather than honored.",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/aws.go#L33-L54",
+          "version": "repo-lines-v1:sha256:d7667665c696d817b91412d4b1f4dd1a5413e9048a06e4ffed2332a28c572294:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNzAwMTdkNzAxNjYyMzhmMDkzOWUzZTI4NWE2NjQ5MDI2ZDZiM2QwNWRkNmFhZWJkYTZjYzYyOTJlMmI3N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmNWI2MzQzMWZjMDA0ODc4YWVlNzlmYThmZDQ1OGM1YTU4Y2Q5MjhmODAxY2UxYzMyZDA1ZWM0MDkzYjk0MzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkZTcyOGM5YWZhZmY3ODg4NzJlODFmOGZhODU0OTY4OGI4NTk2YWI1OTMzMTcxZjgxOWQ3Yjk2NmUxMTg3NjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1e7e12fcbe04722bfa9778fce7f6174",
+      "statement": "aws-get is a generic read action driven by the awsResources registry mapping resource names to an awsapi.Service, a describe function, an id-support mode (optional/required/unsupported), and an accepted-params list; a request naming an unrecognized param is rejected outright rather than silently ignored, preventing a caller's filter expectation from being silently dropped.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_get.go#L179-L213",
+          "version": "repo-lines-v1:sha256:93552be390610888a5d4f71b956e2e39f4e29f5ab638aab2e559966611cb15d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZmFjMzc1ZWQ0ZjYxNzdkYWQxMTU4MmVhMjY3MDc1YTAwNTBmZjExZjhmOTFkZWZhOTFkNTYzNjBjN2ZlOWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0YTJkMTY5ZDVkNGIwZjM1OGI1YTVhNmI1ZDEyY2IxOGI1YTRjZTBkOWEyZGZkMGZjYjQxMmI0OGI1NTEzNTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwMmQ1NDIzZDg4ODZkOWZiODY1YjgyMDg3NTNkMjM4OTI4NWIyYTEzYmI1NjgwMTMzMTliNmViYmYzNTMzNjEifQ"
+        },
+        {
+          "resource": "repo://internal/actions/aws_get.go#L44-L135",
+          "version": "repo-lines-v1:sha256:ae5eed08459ec3421ef539f8ce93c3b56c2afb99340f5ee47282a1d8c590686d:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0ZjU2YmFjMzcxYjBmYTg0YjA0MzY3ZmY2MDMxMzJmMTM0M2VlMjUwMmFmNzM2OWYyY2FkMGZiNzViZGJhYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiM2Q4NWY0MzRkZTA3NmJlMjAyNGIxMTcxNTQxNjIyYTcxOGY1ZTI5ZjQ1Yjk3YTM2MThjMTgwN2UwZWNlNWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1YWY5OGM1MWIxODg0OTA3ZWEyZjdmNzg2NmJlMDFkY2FjZGE1YmIyMTg2M2VjMzA4YzAyZjQ5YmNjZjY2ZWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9b5c31b008cd4ba699f2fa24980aa637",
+      "statement": "aws_elb.go covers two mutually invisible load-balancer APIs: ELBv2 (load-balancers, target-groups, target-health, for application/network/gateway balancers) and classic ELB (load-balancers-classic); a complete view of a cluster's load balancing requires querying both since neither API reports the other's balancers.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_elb.go#L17-L30",
+          "version": "repo-lines-v1:sha256:a8544a78a026bfd186b76d6eb7ad27ca30254ac2e490c0486da7d20e6b6ea279:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNzAzNTkyMTdjNDhhZmYwZWIwMDk1YThlYjc0MDcwMDc5MGRmM2YzNGU5OWQ0M2Q5NWQ4ZmY0MmFkNDI2YzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkNWEyNzEyNWFmMDY3YjhmYmZmZTdmYzM0OWIxMGZkZWM3NjgxNjQ0ZDk4ODM4NDRiYzFlZWY3Yjc1ZWJjYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2NDliMDljZDQyZjkxNGI5NGNiMmM2NGI0YmJiODQ2YmI5ZmE1ZTIwMWZlNDFhOTgyNzQ5Y2RkYmIwODZiMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5OTFlYWFiNzI2NTk2YjE3OGY5NWUzNzFlZTUyZTcwMjdjZDJlOWUwMGQ3NjczZjJkNWY0NTE0MjJkODI5NGEifQ"
+        },
+        {
+          "resource": "repo://internal/awsapi/awsapi.go#L50-L64",
+          "version": "repo-lines-v1:sha256:ac9b036c49e5b3d34227369e2d39391fdfbba8d46ad31890b1830ee5bb01ca4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwMzNjMjlkOWFjOTdlYmM2NTBhOTRlMmNiNzNjODIwOTJjM2E0MDE4MDJhNGI2MDFiNThhZGI0NmE4YWFiNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MjY0MWU1ZjQ5YWFkNjI4YjI2NTBjOWNjNWVhOGIyNTRjMzVkOWJiNzFkYzM0OWYzYmI4OTBlY2QyZjIyMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0MTE1Njk4ZTNlMGYwMzBmNjYyMWM4Yzk3ZGU4YzY5OWY5NjViMGQ2NjRhODM1NDkxYWE4MWQzZmY5YTVlYzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cb00dda5cb324963a725ff95b58dc8c4",
+      "statement": "aws_cloudtrail.go's lookupCloudTrailEvents bounds every CloudTrail lookup to a time window: it defaults to a 2-hour lookback when no 'since' param is given, and rejects any caller-requested window wider than CloudTrailLookbackMax (7 days), because LookupEvents is heavily throttled and paginating a wide window in a busy account is both slow and memory-heavy.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_cloudtrail.go#L17-L36",
+          "version": "repo-lines-v1:sha256:76bfe11ffdc84b2e0d261806ea1bf9cb9325836ce008a48220359905aae36ac9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMGJiZDY0OTgyYTY3MDdlZWRiZjBiZDQzMzdmZDNjOWQxODdjMjhmMDRiZWIzNDU4MTNmYTJkNjMyNDM3NTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxMTg5MTJmOTg2ZDQ5YWIwYmRmYTRjYmI1YWE2OTVjNTM3MTUyYzc4ZGRkNmM2Mzg2MWI3MzZkNGU2ZGY5NDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2NDliMDljZDQyZjkxNGI5NGNiMmM2NGI0YmJiODQ2YmI5ZmE1ZTIwMWZlNDFhOTgyNzQ5Y2RkYmIwODZiMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxYThkODc0NjgyZTMyYjAxNGZhZGMyYzlhMjIxMTIzNDY0YjJmMmUyNGFmNDhlNTM0MGYyOTZkYTU4MGJiNTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9bc16a52f01a46a189b9a8fe4fe2d24e",
+      "statement": "aws_route53.go's describeRecordSets requires a hosted zone ID as the target id because Route 53 has no call that lists records across zones, while describeHostedZones lists the account's zones with no id required since hosted zones are a global, account-wide resource.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_get.go#L124-L134",
+          "version": "repo-lines-v1:sha256:7ba4faecfd1b532bbade545afd2bfedc373c5529f51ca8689fb09d8e78da523e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OTliN2ZlYjE2ZmU2NjVlOGQ0NzMyYmQyYzJlNTMwMWUwNWU5NDYzYzI1NjgyMmM2MTViNTJlYmNmZDJmOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlNTAzMjQ5NjI1NjU2ODVhNTljMzk3NWUxYTU0MjRhODE3NWJhNDBmN2RmYTNhMDk2NTc5MTliMjFjZDkyNmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxZGQ1MzM1YjFjNzRjNzg4ZWI4ZTU4MWYzZmQxOTFmZDkzNWMyMDhkZmNiMWE2NGM3Y2UzMGI1ZDYzZmY2NGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1NDFmMGY4ZjJjMjkzNDMxYmIxNDk3MTVjMDQ5ZmIxMWQ1ZDYzNDJlYTU2NWJjZmIzOTE1YzMwMjQ4YTIzYjAifQ"
+        },
+        {
+          "resource": "repo://internal/actions/aws_route53.go#L14-L37",
+          "version": "repo-lines-v1:sha256:6d07afbafd3649fcb3982bd6c4ae3f28ed88bebac3c2962a368da7413e1695ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliYTc1ZDAzOTEzZGRkODNhMzg0MzU2MWZkY2Y0MWExYjYzMWE3OTI2YWZjZTY5OGUwYzc4YzM5MGQ0Yjc2OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlMTdlYWFmNzc3ZTE3NjQ1YzQyMjQ3ZmM0YWRjYzcxM2RiZGIzNTYxMzE3ZTlmY2NiYjg4MzU0Yzg0NTkwOTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2NDliMDljZDQyZjkxNGI5NGNiMmM2NGI0YmJiODQ2YmI5ZmE1ZTIwMWZlNDFhOTgyNzQ5Y2RkYmIwODZiMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MTM5NDc0NmVmNjExMGUzMGNlNTg1N2FmMWE0OGNmZDFmMjNhMDA5YWI2MzIwZWM0OGYzMDFkNzA0MTYwZmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a94842681f7b4775ad4150b1e092416e",
+      "statement": "The integration/itest-run.sh harness runs aws-get reads against a real LocalStack container via awsapi.StaticProvider, covering ec2-instances, ec2-vpcs, ec2-subnets, ec2-route-tables, ec2-security-groups, ec2-dhcp-options, route53-hosted-zones, and route53-record-sets, but five aws-get resources (load-balancers, load-balancers-classic, target-groups, target-health, cloudtrail-events) are excluded because they need the elb/elbv2/cloudtrail services, which are LocalStack Pro-only and are covered only by unit tests against fakes in internal/actions.",
+      "evidence": [
+        {
+          "resource": "repo://integration/README.md#L53-L73",
+          "version": "repo-lines-v1:sha256:c5f4aeee601119c6ad06cd0fedfebc241eecfe2432ca6d11d519eeba3b5221a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3ZGM1MGIxYjA2YzljZjQ1YjcxZjM0NDM5OWM2MmIxZmJiNzcwNDg4YTM5YWYwZTIzOTg1OWFmNGEwNGRjOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MGQxMTc0MWY1MTI0Mzg1YmRmN2Y4YTM2Yjc3YTQ4ZWU3NmFmNzRiZWJjMTdjNjQwZGU2YjY2MzNhYWIwNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxY2I5ZjE1ZDNlNzU5NGMwMWJmMzRhMDgxNWE5YzY1ZmYzMjg2N2I3NmYwYjBlZmEyMjMxMWZiMGQwOTljMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmM2UzNjgyNTZkMTY1NDRlNjNjMTMzMWE1NDdhYzk4MzU3OTQxZjhjNDBlYWVhYTlhYjUyMjZmODk0NGVjZDcifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

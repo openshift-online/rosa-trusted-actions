@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:834e74bc55bf27eb117c9c65cdb65ff55f87786b2f333c505f3a07f0d772e917",
+  "claims": [
+    {
+      "id": "claim_23fd713c147c4f908176b81ec06dd607",
+      "statement": "An action requires two independent registrations: an implementation in internal/actions/<name>.go self-registered via init()+RegisterActionFactory, and a matching ActionDefinition in internal/catalog/catalog.go; neither is cross-checked against the other.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L24-L39",
+          "version": "repo-lines-v1:sha256:485575966450eb60b731877675813ff59fab4dabdc2928fe5fcbc095f79a4687:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNDM5MTY3NzYwYTk3M2JlMmFhYWVmN2JiZWY2NjcxN2Y5OWZlOGU2MDIzZmQ2N2E2ZTI2ZjI2YTY3MDNmMzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMyNTdlNzIxMjc3NTNlODYyN2Q3ZTE1ZGQ0NDg4NzY4NmViZDRmNmY2ZjY0ODRiNTJiZDBiMTg5Y2Q0Yjg2NTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NTA0YzY5ZTIyNWI5ZTc5MWU3ZGVhNmUzNDM5NWM3NDdjOWY2MWU5ZmM0MTFjMTQ2MTdlNzEwZGRiN2M0NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxYmMxMWRlZGNkNjBmYWY0YzkzNjQ0NGZhMzY0OTIwNjRlODRjN2RmZDJjZTEyNzY2MzI5N2EzZGFmYTZmNWEifQ"
+        },
+        {
+          "resource": "repo://internal/actions/get_pull_secret_email.go#L16-L18",
+          "version": "repo-lines-v1:sha256:f4a2755995806b01679959b4fed4a821a0632e224080307aa53ac2f95a3ecead:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIzOTllMzIzYjJiNzY1ZTk4OThiYTA1MzUwNTQ2N2VlMTMxMTZhMzQ3ODc4MTk1YTExYzhkYTg5Nzg5NWI4ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTUxYzE4NjI0NzRkZGY1YTEzNDUyOTMyMDI2YTk5Y2MxMmM4OWNhMDM0ZjcwYjY0ZTRmNzhhZDA5ZTZiYmJjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGQzN2M1Y2U0ZDdiN2JhZTEwMDkyM2QyNmFjMmY3NzY0NzU2NWYwOGI5ZDdjOTk4YTI3NzYzZWU4ODFkZmE0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2fde1ac8577143478cf6629f90b1d48c",
+      "statement": "If a catalog entry exists with no matching internal/actions implementation, the API accepts POST /{action}/run (202) but the worker fails the execution asynchronously with 'unknown action' when it calls actions.CreateAction.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L34-L36",
+          "version": "repo-lines-v1:sha256:e0f576df92306d2048dcbe18674df864c4295371b50b3e9a1de8e9e4da42ff83:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDBkMzgxOGE5ODZmNzViYmNhOTcyMzI0NjU4NWM1MWQzOGFjNTQxODg5ZDlhOTA4ZTRjODhkODkxMDNiMzY5YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg3NGQ2OTRlYzE4YTc2NjExNGJlMGY3OWRjYmU0YjNlMWRjZGNjMGMzOTI0NWJkNTVjMDcyOTY4ZmRhMWZlZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDg5YzkxZmRlZmMxOThiNjNjNjBlODM3NWUzZmExNDYzNjIxOGEzMjRjZmMxZTlkNDdjYjE4ZTNlMmFjMTRkYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjU0M2FhNjQ3M2E3MGI5ZTc3NWRiM2U0YzEwZDc3N2EyNzM5YzE4ZGYwYTlhZjc0ZTBkYjM3MDU2NDQ1MWJjNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_efcb940f32844f998f960c0ef7ab44bd",
+      "statement": "If an internal/actions implementation exists with no matching catalog entry, GET /{action} and POST /{action}/run return 404 Unknown action because handlers validate the action name against the catalog before execution.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L37-L39",
+          "version": "repo-lines-v1:sha256:f543aa6473a70b9e775db3e4c10d777a2739c18df0a9af74e0db370564451bc5:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjk3ZDU4Y2YwNzFlZDE3MGE3MDM0MGU1YWQ4NmExYTJmOGY1Y2Q4NDJjMzdlNDlkZjMyYTllZmM1N2E3YTM5ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzI1N2U3MjEyNzc1M2U4NjI3ZDdlMTVkZDQ0ODg3Njg2ZWJkNGY2ZjZmNjQ4NGI1MmJkMGIxODljZDRiODY1NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTBmNTc2ZGY5MjMwNmQyMDQ4ZGNiZTE4Njc0ZGY4NjRjNDI5NTM3MWI1MGIzZTlhMWRlOGU5ZTRkYTQyZmY4MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDFiYzExZGVkY2Q2MGZhZjRjOTM2NDQ0ZmEzNjQ5MjA2NGU4NGM3ZGZkMmNlMTI3NjYzMjk3YTNkYWZhNmY1YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9dd499736e5b4d69b6060ebc6b9db4a2",
+      "statement": "A KubeAction implements RequiredRBAC(target) and UsesPodExec(); the executor builds a backplane client scoped to exactly those RBAC rules and only provisions a pod executor when UsesPodExec() returns true, so the action never constructs its own cluster credentials.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L51-L56",
+          "version": "repo-lines-v1:sha256:1b4c276dbe8d1305e9283cd5456f4a4403b2bad33d1f829a6c0227045cc9fe52:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjdkZjQ0Mjg3NGQ3OTNjNjJhOTM1ZGZmNWZmOGVhMjgwNzRmMzdiYmU2MjAyYjUyNWFjOGFhN2VhMTIzYzU5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTdlZjBjMmE4MmIyMzhjZjZhNjQxMjAzYWIzN2IzM2IzMmI3YjY5OGNlMWNjZTQxZWIwZDliZmY4ZmU5Y2YzMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWE2ZDUwNGFjNTRiYTk2OWU1ZmNlNjJmYjZiZGRhYjQ5OGRkYTM1MGY1YTE0YWZkOWQyN2RkOTMxOWQwYmQ1YiJ9"
+        },
+        {
+          "resource": "repo://internal/actions/get_pull_secret_email.go#L37-L49",
+          "version": "repo-lines-v1:sha256:39073f92f048a1b4b8a7cd5dd186883c0453e440e0ee3f72df927589f1480ba6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhMjk2M2NmMjFkYjljMTYwNjA0NTkyOTFjYzMxNzA1Nzg5OThhY2RmMDY2NjQwM2MwMDU5NzE1OTJlZGVmZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkZDMyNDAwYzNlNGUwYTQzY2I3OTE2M2Y1NTAxZDgzMDQ1Y2NhYWZlMWY0NzdjOGEyNjY3NDgyY2JlZTAwMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhZTFjMTEwOTNjZjBlY2JiMWY0YzUzNGI0NmQyNWMxZjQyNzYwMjhlZjJjYmMxNGViYmQwMWI5MjBiZGVmOGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5da4f4c293dd4806a300a80fabd286b5",
+      "statement": "An AWSAction implements RequiredServices(target) instead of RBAC rules and has no pod-exec path; a mutating AWS action must additionally implement AWSWriteAction (Operation(), Resource()).",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L76-L107",
+          "version": "repo-lines-v1:sha256:e4e5cae817830e925f8a3c3e138a1807fb3863e1ef888506820ca9fa10e3b48d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhYjU3YjNmYmY4ZWM3NTA3Njk2ZjAzNjY3ZDExODZhZjZhYzY2MDI0MmEyMjQ4ZmI3YjA4OWMyZGIyOWI4MDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1NzFmZjExZmRhN2FmNjY5NDg5N2Q0NzIxNjIxOTMzMTBiNmI0NTJlOGY1YjYwODExMjNkNzJiY2ExY2FlNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwODJjZWVhZWZlOGZhNjUxMDg5ZjllOGM4MWQ0MzkyZmM0OWFkYTY4MjFkNTQ3MzdkZDAzODVjY2NjZmJjNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxNzc1MGE5YWE0YjBkM2JlZjcwNjlmNDg4OTBlNjQxZjhjYTVkMmVkOThkMjdhNWVkNTM5NjJmNDhiMTY2MzgifQ"
+        },
+        {
+          "resource": "repo://internal/actions/aws_write.go#L96-L111",
+          "version": "repo-lines-v1:sha256:a265b5e737bbbf52582d034ba08a9b8dbc0d3bb203b88bca10e0d6f051f6e6f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhMDUwMGE2MTlkNzJjNTNiMWY3NTUyNGYxM2IxN2JkMzE4M2Q0YjhhNDdjMDg3MzY0NGQ2MjllOWE0OTE5MzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5NDVmNzE4OTMzNGNmODliNmY4MGE0NGUyNDZmNjdiZTY2MmU0ODY2MWM5MzIzMjk5YjQwYTg3ZmUwYTJlMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5ZGJmZjFkYzkzZjNmYTY5ZGJkODFhZDY3ZWMxM2JlODYyYTMxMTUwZDYyMDE3ZDJjNjRiMDZiMDE4MjFiMzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0bde8d8b4874422bb08a34450a7a91b6",
+      "statement": "AWSScope decides whether to treat an AWS action as a write purely via a type assertion to AWSWriteAction (internal/executor/aws.go); an action that mutates AWS state but implements only AWSAction is judged a read and runs without being checked against the ROSA_TA_AWS_ALLOWED_OPERATIONS write allowlist, regardless of the catalog's Type field.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L95-L106",
+          "version": "repo-lines-v1:sha256:5a309a2cbfcd20f721b66bce3386c8b367015aeaca8475f542ca2b974eb7d6eb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNmI2NTYzNTJhMDAxYzc0NGViZDA5OTM1YzIxYWY0Zjc3MGQyYTZiMTUyMmU0MzBmZTQ4NzU0NTQ2MTVlYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4ZDkyZTZlYmI3YTY2NDUxZTI1NTY5MGUwM2M1NDNjNGYzM2IyNWViMDMzMGQwYWQyMmFhMGJjMDk5MWRlZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwOWRjNjFkYjNjN2Y0YzNkNzdjZTcwNmIxMjgxZDFlNTBiN2JlY2M4YWVmNzk5ZDMwZTcxN2E3NDk1MWI3MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViYzlhM2Q2ODdjZmViOWM3Y2MxMDZlNGIwODc1YTI2Y2YwOTZiNWE0ZTJkODljYzlkOTY0ZDZmMjVhNzk3OTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_43273ad615d2450e85ba6414cccc20f1",
+      "statement": "AWSWriteAction's Operation() names the mutation and must appear in the operation allowlist to be authorized, and Resource() fixes the kind of object acted on so a caller-supplied resource parameter cannot redirect the write; aws_write.go additionally verifies cluster ownership tags on the target instance before mutating it, as a check layered on top of the AWSWriteAction gate.",
+      "evidence": [
+        {
+          "resource": "repo://internal/actions/aws_write.go#L101-L140",
+          "version": "repo-lines-v1:sha256:390729120bdaf2337e8e089f3bf4423cac751a7fc0d84bef0c6b910df202c5d7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NGI3MzEzYzA5NGIxODIxNDNkNjUxMzNhOTUwMmM4M2M2MmMyM2UzYmJkYTYzNDYxMmZiYzJjMTBkOWY3YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlZjRmMWVhZGY4ZjhlNDBmMmNmN2U2YjQ4NjEwMmYyNmIxMmIwMjNhYWM0MzQyMTk5YTdkZDc5M2JjMzM1MDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2MDUzOGQ5NGM4ZDVjZmI5YjEwZDlmMTlhNzZhNDgxMzk1ODViNTU3YzI3NTJhODZjODY2ZmI2NThjMjA1ZTYifQ"
+        },
+        {
+          "resource": "repo://internal/actions/aws_write.go#L37-L94",
+          "version": "repo-lines-v1:sha256:a98a7a2e9b975e2a1f6dd42e30eebc3eecc7d9204af6fa5530b0f5d399ad072d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwZmMyNWY5NmUyZGQ0ZmFhNTEyNTkzOTMxYjI2Y2Y2MDA4NzM0MWI4MWYwZTAzZjJjYWNhY2MxZDZlZTVjMzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5NmRhNzcxNmE2OTg3NDBmN2MzMzE3YmU3YzUzY2Y2NjUxOTllNTQzOTFlODMyYmJkOTZjYTdlYTc1YzM0MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjZTgzNDBjMDg5ZTg0YzVmMTg4NWI1MmNlMTllNjM2Njg0ODhmOTBlMGYwZTg2OTExZTgxYzkyNDlhNDc3MmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4537e85834744074a03e7b31b624e055",
+      "statement": "RegisterActionFactory takes a factory function rather than an instance so each execution gets a fresh action value, and the registry key returned by Name() must match the catalog Name exactly.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L109-L120",
+          "version": "repo-lines-v1:sha256:2aa803dd7adea8d4947ca0f07e2be96c201aa1eae4efa07a52dbc1a41b4d5256:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5MTliMWNkMzlkZDY2OWVlNDYyZTI5ZTU4MDg5MDA5OGJiMzA0OTYxNGQ3MzE0OGIxMjYxNzM1ZTk4OWZlNTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhY2NlNjdjNzBiMDFiNjMwZGEwNGI5MzFjNTc2MjM0ODJkODYzZmEwN2VmOThlM2U4Y2NlMjdlMzdhMmMyZWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhMDY3ZWI2ODUzNjVkMWQ5OTAwYzQwM2FlNGYzNGViZjJmOTVhOGEwZWE4YzcxYjUxODMwMjMwZDUzMjBmMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5NWVlYjEwNjZjYjQ5N2MyZDg4MzY0NDVmYzkwYTIzZDI0NzE4NDEzMjdmOGYyOTk0NmNlOWY1ZDVhYjA1ZmIifQ"
+        },
+        {
+          "resource": "repo://internal/actions/get_pull_secret_email.go#L16-L18",
+          "version": "repo-lines-v1:sha256:f4a2755995806b01679959b4fed4a821a0632e224080307aa53ac2f95a3ecead:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIzOTllMzIzYjJiNzY1ZTk4OThiYTA1MzUwNTQ2N2VlMTMxMTZhMzQ3ODc4MTk1YTExYzhkYTg5Nzg5NWI4ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTUxYzE4NjI0NzRkZGY1YTEzNDUyOTMyMDI2YTk5Y2MxMmM4OWNhMDM0ZjcwYjY0ZTRmNzhhZDA5ZTZiYmJjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGQzN2M1Y2U0ZDdiN2JhZTEwMDkyM2QyNmFjMmY3NzY0NzU2NWYwOGI5ZDdjOTk4YTI3NzYzZWU4ODFkZmE0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cac2bc40408d4897970abd1d7ccc5f50",
+      "statement": "The catalog's Required flag on a Params entry is descriptive only: the API does not reject a request for omitting a required parameter, returning 202 regardless, and a missing parameter only fails asynchronously once Execute runs, so the action itself must validate parameters at the boundary.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L201-L207",
+          "version": "repo-lines-v1:sha256:ade272389c12c6bb7f04af5fc87126dac75f8f0adf499ab55fdbf963ce7aa9de:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDJmODcyNzNkN2E2MWRlZGJhNWU5NTY3YjAzZDBkNzJmYzEwZWQwMjFiNzg1NTZjMGM2ODk5NjQ3MmFiZDg1ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzViNDIzYjhkZTBlZmY4MTZjNjM4YzM1NDUyMjU0OWY3ZDI1YzFkZmU5ODhkYWI5ZjJmMWE4NTVjODhlZmE0ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzRlODk0N2FkMzhlYzVjMWExZGJjOTVhZDYxN2MwNWI2ZjE1ZGQxYzY3ZDVjZjE0ZmQ1NmYzNWYzMTY3ODE0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTU1NDg2NDZjZGIwZDYzNTk2MTkyMmI5ZmE4NTIxN2U1M2Y5ZDMzYzZkNTlmODcxYjYxMWY1YzVlNjI1YTg5OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_28422929e3324d0ab5815739c05654cb",
+      "statement": "Authorization enforces a namespace allowlist (ROSA_TA_ALLOWED_NAMESPACES) and a secret allowlist (ROSA_TA_ALLOWED_SECRETS) before an action executes; the secret allowlist check validates the caller-supplied target rather than what RequiredRBAC actually grants, and both checks are skipped in permissive mode when no namespace allowlist is configured.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L213-L231",
+          "version": "repo-lines-v1:sha256:30d4c7cad790c6e988629bfdfb4897051c69e358ca47f28741b3b6f277a3c7f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyN2Q0NzY3NDRjYjE0NGY2MmMwYzBmMjUyMDhhNDVhNGMxMWU4ODJmZmM3YzYyNTZmZDFjNzdmYTE4N2RhZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2YjgwNDgyZDE2MmYxMmNiNGFiOTE2NjA0YWQwMGVlMDUzN2RmYzE5NzRkYjA0YWNhNmRkYTFhYTZjOTY1MjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjOTA0YmIwOTA3ODQ5NGVhODljNmFlZjBkY2RjNmYwODRiNjBlMDRhOTMxZmU3OTVmODJmNTQ2NTk1NmE0YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYjYyZjA5NGUxZmI3ODQwMDc5YzdlNjk1NjkxYWVhZDhiOGRjZjZjMGZhYmEzZmM4Y2VjNWZkMDdhYzQ3MWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_197c7d2269f2494dba2a94d0334ff7b7",
+      "statement": "cmd/action-cli wires up the full executor pipeline (authorization, audit, backplane/AWS client construction, execution) outside the server, dispatching on whether the action implements KubeAction or AWSAction, and resolves actions.CreateAction(action) by name exactly as the production worker does, so a missing init() registration fails identically in the CLI.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/main.go#L107-L139",
+          "version": "repo-lines-v1:sha256:cf9f361fd6856551dd5e44768a899cdc3b755385e57c0bd441e8b07b11a68339:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3ZDg3ZmEzMmFjNDgyNjhjYjMzMDg5ZWNiNTRiMzUxNWYxN2JhY2U3MTc2YzAwODE4ODI0OWQxMTRmNjcxYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkZTdlOTFiMWMzMDFlMTIwN2MxMzUzZDc3NjYzZDBlZTg4YzIxYWFiZjg0YzY4Zjc2ZTk0Mjk4ZWEyMzZjZTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0N2NhZjg1ZDQ1NjI1YzAzOGE5YjAzOTk4OTJlM2U5YTQ3YzlhNTdkNWQ5ZjVjMWIxMGMxZTQyNTdhNTE2MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NGE2MmQ5MDUyYTdiZmFhOWRiMTA4ODBiMmFmMTM5NjJlMzZhMTFkZGU5NmNiOWM5MjE5NWI3YWRlNzU2MmEifQ"
+        },
+        {
+          "resource": "repo://cmd/action-cli/main.go#L76-L80",
+          "version": "repo-lines-v1:sha256:58c4a252aadb4ac36cc344ada4e14a8a160a59fb2c6f2c49f4d8cc75b42394ac:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGZjYzI3MzAxNDBjOTM3NGM2Y2ZlZGI2OTY3ZDE3MjE0NGMyMzdlMjgzODZhMmQ0ZDc3ODM3MGQ3OTBkZDkyNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTY4MDZmMTU1YzVhYzFhZTI3MjJjYTA2ZjJhYzljYWRjYjg4MWI5MTIzY2I2MjRhM2MxMDQ3NWI0NDQ5ZGMyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTFmNTQzYmZlNWFhZjg4MjNhYjdjMWY2Yjc3OTBkYzE0YWYyYjJlODgxOTViYzkyYzc0MWUzOWU0NjI5MWQ0OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRkZmFkMmRhNzcyYTg3NzZmZGExYjQ4N2I1ZTNiNzM3ZGRhOTg5ZjA1Y2YyZmE3N2RhMzYzODNmYjNiNzM5ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8cca6a3f6ac24f33b1beb8848f3af991",
+      "statement": "cmd/action-cli reads the same ROSA_TA_AWS_ALLOWED_REGIONS and ROSA_TA_AWS_ALLOWED_OPERATIONS environment variables the server reads, with no CLI-only override, so what it can exercise locally never exceeds what the server would permit in production.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/action-cli/main.go#L113-L139",
+          "version": "repo-lines-v1:sha256:b5f18b00f4adc5304151c301f69f3ab68961e5469258d3a0b4b0fb30cd8b645d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ZTc1YjMwMWE2MmU1ZTVmNWNkNTRhOWRlZDMwN2M1MjE0ZmI5MjA3YjJlODdiYWQxYjQ3MmI1NDc4ZDI4M2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkZTdlOTFiMWMzMDFlMTIwN2MxMzUzZDc3NjYzZDBlZTg4YzIxYWFiZjg0YzY4Zjc2ZTk0Mjk4ZWEyMzZjZTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNDEwZTNhNDBlMTY0NTQyZjRiN2QzZDZjMDIyNDVhOTEyMWU4ZmVmZmU1MmYzZjkyMTIxMDg0YzE5NzJhZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NGE2MmQ5MDUyYTdiZmFhOWRiMTA4ODBiMmFmMTM5NjJlMzZhMTFkZGU5NmNiOWM5MjE5NWI3YWRlNzU2MmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4d202bb5609e45c3a093235071719ceb",
+      "statement": "A local kubeconfig-backed KubeconfigProvider used for local/e2e testing ignores RequiredRBAC entirely, so neither cmd/action-cli nor a local kind-cluster run verifies RBAC correctness; that relies on unit tests and code review instead.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/skills/add-trusted-action/SKILL.md#L117-L125",
+          "version": "repo-lines-v1:sha256:ac56801f814d8eb6cf87fd2403ae1fab543194be31be000f0ba824dea422cad9:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTUyMWY2MDM3OTRlZThmOGNkZDdiNDk3ODJkNTFjNWY5ZTE1MDI1MzFjZjFhMmJhOGFmZGNkMTY5NzUwNDljYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODJiYmRkY2ZhNzk3ZmNmN2Q0NzgxNDRmZGEyM2VhZWU0NzNhMWVlNzEzNjQ4YzE3MDQ0NGRiZTM5NGM0ZWIzZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTIwYmViNzk0NTUzZjEzYTNmYzRkN2I3MjlmZTdkMzIyZjFkZmVhNjAzMTk3MTM1NDkwMDVmZWExMzJjNThkMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGRkMTM3MTg5MzAyZjZmMDU2YWZlOTI1MTg3MTE4MjY2MTdlYmNhYTgyNGMwN2MzZDc4Mzg5MGU4YmI0NTkwNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0e1c19a964154687867cb3f066e87e66",
+      "statement": "The recommended one-time verification that both registrations are wired correctly is to temporarily remove the action's init() registration (expect an async 'unknown action' failure) and then temporarily remove the catalog entry (expect 404), restoring both afterward.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/skills/add-trusted-action/SKILL.md#L139-L144",
+          "version": "repo-lines-v1:sha256:3aae2e9373a6929a542a2ff2c57fd1094c580df44c39aaebe9f542c699223ea6:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2QxMmMyM2Q1NDUzNzQwZmNiYjI4YjczMmUyOTZlNDFmMjFhNDM4YWQ5N2QwMDhiZjBjN2NjZDkzNzU5MzEyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGE5YzgzNjQyMDNhZjg1YTMxYmFhZTY3ZjQxMzA1MjUyM2E3YjgwOWYxM2Y4YWYzODAwMDA5ZGZiZmNkOTVkMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmZhMGU1MjM5MzlmZjVlZDI1YjA4MmE0MDJkNDgyM2U1NGUwNjFlMDg1Zjg1NWVlMTdlZjRiMmJiNWEwY2UzOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzI1N2MxYzUxNDVhNjcwMGE3YmU0NGYyZmQ0YzM0ZWU2MDNmNjZlNzZhYTcyOTcwMDU4MzM4NmZmYzhhODFjYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a7f742bf2b9f427f863c3905d2455937",
+      "statement": "The Claude Code add-trusted-action skill packages this same implement/register/test/review/ship workflow, including a local kind-cluster end-to-end testing recipe, as an automatable sequence for AI-assisted contributions.",
+      "evidence": [
+        {
+          "resource": "repo://.claude/skills/add-trusted-action/SKILL.md#L1-L19",
+          "version": "repo-lines-v1:sha256:94078db81ef72f5b023ff769aaa4d9afb4662ce88f69cd4d3b274ab06d78a170:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4MjhjNDM3MzAwMmRmYWE5NWZmNTBkNDJkZjFkNzAyMjVjMTc0NzQyMjkwMzU5ZmI5OWRhNTBhZDE0NWY1ZmIifQ"
+        },
+        {
+          "resource": "repo://docs/adding-a-trusted-action.md#L11-L14",
+          "version": "repo-lines-v1:sha256:18dee1f025c126fada14611e613f5727a948898b309918cc02844204208217c6:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTE3MDBhNWI2MjYzNGQ1Y2RlNjdlMjA3ZWEyZGYzMzBmNTM3ZDBkNmJiOTI2N2QyZTdjMjk0MWFiMDlmNzYxMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IzZTI3NTBjYWI4YzNiZTYwODM5ZWFmY2M3NDJhYTc4N2MyYTM0NTFlMzMzODZkYzgwNzRlMWIyOGExNTBjMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE1ZWM1NmJmZWJlZmEwZTdjMjc1MGIyMTkyZjg1NTc1OThiNWQ0MTMzN2M5MTBkNjIyOGZlODUyYzgyNjQ3OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTMyNGQ0M2U0M2I2ZDU4MGNlOTljNDI2MmYzZWU2ZTUxYWQ0NmM2NWEyMjE3YzY1ZTYyNzRkNmYzODNkNjE4MiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

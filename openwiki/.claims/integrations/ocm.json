@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d8c6b398f7817eae26fa3c54adfe4a4dadcb45b4c180e868c5b6010ddc0ff0b2",
+  "claims": [
+    {
+      "id": "claim_2da4dff8325142e98edc0b219bbb9b17",
+      "statement": "A JWKS validation wrapper built from ocm-sdk-go's authentication.NewHandler is applied around the entire chi router in cmd/server/main.go (not just the API subtree) whenever AuthPolicy is not 'disabled', fetching signing keys from cfg.JWKCertURL and optionally cfg.JWKCertFile, exempting only '^/health$' via Public(), and storing the verified JWT in the request context for later extraction.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L392-L422",
+          "version": "repo-lines-v1:sha256:be6b22db053cf421a2c49201097b68eef8dc02ae06aacc10242c6044439719c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3OTRlMjE0YTAyY2Q4NTY1NTgwNGQ5MTUwNWQ5ZGVjOTQzOWUyNmVjZGM0MmE2MjJjZDUwNDEyNzViZjkzZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyYWIzMmVlYzU2YWNhM2U3MWJjMWIxZmQzNGFmZTU2NTg0ZDlkYmU4YTA5NTUxMGJkNDEzOTUxYmUzZGE2OGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZjY3MTVhYjQwMTE4OWNlY2I0YmE1ZWIzZmFmYjZhOWRjYTQzNDc2ZDM2YmY4Y2MxM2JjMTY3MTYyYmRkMTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_141e18bfa34f4433afd1f3b28cb7882d",
+      "statement": "auth.GetCallerIdentityFromJWT retrieves the verified token placed in context by the JWKS wrapper via authentication.TokenFromContext, extracts username/email/clientId from RHSSO claims with a fallback to preferred_username (RHD), and an empty or missing token/username causes auth.Middleware.AuthenticateAccountJWT to reject the request with 401.",
+      "evidence": [
+        {
+          "resource": "repo://internal/auth/authn.go#L29-L47",
+          "version": "repo-lines-v1:sha256:82b1d9a32c8d4b0de6a30561f45d6749439b044417d7729d6cc5ef803e86bed0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljYWVkMTdjNTQ3ZWQzNzJjOTY5YTc4ZTM3MTA2ODA5ZWU1NTJkMjAzNGM0YzcwZGM1MGYwZjY3MzU3MmY4NjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhN2ZlM2I5YmI4YzdiZTEwZWFmYjg4OTBiY2FiNDVhNzA5ZGQxM2JlNDQ1MjI0MzY4YzUyMjEwNWRkNTdiZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyOWI3ZjRlZTE2NTE1ODgzNDcxYzljMzQzMjljYTRjZDk1NDFhMWFmM2MzYzUzY2YzZTY0M2FjZTFiMTc0MWEifQ"
+        },
+        {
+          "resource": "repo://internal/auth/context.go#L50-L79",
+          "version": "repo-lines-v1:sha256:0711aa065ce084f807003b87c16582bd5a58a59156aabcd811460cc2296d837b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMGM5OTkyMDQ1MjQ5MGY0YzYzZThkM2Q4NGM1ODVlZDU2MDBjNWRhYTI2MDM3YzRiZjRhYzUwY2ZjNGFkYzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNDVmZWYxY2Q3YzliZGNkYjI2MGRiYmM4ZWY2NjhmMjQ2MGRjNjc2ZmQ4YWIzNWE1MTk4NGI0ZjhmNDMwZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjMzAxMDI0OGQxNTgwNWM3MTllYjMxYTZiMDdjYTc0ZmI4OGZkYWQ2ZGVjOTk0ZTBkMTQyOTNiZWJlNzY2MWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_369dd22a22c34499b3cf4138634dc145",
+      "statement": "cmd/server/main.go builds the OCM client's static Config from cfg.OCMBaseURL/OCMClientID/OCMClientSecret/OCMToken under the 'enabled' AuthPolicy, or from a loaded ocm-cli config file (ocmconfig.Load) under the 'ocmconfig' policy, and requires a non-empty, fully-populated []config.RoleMapping list under either policy, failing fatally at startup otherwise.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L122-L178",
+          "version": "repo-lines-v1:sha256:ae21967c060f3082eecc5cd23a05b64078295a6873ea19ffb100002139cf063c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiYWU2NmYxZjdkZTBlZWNiNTE2ZmU1N2VjZjM3ZTEwMTlkZTE5NDZhYTI2MDI4ZjVhYjQyY2FkMmYwYTIxMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2ZGE5ZWY1MTc2NTBkODY5M2UwYWFjYTdjNGRiMTk3MTFhMmQwOTRkYTMwODJmNGVhMGU3NTIxYThmYTczZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMzMDZiMzczMTVkNDgzYTk0Zjg2YTRkYmEzYWY2N2NhNDBkODlmODhiYTllMzA0YjNjMGFmYjJkM2NlY2QwZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyYTBjZjllMWMzNzkyZmNjOWZjMzdjMmNjN2I0YmZlNjI4OGMyODI2NjgzODg5NWY4NTAzNTZkZDBiMmU3ZGIifQ"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L23-L27",
+          "version": "repo-lines-v1:sha256:d1b7f5d5d5a27a3b2a727bd2a878fe10d87a9e9e117c691f8935809992469a27:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzQwNGNmMzc3ZjY2NWYyMTYzMTY5Y2M0NDdjNWQ0OTkyNTQ0YjlhYjA5NTM3ZmZhOTZkMjY1ODI1OGVkMmIxNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGIyMGZhYmY4OGY5NDE3Y2Q4OWRjNzJmOGNiZWZjY2JhNTc0NWIwODU5ZjU0YTM5MTI4ODU4ODNiN2MxYTE3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjZjZjlmM2I4MzNiODMwYWY4NjA1NDFjODg4N2ZjMjUwZDczNDAwYTAxNmQ5YjAzZDczZDBkOTY1OGVhYjY5MiJ9"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L57-L58",
+          "version": "repo-lines-v1:sha256:f7387c709af42b89f97036e5b7c0844017f306e2eb1dca04cf1c78bcb38fb7d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzY1ZGQyMGMxNzhkNjRkMmRlZWIzY2FjNWNhY2JkZTFhOWY4ODAyNTU2ZmNiNWEyNTcyZjlmM2MyNDg4NWU3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzIyYzMxNDAzMmYxMzc5NDNiMDExNzQ4ZjIyZWQ4YTBmNTU5ZjJkYjRhNDAzZGNlZDcwNjg2OTA4MTE0ZTJhZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDIyNzYzMTBhZjdiZTVmZTBkYTU3MGM2M2YwN2YzNDAyOWJiOTEzOWMxOTM0YTk4YWIwM2JlNjliNGEzOWM5ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2ZjYzZkOTU1MzdmZWVjZjk5ZjUxMGIzMmU4MTg3MjY2YmJmMWEzZWY4MTM2YjcwOTgyNDU3NTFmZThjZTRiMSJ9"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L60-L64",
+          "version": "repo-lines-v1:sha256:ece9d6ae44d2da2219f6a719b9755de435ec1f2b93ae97121f4539de1f18a3a0:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzc1Zjk2YjhhMWQwODJlYjMwNDFlZmUzZDJkZWExMGQyNTc3N2MwYmU3OTgzMzM0MDc2MjFmOTk1NzAxODU2NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2VmYWZmMmIxMzUyMjc4ZWJiM2RkNzc4ZDBkNzkxMTQxYTdlMTI5MjI1MTVmNjdjNWViZTA3MmJlNjg1ZTg0MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWRjNGRmZTg5OGI1MDQzODU2YWVkZGU5MDM2MTExZTg1NDlmZjNmOGE0N2QxZWZjMDQ4NGUwMTk3NmRlYjk0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTc3MGJmZDJlNTA5YWEwZmE5NWM3NWIzNDI5NTUyM2U1NDdhOTlkNDcxNTMwY2M0OWE4YzQ3YTAxNGYyNTM5NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_496e823169644726b5b139d7c69a0b90",
+      "statement": "ocm.Client stores its connection behind the narrow ocmConnection interface (Tokens, Close) rather than the concrete *sdkClient.Connection, specifically so tests can substitute a mockConnection via Client.buildConn; Client.sdkConn() type-asserts back to the concrete connection and errors (rather than panicking) when given a fake.",
+      "evidence": [
+        {
+          "resource": "repo://internal/ocm/client.go#L11-L18",
+          "version": "repo-lines-v1:sha256:d9d24490fc59fe7f202ef2a7f4ef5fec45646e4c696de34f09f2b62a9c0dbfa6:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDc1NDRkY2M4NGRmZDE4NDU1ZGVlYzgyNzk4ZjBhMGZkZjBlNzQwZDUzMTQ2MDNhMjFjYzU2MDQ1MjJmNzc2YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTAzMTRjZDM0ZmU3ZmJlYWJkMzI0MjNlODUwODIxYmY2MWIxYzBhYTdmMWEzMzg5ZTQ2NGFkZTY0ZWM1ZGZlOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmQyMTBjYjY2NGQyN2IwODMxNGZiYzYwOGZmMWU2NTZhYTI5NDhhZTc2ZjFlNThhYjA2YmQxMzM1Yjc4OWZiNSJ9"
+        },
+        {
+          "resource": "repo://internal/ocm/client.go#L88-L97",
+          "version": "repo-lines-v1:sha256:5fa0d799a99a0078624a87718dedc25acc246d253c8f9d79c9fa4d6b2c1c5f57:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjZDUzZjAwNzQ3MmU5ZjcwNGVhNmNkMWVhOWQwOTllZDI0ZDQxNjk4ZDZiOWQ2MGFiMjliOWE0MmM2NWEzZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmMWM0MmMxYWFkZWU2Y2UxOTc4ZGYwYzM3ZTExNGYxMGJlOWRjZGM3YmZkNzEyOWI4MjU0ZGMyMGE5ZjBjYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMzljMzJjODhlMDBkMmQ4N2ZhNzRmZDU5YzhlN2Q4NjMzYWExZTBmMzM1MDkzNDUwMWU1MjYxMjFiNzQ2ZjcifQ"
+        },
+        {
+          "resource": "repo://internal/ocm/client_test.go#L12-L29",
+          "version": "repo-lines-v1:sha256:61386306a2c8a23acbf7518708240da377d3299ef0df10ff9acef86f93aa6967:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhNTFhNDFjN2VjOGU0ZjQwNGY1ZmNlNzNiMjE4YTVmYTE0ZjcxY2M1ODlkZDY3NDMyYWI1MDA4MmFkNGNjZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiZmE3YjcxYWUyYjkxZjViNWY1ZDRlMzJmYTY1YTQ3YzRiYTliMTZjZWJkMTlhYjI4MzkwYmFhM2U0MzVhZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1ZjhlMzI5YTQ0ODA5ODZiNTUzN2IyYWEwMTkwNDBkODliYTI5MmM4NmYwMmEyNjgyNjg2NzM4M2Y3ZDgwNjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6b4692981a504c3cb34c4f199df1a1c5",
+      "statement": "ocm.Client.newConnection extracts a connUsername by calling conn.Tokens() and parsing the resulting access token unverified for its 'username' claim, falling back to 'anonymous' on any token-fetch or parse failure; buildDefaultConnection requires at least one of a client secret or a token, erroring otherwise.",
+      "evidence": [
+        {
+          "resource": "repo://internal/ocm/client.go#L128-L149",
+          "version": "repo-lines-v1:sha256:b555d9e8c869eb5e63a1eeb05afe1aa8ffb24f4687394b71ad6d62c1dac048cd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4ZWQ5MWNhYWM2ZDM5ZjkxNTA5ZWYyYWQ3YWQ3YjEwZmY1MmQ0YzljMDYwNjRkZjc1ZjA2ODg3ZWYwMjMxZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MzFiNmUyY2EwN2Q4YmFmMGViNDRlNzQ5ZGJmNDkwYjM5MmUzYTUzNGVmNjEwMjI3NzExNDZjZGY5YWYxYTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNzYwYzdmMzA3YjNhNGZhMGU0YjVhMjU4OWEwODVmMTI4ODZlMjU5MWFkZDhjY2RjM2ZiZjJkMjNlODg1ZGMifQ"
+        },
+        {
+          "resource": "repo://internal/ocm/client.go#L62-L126",
+          "version": "repo-lines-v1:sha256:ce2e3ab787fde1602330bf6ff6879d9a241b30729961a6c8cf38b4c43fdc16ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MDBhMmRhMGIzODMyM2FjOWJiYjMwNGJmOWFmMTFiZWNkYzAwZmMzNmI5ZWY2OTVkNWQ2ZjgzYTQxMWEzYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMjEwNzQ5Yzg2YTBjMDM5NmMxMzdiMGZlMjY4YTYzZDU4Njk5NmJjOWE2MTZhYWQxOGFiN2QxYWFkYmE1NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2NTE2OTFmYzcxM2NlNzk2NmQxMGQxYzUyODY5YWE3MTUwNzczMjJkOGIzYTM1MGE2YWM2YWY1NThhMGM1OGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a766dacc04cf48dba8883fe6dc72bacd",
+      "statement": "ocm.Authorization.AccessReview issues an AMS SelfAccessReview when the checked username equals the client's own connUsername, or a regular AccessReview scoped to AccountUsername(username) otherwise, and returns response.Allowed() from whichever call succeeds.",
+      "evidence": [
+        {
+          "resource": "repo://internal/ocm/authorization.go#L18-L73",
+          "version": "repo-lines-v1:sha256:85a11d69cfe0004a0c46295282e898a80790abb15411e76ac9249624ad702919:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNzBmYWQ5MTUyNjNiOGVlNTRjNGQxMWQxM2UyMzcwMWJlNTZkOWU4ZGI1MjEyYjNkMzJiMzFlZTA4ZDI0NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2Mzc5Mzk2MjQyMmM5NzY1YzAwNGRkYzc2NTFmMzcwY2NmYzJhZWIxOTA0OTVmY2ZiYzg0ZGYzYTg5ZGIwODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2ff79328a2ee4e87875123b6f33b3c7b",
+      "statement": "ocm.Clusters.Get validates a caller-supplied cluster identifier against the regex ^[a-zA-Z0-9-]{1,64}$ before using it, because the identifier is interpolated into an OCM search-query string; validation runs before any connection is touched, and matches by internal ID, external ID, or display name are all attempted via exact-equality search.",
+      "evidence": [
+        {
+          "resource": "repo://internal/ocm/cluster.go#L13-L53",
+          "version": "repo-lines-v1:sha256:9ca733ff0737c460e031a1af74aecd61363171d442f83629a871c581892b5d4f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhM2NhODMyMDhkY2VhNWI5NjEwNDgxYzcxNzZjNjk0NjA2YjIwNWJiMGE4ZGY5ZTAxOTc5OWU3ZGVmMGUyNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1OTA5OTMzYTllZjc2YjUxNmI5YmNiYmU0YzcxOWUxN2U3ZGFmMTkyZGE0MGY2M2I4ODBkYmJjMzAxMjhjZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhYzEwZGNkOGU5ZmE1M2VhYzRiOWMzMDYzM2YxNjI3MGFjMzc4ZTI3ZDY1NjE1MTdjNWQ4ZjNmMzBlYTI5M2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwYWJmZWM4MTUxOGRjMjhhY2U0Yzg1ZjliYjkwZmQ0Zjc4ZDg5ZGJjNmU4ZThkOGRkMGE2NjBjZTNlOGU1MDgifQ"
+        },
+        {
+          "resource": "repo://internal/ocm/cluster_test.go#L44-L56",
+          "version": "repo-lines-v1:sha256:0a9f5c9c27835ec2fd7d33bdf37b3568b106cdf2eb5e22d027e58e60128f28aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhMDNkZWQ5ZTBjNzI1ODMwODMyZjcyYzFjOGM0MjE0YzUwYWQ0OTY4ZGVlNDViZDU4NzNjZGExYWE2MjcwY2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ae21a550a0ec413e9d4bd9049db8618d",
+      "statement": "ocm.Clusters.Get treats more than one matching cluster (detected via Size(2) and response.Total() > 1) as an error rather than picking one, and treats zero matches as a distinct 'no cluster found' error.",
+      "evidence": [
+        {
+          "resource": "repo://internal/ocm/cluster.go#L48-L66",
+          "version": "repo-lines-v1:sha256:cfc3d9f3be6f0210311c60c0fc6067e2d8dcca4c298885d3d539144ab4c331c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczMzIwYWRhN2IwOWU3YTViMjc3NWIxNThmY2RjZTVjMDg4MTQ3Mzk1NmZlNzQ2ODdhMjU3OWY5NTAzYjAzMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5ZmIxZDZkOWU1ZjA1NmQzMWIxNzNkZDQwMGEzZDBmYzMwZWM3NjYyZGFiODkyNWNjZDM4MTY0MTczYWNkMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg3MTk3ZWFlOTcwOWE3MGIwODgyZjYwZTUwZWVjNjExOGFhY2E2YmU3YWNjYjQxZTc1MGQ4NjhiZDliNGE1Y2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6f58115a57574415afcecc55da15cb07",
+      "statement": "Client.Connection() is handed to awsapi.NewCloudCredentialsProvider as a method value (accessor) rather than invoked once and its result captured, so backplane-cli's cloud-credential flow always fetches a freshly-resolved connection/token rather than one captured at server boot; the server does call Connection() once at startup solely to fail fast on a non-concrete connection, discarding the result.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L300-L320",
+          "version": "repo-lines-v1:sha256:8161c5c9cb5f4f8b5ede94efc3432aa962512469645ba18f1736239126897750:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwYWFlNzU2N2YzNmVjZGZkMTJjMWFkN2UyMDZjMzEzODBjOTdkMzNkZDY3MTEwNTQwZTI2Y2YzMmNhZWZmYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyNzg4NDk1ZDFmZTBlMDhlODg3ZGJiOTgyNGVmNzdmMzgwODU3Nzk5MjYxZTYzMjEwNGY2ZWMzYWVlYmI4OTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlYWNlYTU2NGNjZmFkNGNlYTZmZWM1MDMzOGJiYzI3ZjM2MGNjZTg4ZTMyY2IwM2FhY2JmYTQ5MGFiYmNkNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzNjQ2ZTMwYjJkNWZlOGQ5ODhlODJiMjRjOTRmNjVmODgwYmUwOWRiZTNmZDgyMmNiM2NjMmY0NWZiZTBjMzMifQ"
+        },
+        {
+          "resource": "repo://internal/ocm/cluster.go#L68-L76",
+          "version": "repo-lines-v1:sha256:85f34803b0dd142ff278aa5f5c360435741fdcfa523b725618fd6240a7cee36a:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTY4ODI1NTIxM2ZmYmM3MWVhZGYxY2U0YmYwMmRkNTEzZjVlZGY1NTE3YTUxZjg4YzY1MTUwZmFkYjQ2ZTY1ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWVlOTZhZmMwMDg2MGIzYmExYTc2OWU1YTRlNzY4ZjYyZGIyOThkNWRjNmZiNTNkMTgyNDliMzk5YTQ3ZWI0MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjZhODYwNmY1NTM5NGU4ZTI3ZWRlYTEzNTkxNDA2ZTk4ZTFlYmY3NWQyMDc3ZDJlODMxNWY1OGQwNTdmY2MwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

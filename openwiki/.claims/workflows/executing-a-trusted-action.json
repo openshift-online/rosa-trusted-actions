@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:4f5387fed0f94dda7d145d9eb3b7a67cfe1cfceffc3e61798aa9890a0500cb41",
+  "claims": [
+    {
+      "id": "claim_0407c6156c3e4d3bb9649461ecc1ebdf",
+      "statement": "handlers.APIHandler.CreateExecution validates the action against the catalog, persists a new Execution with status pending via store.CreateExecution, calls notifier.Notify() to wake a worker, and responds 202 Accepted with the execution plus a self HAL link before any execution logic runs.",
+      "evidence": [
+        {
+          "resource": "repo://internal/handlers/api.go#L87-L142",
+          "version": "repo-lines-v1:sha256:f389c59320278e37643dbc04fdd5a7f6ad34c826815a555a4e7bdc89659e3f09:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5ZGQ4ZDY3MmIyYTE3NDZiOGM3NzRjYmQxNWFiOWU3ZWU1OGE3ZGEyNzA1MjVkMDM3ZTRlNDY2YjljYTNhZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY1NWQxNzExNTFmY2MxMzYyZDA3NzRhNTRmOTBlNTY0NGQ5MzBlMGQ3NWFkNmViYTdmNDVmZmRkOTk1MDcyMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmYjk3NmExMTIxMjkzYWY4NWEzM2EyZWM5YzczMTBhMWYwYWExYjk4NjE1YWZmNjA1ZTNhNDVjYmI3ZGJhYTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_21670ee39f9a40ab938c7c9033b76656",
+      "statement": "models.ExecutionFromRequest builds the persisted pending Execution from an ExecutionRequest, assigning a new UUID, status pending, approval_state not_required, and serialized params.",
+      "evidence": [
+        {
+          "resource": "repo://internal/models/execution.go#L81-L108",
+          "version": "repo-lines-v1:sha256:e79c8afc8fed3f59cc41c44b10aa0987d30a4fd726e92d84a722c03729647dae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmOGQxNjc2ZGVkZjlhZjI4ZTNkZDVjZjAzZGZlOGIwNDdhOTE0MmYxNGI0YWQ1YTQ0MmFkNDg5MzJiYTVhMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmZWRiMmE5YmI5OWM5MDFkNzc2NzY0OTJiM2FjOTRmNzI2YmQzNDc5NGUxMjJiOTVmNjhhNGM5MTgzYjI0YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a53a4115046040458971ab4cc09576c6",
+      "statement": "worker.Pool.Notify writes to a capacity-1 buffered channel without blocking, so concurrent or repeated submissions coalesce into a single wakeup; ExecutionNotifier is declared in internal/handlers to avoid an import dependency on internal/worker, and worker.Pool is its concrete implementation wired in cmd/server/main.go.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L336-L341",
+          "version": "repo-lines-v1:sha256:ca8a6a4f9dce83f90016a72578a137a090c626196b9b395fae6266e2e9181dfc:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDRhNmNkYzBkZjg2YWU4N2I5N2U5NzQ5YWViYjI4YzIyOGQwYWRjODZmZTVlNGU3ZTBhNzJiYTAyNjRmODY3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDljZTRiNmJhZGQ4NWM3ZGI0MTBjOTBlNGE5NzVmNTFkMzA0MTIyMGNhNDRiNjM1NjhlZWJlMmJhOTkxMGM1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU5ODNhMTQ5ZTBjNWE3MWQxZjA3OWJjZTAzN2IyYzZhZWY2YzY3NDc1MzQ0ZDRhYWRkMjI1MzgyZDY2MTA2MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTU0MDM4YjdiNTI2MzVjYjA4MTFkNjdkODBmZDhiYzc3OGY0OTdiZDE2ZTM1NzAxNGI5ZWY1ZThjMWZiZjViMSJ9"
+        },
+        {
+          "resource": "repo://internal/handlers/api.go#L25-L51",
+          "version": "repo-lines-v1:sha256:d4ad40cab2bbaa40f85d84a4b69a6ac6bbaface84f67340aa1d6d9f6006f9f6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlZGRlNmU3MzllZDg0ZjY0NTBmMTNjMmQyMDdhM2Y0NGJlNjJkNGE1NjNhMDFmMGMwOTFhZjcyZGY5NGEzNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4ZGRlMGFkMmU0MjY4MDJjYzM3NjlhNjk5NTNmZDRkOWZkZDJmMjdhMGZkMjdjZjQxMTYyMWUzYjIzM2E2NTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjYWQ4Mzg2MmMyOTNkMGY3ZTAyNzNlMjM2N2E4MWQxZDkyOWU3NWJhNjk1NDVkZGI0YzMzNGMwMGQyOWRhYjQifQ"
+        },
+        {
+          "resource": "repo://internal/worker/pool.go#L70-L77",
+          "version": "repo-lines-v1:sha256:7af49e64981d48a38ee62a05fa5b4e42dda762526c47f7e604d32682800bad6d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NkYjA2Nzc5N2RkN2JjNDVmZjFlM2M3NDViY2UxMDdhY2EwY2ZjNmEzODc5YmEwOGJlZGQyMTc0MDA0YjlmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjI5NjQwNzljM2M1YzgxNTIwZWYzM2EyYjlkMmUxNWExYjg0ZDcyODBkYjg1OTBkY2Q2NTc0N2UzZTAxMmE0MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGI2NzZkMWRmMzMxYzBlMGVhZmI1NmQ3MTc4Y2RkMjU5ZDY3YThkZTk3NTcxYTg1NDc5ODM1MGUzZjk4ZDNlMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c11d415505bc4b4c9c76ceb94bb1b41e",
+      "statement": "worker.Pool runs one goroutine per configured concurrency that loops calling store.ClaimNextExecution and, when nothing is pending, blocks on a notify channel or a poll-interval ticker, so a missed Notify or an externally inserted row is still picked up on the next poll.",
+      "evidence": [
+        {
+          "resource": "repo://internal/worker/pool.go#L93-L124",
+          "version": "repo-lines-v1:sha256:ff247c5707616d209ae31a6ec760297cb5ccbeb836074c3f1c40af2cbff7f97e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyM2Y3NTMzYWJjZmE0NTk5MjVmZmE5NjU4MWU2ZDgxNWEwMTNhNjM4ZmUzMGQ4YWM2NjA2M2MxNWNlZWViMGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzZTAwNGQ1MmY1Mzc0OTdiNDhiODlhMzlkN2MyMmM2MmU0Nzk5YzgyZDFiMzU4ZWE0YTNmMDg0OThjMjBmOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlNzk2MTk0MWM3YzA0YzVjMTk3Nzg4NTAwNmI4MGU1NGQ3YjJjM2E0MzJmNjhlOTE0YWJlOGU3ODlhMjQ3NWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_63da180b570e4b48abd21a493527187e",
+      "statement": "PostgresStore.ClaimNextExecution atomically claims the oldest pending execution using SELECT ... FOR UPDATE SKIP LOCKED inside a transaction, transitioning it to running, so concurrent workers never race for the same row and do not block on unrelated pending rows.",
+      "evidence": [
+        {
+          "resource": "repo://internal/store/postgres.go#L231-L274",
+          "version": "repo-lines-v1:sha256:00a4edab11ba9e8625c4b218263b77bbca74255992db5b6578bbac4dc6505491:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlOWU0ZWVmM2EzYTE1NzE3MDRiZDdkZjBmMDcwMzVjMDExYjY0ZjViMTcyYTFiNDU1NjM0N2JkNjhhNjFkNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MzFiNmUyY2EwN2Q4YmFmMGViNDRlNzQ5ZGJmNDkwYjM5MmUzYTUzNGVmNjEwMjI3NzExNDZjZGY5YWYxYTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3YTM0NTE3N2I3MWNhOGQ2MWE2MDU4MTUzNDgzNDdmOTRlOWM1YWJiZTc5MTBjOTJhYmMwNWIwMjRjMThkNGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_57244a53993a47d3a10657897e1761f2",
+      "statement": "worker.ExecutorRunner.Run resolves the action, decodes stored params into map[string]string, applies a per-execution timeout (ROSA_TA_WORKER_EXECUTION_TIMEOUT, default 2 minutes) via context.WithTimeout, and calls executor.Executor.Execute with Target left nil so the owning Scope derives it from Params.",
+      "evidence": [
+        {
+          "resource": "repo://internal/worker/executor_runner.go#L41-L96",
+          "version": "repo-lines-v1:sha256:13a7140dbbb3dfec87f345feb410d9481c6d4c46c514dd578ac67ba39af8766a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZGY2YTk1ZTRiM2NiYzg3Y2I1YjI3NTZmZGJkM2Q3Zjg0MDBjMTU3NjE3ODUwZDk1OTNkYWU5ZWFjM2U0NWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjZDkxNmJlNzY3Y2FlY2U4YWU3ODk4MGNhYTZiNGMzMDI5ZmQ2OGYxNDhlMzU4MTIzZjVmZjdmNTBlODI2YmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwMmUyYjZkMTQwYjIyMjVlYmI3Yjc3ODEzZTgxMjU5YmExNjBiZWFiZmEwOTcyZTUzN2NlNzA4NzQwOTQ1YmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1MTIwMjg1ODYwN2RhM2I4ZDMyOWY5ZDcyN2FjMGUxNzU4MjdlYzJmNDJiMzU5NDk4MGUyMWY1OTg2ZmZkMzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e8a2f6f04f346aa8fc13c468aef5726",
+      "statement": "executor.Executor.Execute distinguishes three failure situations that all currently map to the same terminal RunResult status \"failed\" in the worker but are logically distinct: a target-derivation error before authorization ran (Result.Error set, Allowed false by zero value, not treated as a denial), an explicit authorization denial (Allowed false, Reason set, Error nil), and a successful-authorization-but-failed Scope.Run (Allowed true, Error set).",
+      "evidence": [
+        {
+          "resource": "repo://internal/executor/executor.go#L93-L159",
+          "version": "repo-lines-v1:sha256:f384618a4ea92aea25534aaf7ce36ff6fa75ff714c39c678938eb868eb45d2f8:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxODJjMGEyMDRlOTA3MjU1ZWQ1NDQzYTVhY2M4MzU5N2FhMjljMGM3ZmQxMmE4YjVkNTAzY2IwZDY4MDAwNzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiZjNiNWU4ZTk3NGFhMTBhZmE1NmY5NzMyYWE4MzIyZTY0OWRkN2QzYWMwNDI0MmJiODg0YTY2ODA5ZTQ1MDIifQ"
+        },
+        {
+          "resource": "repo://internal/worker/executor_runner.go#L83-L102",
+          "version": "repo-lines-v1:sha256:aadf648b5c7206fdf779fd82c51ca502dd6e50318385127edb6f8cd2e10bd1e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMzE2YjI0MGVmMjczMTc0MTIyNWY1YjgxN2QwNjk3MDNmMDRjNGZiYmNiY2M1YWUyMDE3MTQxNzdkYmRhZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkZmY4NTE4Y2U3NTUzNDc1MjdkMGM1Y2ViYmUwZTI2ZDA2ZDQ4MTJjMWNlOTVjN2QzZDAzY2I0NTZlNzJjZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTI5YzE1NzQ4NWExYjQ3YzllOWE3ZTQ2NGRlMWY2Y2QxMjU2OGZmNDI2YThiZDE5Y2Y4MmFiMWZhY2Q1NTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c171fc3e6de5464193866a7f1c7cc13b",
+      "statement": "worker.Pool.process persists the terminal status via store.UpdateExecutionWithResult using a context derived from context.WithoutCancel with its own 5-second timeout, so a result already computed when the worker context is cancelled (e.g. shutdown) is still written instead of leaving the execution stuck running.",
+      "evidence": [
+        {
+          "resource": "repo://internal/worker/pool.go#L126-L160",
+          "version": "repo-lines-v1:sha256:52b7dd4809fb78af060e6f9862e8a53af272199aff9ee4d2c77f492aa0ed2558:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxOTcwZTU2OTQxNDhmYTcxNWJmZmFlOTJlN2RiNTg3OWZkZWI5YjExMDRiNmFhNzJiMjkxZjk3M2FkNTY5ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTY0MDc5YzNjNWM4MTUyMGVmMzNhMmI5ZDJlMTVhMWI4NGQ3MjgwZGI4NTkwZGNkNjU3NDdlM2UwMTJhNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_275ac78b44274c2ab04c7158c2ee46e9",
+      "statement": "The failure reason string for a failed or denied execution is only logged via structured logging and is not yet persisted to the executions table or exposed through the API, because neither the executions schema nor the generated Execution type has a field for it.",
+      "evidence": [
+        {
+          "resource": "repo://internal/worker/pool.go#L131-L142",
+          "version": "repo-lines-v1:sha256:7f86fe1a56a1bd9a65a29309aeea104efa90bc829cf9690ae527a9c43f6864d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5Nzk2NjY1YjU2YzJjZWI4NGMwYjk1ZjJmNTU5NWUyYTVmOWY3ZTIyNmNlMDgzZmNhMjA3YjNhYmNmNDJmMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMDAxYjMzMTFmNjUyMDI1MWMwYzY2YzRjODUwM2IyNDM1NjFjNGNiYTg3MWE4Y2JiYmQzY2RjNGZiZDY5MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0MTVjYjRkZWMxNDYyMzYyMzk5ZmRiOWQyNzQxYzJkYzFjNWUwM2I5ZTFiNWUzNjM1MWM0OTlmYjk4MTY2MGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_97db1d7d8a7f4d3e95dad01c8d47ff08",
+      "statement": "GET /runs/{id} returns execution metadata and adds an _links.output HAL link only when store.GetExecutionOutput confirms output exists for that execution ID; the top-level OpenAPI description's GET /runs/{id}?include=output,logs is aspirational documentation, not an implemented query parameter — getExecution's operation definition takes only the id path parameter and the handler does not read any include value.",
+      "evidence": [
+        {
+          "resource": "repo://internal/handlers/api.go#L313-L350",
+          "version": "repo-lines-v1:sha256:476ad4540c0bb29c2660e8ec6006029ec005e254309b6131a779f7d021893e9e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1YWFmYTc0OTgyMzY0OTQyYTliZGVjMjllYjA5MjE3YWU3M2FhZmQ3NjEwZTE5ZWMxZDlhNDkwYjcxNWZlZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzYzhjODdlNTc4NGY3YmM2ZDRhNTJkNTQ5YTdkZjQ3MGY5MmExNGNiYTdkNzkxNWI5ZWFjZWM5M2Y2NjUxNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MTgxZDQ1Yzk5MzFlNjk4ZjIyYTRiYmJiZDFhYjlkMjFlYTg3ZGE2NjEwODY2ODQzNGQ4YTA5ZmEwYmRjNDMifQ"
+        },
+        {
+          "resource": "repo://openapi/openapi.yaml#L16-L27",
+          "version": "repo-lines-v1:sha256:c2b186154bfaa58370e5981d8cc76fd31b050322dab851d71f773cec210341bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNzY5ZGRhNjY2ZGI0NzdiYjhiZmI1YjQ5M2NjYzZlYTVlZDYyNTk3NjcwNzMxMjQxN2NkNjJmZTVkNjE0NTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMGUyZDAyNThjZmEwMzlhOWYwMDVlNjgzYmU0MjIzMWZkZDNhZGZmOTM3ZDE3YzE1NTQ5MjUzOWJmZDU3YmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyMjg3NDYzNjA5ZGM4ZDI3YzJiNDI2N2MyODJkNWRhZTAxZjc2MTc1NmNlYTIzNjA1MzQ1OWJiMDVkYWE2YTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxZjkyNWI5NjU0ODljZDY1ZmY0NzE2NThjZTE3YWU3NzllNjE3YjQ5MDg4NThjOGMwOWZhMTllY2Y1ZWJmNTgifQ"
+        },
+        {
+          "resource": "repo://openapi/paths/runs%40%7Bid%7D.yaml#L1-L24",
+          "version": "repo-lines-v1:sha256:15a4fbc2ad6321740b1ad93444101c406dbd1f3b0f99953d4c40e02cbeaf0a7d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NjE0OGFmMzQxYmJjYWFhMjEyNjQ0ZmQ1NjE4MDMyYTI2NTVkNjBhZTE1NDUwYTJlODFlNTFlYzNhMzY2MzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmMDdkYWJjMDhlZWQwZDg3Y2RhYTQ1YjFkMTFjMmZlN2MzMjdhZDEzMzZkN2U5NjFjYWMxZmI1MDJjZWRhNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxYTMxMmYyNTlmMDY1ZjY4ZjY0ZTFiNzM2OWI0MGZmZTcyNmVlOWYzNzcxYTU3NGE0NTYwNWRkMDJjZTlmMmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2ab1c23e9214684adc0e4e859244391",
+      "statement": "On SIGINT/SIGTERM, cmd/server/main.go calls cancelWorkers() to cancel the worker pool's context (propagating into any in-flight execution's bounded timeout context), shuts down the HTTP server, and then waits on workerPool.Wait() bounded by the remaining time on a 30-second shutdown context, logging a timeout warning and proceeding to exit if workers do not finish in time.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L444-L469",
+          "version": "repo-lines-v1:sha256:0b5e75814d34f0bebaf895c054f5d303be213a01e3d13a6cae1acb50d72186d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiNzJlYTZkYWZhM2QzNTE4NTA4ZTdmN2RlOTg1YWUzYTU2ODg5YjA1MjI3OGI5MTgxMGQ1ZTZkNzY2Yzg1MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzMzZjNWZiYTNlZjNmYmQ0ODRmMGQwODAxNDBjZTgyMjkzMjJmYWQzNDY2Y2E0ZDliOGRiYjA1YmJkYWI0ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhNDI2NWEyY2JiYmU2NzFjNjBlZjYyMzFiYmMzYjZjNzE2MTE0OGNmNDkxNmUzZDYyMDI3ZTM5OWIwNDRhNDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a1b22fbeac984c7e8995b731666b57e9",
+      "statement": "The ExecutionStatus enum includes a distinct timed_out value, but the worker never produces it in practice: an execution-timeout cancellation surfaces as an ordinary Scope.Run error and is reported as status failed like any other execution failure.",
+      "evidence": [
+        {
+          "resource": "repo://internal/openapi/api.go#L107-L113",
+          "version": "repo-lines-v1:sha256:7c5af8f6782aa06da06404cf7f1a3873e90e50ea87231a80809738d064a39c01:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjJiNzJhYzliM2YzMDYzYjI1NGViOWFkMTkxOTk5MmJiMzI0N2JjMzhhOGQ3ZGJkZmJjZDAxODM1OTQxOGFhYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjdlN2I5YjQ0OGViYjU5NzQzNDViMDU0ZDRhMjk1OTgxZjEyNzUzMTcyMWQ2MTRkZjBiMDhiNjgzMzBjOTM1MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjI5NjQwNzljM2M1YzgxNTIwZWYzM2EyYjlkMmUxNWExYjg0ZDcyODBkYjg1OTBkY2Q2NTc0N2UzZTAxMmE0MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzY5MmVkZjM4NWMxZTEzMTY1M2E2M2JjMmU5ZWU4ZTlmOWI4MTQ4ODc1M2U3ZTkwNTM0ZWNhMmRjNGI5ZmIwNSJ9"
+        },
+        {
+          "resource": "repo://internal/worker/executor_runner.go#L71-L102",
+          "version": "repo-lines-v1:sha256:46e55051fc29668285ac4e1a991a874d02360f7b7ca4d3ddd14a87932c6a5173:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMTc2NGI5ZGMyNjE4YjRkOTA4MTA0NDdlNDBkYjIyZDQwMmNlMTIwMjEwOTBiNjg4NzQ5MjUzZDNkNTZjNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjZDcwZWVmNjhlZmFmOWMwMzlkYjNmYWYxNDJkNWFmODMyOGY3MTZjNmIwNjI3NmIzZDI5NjMzMWIwNDdmMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTI5YzE1NzQ4NWExYjQ3YzllOWE3ZTQ2NGRlMWY2Y2QxMjU2OGZmNDI2YThiZDE5Y2Y4MmFiMWZhY2Q1NTcifQ"
+        },
+        {
+          "resource": "repo://internal/worker/pool.go#L125-L130",
+          "version": "repo-lines-v1:sha256:fe09b56d91dd64ac1940c0096b35d15c3b83bb2b68c4ab7fe425bd39fb364766:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzhmYzU2ZTM5ZGU2NDRlYzQ0N2FkMzY1ZjExMjVhMzk1MGYxMDUxMzc3NmQwNTk1Yzc4YWQzMTM0NzdkYjIyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjY5YTRiNzc3ODgyZWI0MTMxZjhiNzE1YjYwYzM5MjEzODA4ODc4NTA1NWMwMmZjNWJlMjczNWM5ODA1YjczYiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}

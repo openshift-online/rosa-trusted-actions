@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:aa0c786c31865f44f46d50ebff421f634676e1d79e966d5a83caea74ea6a3ce8",
+  "claims": [
+    {
+      "id": "claim_4bef12b2290940219a283aaabe23ad7e",
+      "statement": "config.Load (internal/config/config.go) resolves configuration from three layered sources — CLI flags, environment variables, and an optional YAML config file passed via --config-file — with CLI flags overriding environment variables and environment variables overriding the config file for any setting available from more than one source.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L70-L92",
+          "version": "repo-lines-v1:sha256:2e8e12588abe930d549e13347cd5584fdd438f9c48a6613533e90f95e2f37b41:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiOTY0ZGNkMzk2NWI1M2RlYzljM2Y1MjM1NjlhZmNjNTk1OTYxNGY1ZmU0NmYwNWFkNTM3ZGIwOTk1MWI2ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhYTE4YmNiNDE3ZTJkZTVmMTFmOTEzNGY5NGNiZjExZmQyNzI2MDYzOWQ0ZTg4NTZiZDc1NTY1OTg4NTZjYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmZjc2NzFmZDE2NDA2MjQ0MTE5ZWQ1OTU1Y2UzNWQ4NDZmZmRkOGUwYjgzZDQwYmM2MWJmY2RlMzJlYzlhODgifQ"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L177-L280",
+          "version": "repo-lines-v1:sha256:b257f2f523b9b345d197d388319d010019080596b82bd6d59dbd06b8346202a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiZTUwNWFhMWZlYmEyZTg4ZWMxMmQ1NTcwYTQ2N2JlMzg2OTU4NzFhZTNhNzllYmE3MDczMTgwMzVkZjk3MzljIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5OTc4ZWJiNzViNzYzOWJhNDFhNWQ1ZDIzYzUzYzBkYzYxZDQ3ZTMwMGJkZTJlOTRlODA5Mzc2OTI2NGIwNGVmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIyZmNhZmVmMTk4NDIzYjAzYjc4ZDUyMzNlMGU4NmE3ZjIwNTU5ODViMWNmMGIwMmM2Njc0ODIwZWU4M2RmZDY5In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_2d4b1066dd9f4da7abcd5c5dc900df37",
+      "statement": "ROSA_TA_ALLOWED_NAMESPACES (and actions.allowed_namespaces in the config file) defaults to permissive: an empty/unset namespace allowlist makes the Kubernetes resource authorizer allow every namespaced request, so production deployments must set it explicitly to restrict access.",
+      "evidence": [
+        {
+          "resource": "repo://internal/authorization/authorization.go",
+          "version": "repo-file-v1:sha256:1d35c03c15bcb3efad48a05ae2849e9a101ae157b580279029e6ec924d35b24b"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L103-L116",
+          "version": "repo-lines-v1:sha256:3a5e8ca88e9eae6ba7e83caa9987038f241cd0366e4e304a6aa40d7293c7a2e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmZmY4YjBkNjRiNDZhOGNmZDEwM2Q1MDA4MTRmMzczYzJhYjlkZjVhOTFkY2Y5NDUzMzE5YjJjMDYyMWRlMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNTkzNmQ5ODBhYzMzNzcxMmU0ZTEzN2YxMDI1ZTVjMmY4YjkwZTg3NGExMTZjODI4ZjU4MjAwYmVlM2M3YzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiYjYyZDI2NDQ0N2E1NDgxNjdiYTFlODNjZDEyODY3ZjU4MzJkZmY4NjE4YzhiMTc1YjgxYWUyYjQ5ZjRlMGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiMDRhM2Y5NTkzYTU5NjZhMmNlMzBkNjkwNjM1YmY3MTQzYmRkZjExZWE1YTBiODE2MDI5YmQ0NzcwNTRiZTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_81c8de72486f4b8985d0a08473260d0a",
+      "statement": "ROSA_TA_AWS_ALLOWED_REGIONS (and actions.aws_allowed_regions) has no built-in non-empty default — config.Load falls back to authorization.DefaultAllowedRegions, an empty slice — causing the AWS authorizer to deny every AWS request, and cmd/server/main.go refuses to start the server at all (logger.Fatal) if the resolved allowlist is empty after config.Load runs.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L251-L260",
+          "version": "repo-lines-v1:sha256:c62d9cc3ab9cb55f5c20d532864d8fc5cc6e4fb14a5611e0a2558892cb26e6ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMWYzZTExZTQzMGRlNjUxOWY5MDJmMTRjMzI1MTE0MzIxY2RlNGNkZGQ5NzAwNDFiYzQ0ZWEzNWEyNDY0NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZjJmZjVmZWVjNjBmNTg3YzhmYWU0ZTg3ZjgwOWE2NjFjZmZlZDZiNDdhYWU1ZjZkNmEyNjUzYWE4OTUyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzOGZmZDJlNWRiYmRlMTYyYWU2ZWYzN2M3ZmY3ZTVkZDQ1YTZhYTkwODlmNDY2OWIxZTkyOTU5MzRjMGVmMGUifQ"
+        },
+        {
+          "resource": "repo://internal/authorization/aws.go#L18-L31",
+          "version": "repo-lines-v1:sha256:4fd293f4a4967419b6dc0521c1d5fa99d39c021b2e5a774609cc280f7b002f94:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NjM0ODFjOTY2M2JkNDk1MTNjN2VkNTMwNmFlZDIxNWFjNTk0MWQyM2Y0YjZjN2QzZmMzMzU5MmIyMTJiNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2Y2VhYjg3NGExMDRhNGJhY2U2OTVmZTgxZjQzN2EyZGFkMjZiNTNiMDViYWE0NjZkNWY5NTEwOTkyNzI5ZWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ZmZlM2IyM2QyNDFmOGUyNzgxNTljN2E3MmEyNWZmZTI1MjY3NjNmNjhhNTdlZTRlMjUxYTY1ZmYwODRhZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1Mjk4MGE1NDA2YmNiNGQyYzZlZjAxNjRiODQyYWZkODI4Yjk1NzBkYWQ2OGE3YWYxYTNmOTgzYjBhMDFkZTUifQ"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L188-L196",
+          "version": "repo-lines-v1:sha256:bf4aff0fa7efe0eea4773f3a0d04b4d2fd6c339f11cb48ce3d9b78a901a9bccf:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjQ5NDJiZWVkYzRhZWExNDEzMjQ1ZDgwMDhmMjM2MThhZmQzOWVlMjhlMGFkYTgxMTM2MmNmYzYyYTM2MzBiMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzY2YjAzMDZmMjA2NWJiMWM1NzExMWRhODlmMWQ0NzljNzhmZjg1NTZhNDg0NDJiMTY3OWZmYTA3YmU0OWMzMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzU1MjA5ZTBiZjhlYjY5NjgzNTRmZTg3YWFiMWFjMzFkYmIxNzA5MGQ5NzMyMzY5NzQ0MjY0YzcxOWIzZGMyYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_73dcd5fa54214af988945539686780ab",
+      "statement": "ROSA_TA_AWS_ALLOWED_OPERATIONS (and actions.aws_allowed_operations) has no built-in default either, but its empty state only denies writes (reboot/terminate) while still permitting reads in allowed regions; it is not a startup failure, and cmd/server/main.go logs a warning whenever any write operation is enabled.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L262-L273",
+          "version": "repo-lines-v1:sha256:00c2677f394d926d6036c7595fb18a368a66b187c578cf521458546ea8ab5cb8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhODQxNzE4NThkMDBjNTk4MmEwOGE5NjkxZWVlMWYyOGE4NTVkY2QyNWEyZjFlNGIzOGQ3YmZlMTAwNTdlMDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMzNDE1OTI1ZWZkYjgwZWFmYzFkNzE5MjZiMWQzOTQ3ZDI5YWE5OGZjNjE3Yjk0MjliYzc2NDc5NTkyY2Q4YzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5ZGU3MjNiODQ1ZGFlNzMwYWM2Yzc4MzdlOTA0NmU5MDA4ZWM4M2QxYWY3MTAxOTU4OWE5ODE5ZTk4OGFjOTgifQ"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L111-L116",
+          "version": "repo-lines-v1:sha256:2ab98f5c44f388558291cc17f893841474d1a3153a82b5ce7ec7aadd88efa8ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzYyNGQwY2JkZmIzODcyODQyNjA5YzU0NTY2YjE5ZmM2Mzk3ZjYxOTA2ZWZhNDM3MGY1MGEwM2EwNGZjNmJmOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWM1OTM2ZDk4MGFjMzM3NzEyZTRlMTM3ZjEwMjVlNWMyZjhiOTBlODc0YTExNmM4MjhmNTgyMDBiZWUzYzdjNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDg2ODVkODBkMWYzZjdlY2YyNGJlYWU2MDM3MTZiNzk4NzIwZTgwZjhlMDkzN2FlMGYxODVlOTVmZDlkZDc5NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGIwNGEzZjk1OTNhNTk2NmEyY2UzMGQ2OTA2MzViZjcxNDNiZGRmMTFlYTVhMGI4MTYwMjliZDQ3NzA1NGJlMCJ9"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L273-L276",
+          "version": "repo-lines-v1:sha256:dc34b7690d12e82b786b847a8f8a6dce99d96d5754763dfd488dcb51da17e2d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmIxNDNmMmU1ZmNkMTJhY2E1YmM4YTI3ZmJkMjcxMjFlOTM5NDZjOThlMzBiNTdmYjkyYjQ5MzVjYWMwNjY1NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTIyN2E0NDkzODY5MTUzMzEzNDg3MDNkOWI3ZTg0ZGIxYjM1Zjg2NjY2NTNmZmYyZWNjYmZhNDhkZWE2ZGUyMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzBiZjM3OGNkNTY4MmYyMWVhMWRkYzVhYzE3ZWQyZTE2Y2MwNTdlZWFjNzVjMjFkZmIwMTM4ZTY3ZGM0OWNjNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f33221950fda4c089da1ba20a17831e4",
+      "statement": "The YAML config file (parsed by readConfigFile in internal/config/config.go) supports workers.{concurrency,poll_interval,execution_timeout} and actions.{allowed_namespaces,allowed_secrets,aws_allowed_regions,aws_allowed_operations}, plus aws.{endpoint_url,proxy_url}, backplane.{assume_initial_arn,proxy_url}, and roles; readConfigFile seeds workers defaults (4 / 5s / 2m) before parsing so they apply even when the workers key or the file itself is absent, and every config-file key except roles is overridden by a corresponding environment variable when that variable is set.",
+      "evidence": [
+        {
+          "resource": "repo://config/config.yaml",
+          "version": "repo-file-v1:sha256:76fa934ecd12251565c8b74958247672f68ce02e3faaa8bdba2088071278df9f"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L125-L175",
+          "version": "repo-lines-v1:sha256:fa73769149a0329bc1e43e3c7c40665863672ef3d5d9584f34803cce1a5f2203:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiOWJlYWI3ZDc4N2Q4NDRmMmNiMDllYjRkY2EzNDVlM2RmODU3MzBjMjRhNzQ4ZmVlOWQ2ODM5MDE0NDMwOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyODc2OTg3MzRkNmZmYjg1MjQzMGYwMDZmZWM3NzVkMjNiOTRmYTM0NDQwNTE3NTEyZjhiZTZiOTdlOTNkODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5YmE2ZTIxZDc0NDYxZWNiZmE2YmQwZjY0OWM4MTFmMTJlYjRmODI5ODAyNzk4MzllZTMyYmVlNGE2YWIwYTgifQ"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L228-L275",
+          "version": "repo-lines-v1:sha256:ff164bd460036ee4671261ef57035bafb23aecd51c07f03947daf4d847dbab74:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNDRhYWY1OTM2OGM2ZWRhMDRlZDg1ZWYxYTQ1MWZhYjQ3ZGU1N2IzZDI1NWViNWRhMDEwNTNiYzUyZmNiYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhNDc3N2RjOWMzZDQwOTMzNDllODY3YTk5OGNmYjk1YjY1ZWQzZTkyNmI1YTMwMjkzZDA1NTJiOGU4OTJiMDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMWE3NWQ0NDMxNjc4N2E3OWIyYTNiNjk3YTQ3MjljZmRhOTgyYWIzNjllOGVhZTc5MWEzOTMyMzFiNjVhMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzOTZlZGVjNTg3Mjc0ZGIwNTZiYTE3YjgwNzA1NDI1YWQxZWQyY2M3ZTE0MjM2NmQxMDdjMTc1NGM4NjY0ZWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e63ebe942c74943bab425dbdce27b87",
+      "statement": "roles: is a config-file-only setting with no environment variable equivalent; the previously supported ROSA_TA_ROLES_CONFIG environment variable is no longer read by config.Load and setting it only prints a startup warning.",
+      "evidence": [
+        {
+          "resource": "repo://internal/config/config.go#L154-L154",
+          "version": "repo-lines-v1:sha256:29fbc50bb7ef76e673b99536a427a8947418ef267469248afc8a06ce2b20a8b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjlmYmM1MGJiN2VmNzZlNjczYjk5NTM2YTQyN2E4OTQ3NDE4ZWYyNjc0NjkyNDhhZmM4YTA2Y2UyYjIwYThiMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjlmYmM1MGJiN2VmNzZlNjczYjk5NTM2YTQyN2E4OTQ3NDE4ZWYyNjc0NjkyNDhhZmM4YTA2Y2UyYjIwYThiMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2RmY2VkNTI0ZGI1ZTFlZTE5MGFiNDk0OWI3OGRkMDAwYTFiZmNkODAxNTk2NmQ3N2U1NGVmMGFmNWQ5MTI4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2ZhYzhhNmY3NTI0ZDgwYzdmYzQxMjU5ZDczY2M0MjdlYzRhZTM4OTllZmU4YWY0Y2QwMDg4MDUwOWY1MjYyOCJ9"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L179-L181",
+          "version": "repo-lines-v1:sha256:ccb5db392cd71f39515b316d18a28447a52afbe615588fa0383d1585203ac188:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODNkZmNmYmE2ZjM4NDY5MDU2MzE1YmVmOTY1NjI4YmNjYjA0ZmZhZGQ4ODlhOTVmZDk3YWRlZTRiMDA5YjFkNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjdjZGE4MmRhNjA2MjM4ZTA1ZTYyMzk5NTY5YzVlZTAzOTkzNDE5NjQ4YWU1ZDQzYTJiZjhjZDYzNDdmODI2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjliYTZlMjFkNzQ0NjFlY2JmYTZiZDBmNjQ5YzgxMWYxMmViNGY4Mjk4MDI3OTgzOWVlMzJiZWU0YTZhYjBhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmMyMjYwOGNhMTdkYWMwYjAzZjhkM2IyMDhmNzZiZjU5MGYzMGU1NDYwZmU4YjVjMjBiNmU5ZDM4NzQ3Y2Q0NSJ9"
+        },
+        {
+          "resource": "repo://internal/config/config.go#L237-L237",
+          "version": "repo-lines-v1:sha256:34e557e8e1597dbc266c57de932129373a13552f171e1d7df0d57a4bcb7400bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzRlNTU3ZThlMTU5N2RiYzI2NmM1N2RlOTMyMTI5MzczYTEzNTUyZjE3MWUxZDdkZjBkNTdhNGJjYjc0MDBiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzRlNTU3ZThlMTU5N2RiYzI2NmM1N2RlOTMyMTI5MzczYTEzNTUyZjE3MWUxZDdkZjBkNTdhNGJjYjc0MDBiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2ViMzI0Y2FhMDE5M2RhOWQyNzI2NTI0ZTA5Y2RiZGYyZjQwY2Q0MGQzZGQyMmQ1NTc2YTA5ZjBkMTBkYTQwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjllZDgyZjZhNDFmZDBjMzQ4MjY1NjVkMjFiZTkyNzY0ZDllNjk0ZjM3Y2UxNGViMGUyYTg0OTE2YWI1ZGY3ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d9ebb51e28b341d483f1274b5af94965",
+      "statement": "ROSA_TA_AUTH selects one of three auth policies (enabled, ocmconfig, disabled); an unrecognized value makes config.Load return an error before the server starts, while ROSA_TA_ENABLE_AUTH=false is a legacy fallback selecting disabled when ROSA_TA_AUTH is unset, and the default policy is enabled.",
+      "evidence": [
+        {
+          "resource": "repo://internal/config/config.go#L198-L215",
+          "version": "repo-lines-v1:sha256:9a0501a66843bde66acdd935d116946ffc71826538d9380420aaab984459dd00:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5MWJkODFhYTcxYzk5Njg3OGI2YWFjOWI3YThhOGU4ZjMyMjY0ZGQ5ODIzOTAzNTc2MzlkMDI5YWI3OThkZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhZDM3N2EwMGE1YjdjNmU4YmMyNDU0ZmMwNWJiYzQ4OWJjNGFmYTY2NmRlZDQ1ODMwZmFkMDU0MzdhZWZhNWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjNWJiZjRmZGUwNTFjMmRiZmYyZDZjMTcyY2JlN2I3Mzk2NmRiOTg0MTJkZGRlZDc1NGNhMGY0ODNjY2I5YmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6726af50db6c4233810b856a8f5e3a0c",
+      "statement": "Under auth policy enabled or ocmconfig, cmd/server/main.go requires a non-empty roles list from the config file with every entry having both id and amsResource set, and fails fast with logger.Fatal if the list is empty or any entry is malformed, or if building the OCM client fails.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L122-L176",
+          "version": "repo-lines-v1:sha256:b1693201dcc8022fca1ed01755f41c79c8b60f117a2ed6f497a6f195cc5eb6c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiYWU2NmYxZjdkZTBlZWNiNTE2ZmU1N2VjZjM3ZTEwMTlkZTE5NDZhYTI2MDI4ZjVhYjQyY2FkMmYwYTIxMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjA5YzRlZjg3ZDdiZmNkYzQ2NTdhMDY2MmNhOWFlZGM5ZDRhZDVjNDJlMjVmNGFiOWYxY2QwNzY5NjlkMWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMzMDZiMzczMTVkNDgzYTk0Zjg2YTRkYmEzYWY2N2NhNDBkODlmODhiYTllMzA0YjNjMGFmYjJkM2NlY2QwZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1MDEwOGI4ZDg4ZDI4MmEyOTg2YmZjYjE2NmMwZTFlMjkyNjkyODFlMGVlMjgyNGU3ZGFhNWE4ZDdiNjZmYjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fca87fd6500549eb8a22636d36d4badd",
+      "statement": "Auth policy enabled builds its OCM client from ROSA_TA_OCM_BASE_URL/ROSA_TA_OCM_CLIENT_ID/ROSA_TA_OCM_CLIENT_SECRET/ROSA_TA_OCM_TOKEN, while auth policy ocmconfig instead loads a local OCM CLI config via ocmconfig.Load() (typically populated by `ocm login`) and uses its URL, client credentials, and access/refresh tokens, failing fast if that load or client construction fails.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L146-L172",
+          "version": "repo-lines-v1:sha256:ef59965555d54a661dbc7e838b9113085924e979522ec872058a95fe54961240:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4MTJlYWRmNTI1MTVhZGY3ZjYxMGZiMTU5M2MzN2IxYzMzODU0OGE1ZTk5MTEzNTZjYjk1NGMxMzQwZDdiZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YmVkMjU2ZDM1NGVhZTJkMjQwNTM2NWEwMzdlZGMxNWJhZGU5NDk4NDVkZTQyMDliMDNjYWFhNDZiZGEyMGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyY2FiZTZkNTA0YjA4ZmZhZmMwOWExZjY2ZDNiNzQzMjA3MDI0NzY3YzY0NzAxZjIwODhmYTM5ZDM2MTcxYWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjNTZjZTI0YjBjMzAzZTdjN2YzYjQyMWUxYTQ1ZjA2OThmYTAyY2IxOGQ3OGI1NzhlYTFjMjNjNDllYjk4NGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1801090dd434235a5b1e16cbdae4a93",
+      "statement": "Auth policy disabled swaps in mock authentication (hardcoded dev-user identity) and mock authorization (hardcoded SREP role) and requires both ROSA_TA_KUBECONFIG and ROSA_TA_AWS_ENDPOINT_URL to be set, failing fast with logger.Fatal on either being empty, because mock auth against the real backplane or real AWS would let an unauthenticated caller reach production infrastructure as SREP.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L179-L203",
+          "version": "repo-lines-v1:sha256:725db4fcdd15b9ac5a7197e1fc68fd0fc1d34d8807b95d6db9596502858dde69:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YWRkMTdlY2Y0OTkxYzNiNTFhNTdjNzZjYjVkYmIyZTc4NTNmOTlmNDQ1OGVkMDg5NDUwNjNjM2EzMzUyODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3Y2RhODJkYTYwNjIzOGUwNWU2MjM5OTU2OWM1ZWUwMzk5MzQxOTY0OGFlNWQ0M2EyYmY4Y2Q2MzQ3ZjgyNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiMTliMDEzZTNmMWRmYzdmMzM5ODUzMTA2OWZjNjZjMGY1ZWI4YTE1OGUwYzk4ZTBhNzA4ZDkzZjk0ZmEyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIzYmZmYzRiMDI0NjUxNmYyYjBjN2M3YWVmYjE5MzQyNmJkZmI1YzY4MzRhNDA2Mzc1ZjcwN2Q3Mjc1Yzc4MGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c620df52b424efa9607166b9626d29d",
+      "statement": "cmd/server/main.go requires ROSA_TA_BACKPLANE_URL to use the https scheme whenever ROSA_TA_KUBECONFIG is unset (i.e. the real backplane Kubernetes provider is in use), and fails fast with logger.Fatal if the URL is missing, unparsable, or not HTTPS.",
+      "evidence": [
+        {
+          "resource": "repo://cmd/server/main.go#L223-L230",
+          "version": "repo-lines-v1:sha256:12cca8321fbe9486ab29edf40191c249a0edf80b9a67daac2c1812538e767bd0:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTQ2ZmU3MGI4ODZhNGQ5ZDIwNTdmNjkxZDM0YjI5NTRlMjk5YzcyNGJkNDJkNzRhZjkzZDFkMDJhMzM2M2MwZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2JlZDdkOTIxNmFmYzI3NTJlYjY5OGNlNTgzYWVkODU1MTI4MTVmMDZhZGJhMjQ3OWZkYjE0NDExMWY0N2I4ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzg0YjBhOWYzMzJkZmU2YWNkMmQ5ODdjYTQyZTQ0ZmUxZDViYjAzNWM3MDUxNjRkZmVmMzNiNTNmY2Y3Y2Y1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTRjMjgzZDRjNmJlZWU4OGE2YTYyYTM5ZTNlMjQ4NDdkZDUxYTVhOGJhYzE4NDM1ZWMxNTBmZDI1ZTZiMjBjNiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-11-05T16:04:34.033Z"
+  }
+}
