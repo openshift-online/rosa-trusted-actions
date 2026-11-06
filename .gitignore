@@ -79,3 +79,5 @@ terraform/regional/terraform.tfvars
 # Override file used to redirect terraform_remote_state to local state
 # during development. See docs/deployment.md — Local Testing section.
 terraform/regional/local_override.tf
+# Added by goreleaser init:
+dist/
