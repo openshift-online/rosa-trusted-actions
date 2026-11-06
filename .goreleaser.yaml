@@ -1,0 +1,65 @@
+# goreleaser config — builds the rta CLI and server binaries.
+#
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+version: 2
+
+project_name: rosa-trusted-actions
+
+builds:
+  - id: rta
+    binary: rta
+    targets:
+      - linux_amd64
+      - darwin_amd64
+      - darwin_arm64
+    main: ./cmd/rta
+    ldflags:
+      - -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Version={{ .Version }}
+      - -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Commit={{ .Commit }}
+      - -X github.com/openshift-online/rosa-trusted-actions/internal/rta.BuildDate={{ .Date }}
+
+  - id: server
+    binary: rosa-trusted-actions-server
+    targets:
+      - linux_amd64
+    main: ./cmd/server
+    ldflags:
+      - -X main.version={{ .Version }}
+      - -X main.gitCommit={{ .Commit }}
+      - -X main.buildDate={{ .Date }}
+
+archives:
+  - id: rta
+    builds: [rta]
+    formats: [tar.gz]
+    name_template: >-
+      rta_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+
+  - id: server
+    builds: [server]
+    formats: [tar.gz]
+    name_template: >-
+      rosa-trusted-actions-server_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).

@@ -36,8 +36,8 @@ make all
 ### Building
 
 ```bash
-make build              # Full build (generate + compile)
-make build-linux        # Cross-compile for Linux
+make build              # Build server and rta (snapshot, current OS/arch)
+make build-all          # Build all release targets (linux, darwin)
 ```
 
 ### Running Locally
@@ -51,7 +51,7 @@ cp .env.example .env
 make run                # Starts on :8080
 
 # Or with custom flags
-./bin/rosa-trusted-actions-server --listen-addr=":3000" --log-level="debug" --log-json
+go run ./cmd/server --listen-addr=":3000" --log-level="debug" --log-json
 ```
 
 ### Code Generation

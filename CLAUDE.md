@@ -44,7 +44,7 @@ The ROSA Trusted Actions Server is a Chi-based HTTP API server implementing the 
 ### Build
 ```bash
 make build              # Bundle spec, generate code, compile binary
-make build-linux        # Cross-compile for Linux
+make build-all          # Build all release targets (linux, darwin)
 ```
 
 ### Lint

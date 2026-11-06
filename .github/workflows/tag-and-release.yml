@@ -1,0 +1,117 @@
+# Cut a release when VERSION is bumped on main.
+#
+# When a PR bumps VERSION (e.g. 0.1.0 -> 0.2.0), this workflow creates an
+# annotated v<VERSION> tag and publishes a GitHub release with the rta CLI
+# binary built by goreleaser.
+name: tag-and-release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "VERSION"
+
+permissions:
+  contents: write # create/push the tag and publish the release
+
+jobs:
+  release:
+    if: github.repository == 'openshift-online/rosa-trusted-actions'
+    name: tag and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          version="$(head -n1 VERSION)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION '${version}' must be MAJOR.MINOR.PATCH (e.g. 0.1.0)." >&2
+            exit 1
+          fi
+          tag="v${version}"
+          if remote_output="$(git ls-remote --exit-code origin "refs/tags/${tag}" "refs/tags/${tag}^{}" 2>&1)"; then
+            remote_sha="$(awk -v r="refs/tags/${tag}^{}" '$2==r{print $1}' <<<"$remote_output")"
+            if [[ -z "$remote_sha" ]]; then
+              remote_sha="$(awk -v r="refs/tags/${tag}" '$2==r{print $1}' <<<"$remote_output")"
+            fi
+            if [[ "$remote_sha" == "$(git rev-parse HEAD)" ]]; then
+              echo "Tag ${tag} already exists at HEAD, nothing to tag."
+              echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "Tag ${tag} already exists but points at a different commit (${remote_sha}) than HEAD." >&2
+              echo "Refusing to proceed; delete or fix the conflicting tag manually." >&2
+              exit 1
+            fi
+          else
+            status=$?
+            if [[ "$status" -eq 2 ]]; then
+              echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "Failed to check for existing tag ${tag} (git ls-remote exited ${status}):" >&2
+              echo "$remote_output" >&2
+              exit 1
+            fi
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        if: steps.version.outputs.tag_exists == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${TAG}"
+
+      - name: Check for existing release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if output="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,assets 2>&1)"; then
+            is_draft="$(jq -r '.isDraft' <<<"$output")"
+            asset_count="$(jq -r '.assets | length' <<<"$output")"
+            if [[ "$is_draft" == "true" || "$asset_count" -eq 0 ]]; then
+              echo "Release ${TAG} exists but looks incomplete (draft=${is_draft}, assets=${asset_count})." >&2
+              echo "Delete the incomplete release manually, then re-run this workflow." >&2
+              exit 1
+            fi
+            echo "Release ${TAG} already exists and is complete, skipping goreleaser."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif grep -qi "release not found" <<<"$output"; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Failed to check for existing release ${TAG}:" >&2
+            echo "$output" >&2
+            exit 1
+          fi
+
+      - name: Set up Go
+        if: steps.release.outputs.exists == 'false'
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Run goreleaser
+        if: steps.release.outputs.exists == 'false'
+        uses: goreleaser/goreleaser-action@v7.3.0
+        with:
+          version: "v2.20.0" # keep in sync with GORELEASER_VERSION in Makefile
+          args: release --clean --parallelism 2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.tag }}
