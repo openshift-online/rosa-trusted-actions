@@ -84,8 +84,10 @@ See [docs/networking.md](networking.md) for the DNS and TLS architecture.
 ## HCP Terraform (CI/CD)
 
 Workspaces are managed in `hcp-terraform/rosa-trusted-actions/main.tf`.
-Apply that configuration first to create the workspaces, then use the HCP
-Terraform UI or CLI to trigger runs.
+Apply that configuration first to create the workspaces. Both workspaces have
+`auto_apply = true`, so once created, a VCS push that produces a clean plan
+applies automatically — no manual "Confirm & Apply" step in the HCP Terraform
+UI.
 
 ### Workspace summary
 
@@ -105,9 +107,11 @@ Terraform UI or CLI to trigger runs.
 ```
 
 A `tfe_workspace_run_trigger` queues the regional run automatically after a
-successful global apply. Each regional workspace is also granted read access
-to the global workspace's state via `tfe_workspace_settings` — no extra
-configuration needed.
+successful global apply, and `auto_apply_run_trigger = true` means that
+queued run applies automatically too — the whole chain from a global push to
+a regional apply requires no manual intervention. Each regional workspace is
+also granted read access to the global workspace's state via
+`tfe_workspace_settings` — no extra configuration needed.
 
 ### Workspace variables
 
