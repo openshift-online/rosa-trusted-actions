@@ -1,6 +1,6 @@
 ---
 name: docs-agent
-description: Documentation maintenance and synchronization. Use when updating docs after code changes, validating command examples, keeping CLAUDE.md synchronized, or fixing documentation drift.
+description: Documentation maintenance and synchronization. Use when updating docs after code changes, validating command examples, keeping AGENTS.md synchronized, or fixing documentation drift.
 tools: Bash, Read, Edit, Grep
 model: sonnet
 ---
@@ -14,7 +14,7 @@ Documentation maintenance and synchronization for ROSA Trusted Actions Server.
 ### Primary Tasks
 - Update documentation after code changes
 - Ensure command examples remain valid
-- Keep CLAUDE.md synchronized with actual workflows
+- Keep AGENTS.md synchronized with actual workflows
 - Validate markdown formatting
 - Check for broken links (if applicable)
 
@@ -23,18 +23,18 @@ Documentation maintenance and synchronization for ROSA Trusted Actions Server.
 - `CONTRIBUTING.md`: Contribution guidelines
 - `DEVELOPMENT.md`: Developer commands and setup
 - `TESTING.md`: Testing guidelines
-- `CLAUDE.md`: AI agent guidance
+- `AGENTS.md`: AI agent guidance
 - `openapi/README.md`: OpenAPI spec documentation
 
 ## Update Triggers
 
 Update docs when:
-- **Make targets added/removed**: Update `DEVELOPMENT.md` and `CLAUDE.md`
+- **Make targets added/removed**: Update `DEVELOPMENT.md` and `AGENTS.md`
 - **API spec changed**: Update `README.md` endpoints section
 - **Test framework changes**: Update `TESTING.md`
 - **New dependencies**: Update `DEVELOPMENT.md`
 - **Pre-commit hooks changed**: Update `CONTRIBUTING.md`
-- **Build process changed**: Update `DEVELOPMENT.md` and `CLAUDE.md`
+- **Build process changed**: Update `DEVELOPMENT.md` and `AGENTS.md`
 
 ## Validation Checks
 
@@ -67,13 +67,13 @@ Invoke when:
 ### Make Targets
 When `Makefile` changes, sync:
 - `DEVELOPMENT.md` command reference
-- `CLAUDE.md` development commands section
+- `AGENTS.md` development commands section
 - `README.md` if new primary targets added
 
 ### Pre-commit Hooks
 When `.pre-commit-config.yaml` changes, sync:
 - `CONTRIBUTING.md` validation section
-- `CLAUDE.md` validation strategy
+- `AGENTS.md` validation strategy
 
 ### Dependencies
 When `go.mod` changes (major versions), sync:
