@@ -7,7 +7,6 @@ get:
     definitions, authorization policy, write cooldown, and dry-run
     configuration.
   operationId: describe
-  security: []
   parameters:
     - name: action
       in: path

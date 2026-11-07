@@ -35,7 +35,7 @@ func (g *commandGroup) actionListCommand() *cobra.Command {
 				return err
 			}
 
-			client, err := g.newClient(cmd, false)
+			client, err := g.newClient(cmd, true)
 			if err != nil {
 				return err
 			}
@@ -75,7 +75,7 @@ func (g *commandGroup) actionDescribeCommand() *cobra.Command {
 				return err
 			}
 
-			client, err := g.newClient(cmd, false)
+			client, err := g.newClient(cmd, true)
 			if err != nil {
 				return err
 			}
