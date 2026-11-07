@@ -201,4 +201,4 @@ SKIP=hook-id git commit
 - [Pre-commit Documentation](https://pre-commit.com/)
 - [Gitleaks](https://github.com/gitleaks/gitleaks)
 - [golangci-lint](https://golangci-lint.run/)
-- [CLAUDE.md](../../CLAUDE.md) - Development guidelines
+- [AGENTS.md](../../AGENTS.md) - Development guidelines

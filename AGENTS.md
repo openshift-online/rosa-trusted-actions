@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents working with code in this repository.
 
 ## Project Overview
 
@@ -262,6 +262,13 @@ make generate
 **When to regenerate:**
 - After changing any file in `openapi/` directory
 - After modifying `oapi-codegen.yaml`
+
+## Agent Skills
+
+Project skills live in `.agents/skills/` for maximum compatibility. Claude
+Code discovers each skill through a symlink in `.claude/skills/`. When adding a
+skill, create it in `.agents/skills/<name>/` and add a corresponding relative
+symlink at `.claude/skills/<name>`.
 
 ## Claude Code Integration
 
