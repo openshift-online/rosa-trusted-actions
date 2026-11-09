@@ -6,6 +6,28 @@
 
 Modular, tested, API to interact with ROSA clusters. Based on OpenAPI.
 
+## RTA CLI
+
+`rta` is a command-line client for the Trusted Actions API. Download it from the [latest release](https://github.com/openshift-online/rosa-trusted-actions/releases) or build locally with `make build-rta`.
+
+```bash
+# Point at the RTA server (or pass --server on each call)
+export RTA_SERVER=https://rta.example.com
+
+# Authenticate with OCM (or pass --token=$(ocm token) on each call)
+ocm login
+
+# Explore available commands
+rta --help
+
+# List actions, describe parameters, run against a cluster
+rta action list
+rta action describe get
+rta action run get --cluster <id> --jira OHSS-1234 --param resource=pods --param version=v1 --param namespace=openshift-monitoring
+```
+
+Use `rta <command> --help` for details on any command. All commands support `-o json` for machine-readable output.
+
 ## Prerequisites
 
 - Go 1.21+
@@ -183,7 +205,7 @@ make fmt
 ### CLI Flags (Server Settings)
 
 ```bash
-./bin/rosa-trusted-actions-server --listen-addr=":3000" --log-level="debug" --log-json
+rosa-trusted-actions-server --listen-addr=":3000" --log-level="debug" --log-json
 ```
 
 ### Config File

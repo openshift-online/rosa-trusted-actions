@@ -63,43 +63,48 @@ generate-api: $(BUNDLED_SPEC_PATH) ## Generate Go server code from OpenAPI spec
 validate-spec: deps-npm ## Validate OpenAPI specification
 	npm run validate-spec
 
-# Build
-.PHONY: build
-build: generate ## Build the server binary
-	@echo "Building $(BINARY_NAME)..."
-	@mkdir -p $(BUILD_DIR)
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
-
-.PHONY: build-cli
-build-cli: ## Build the action-cli binary
+# Build (dev tools not released via goreleaser)
+.PHONY: action-cli
+build-cli: ## Build the action-cli binary (dev tool)
 	@echo "Building $(CLI_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(CLI_NAME) $(CLI_PATH)
 
-# Version stamping for rta
-RTA_VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-RTA_COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
-RTA_DATE    ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-RTA_LDFLAGS  = -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Version=$(RTA_VERSION) \
-               -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Commit=$(RTA_COMMIT) \
-               -X github.com/openshift-online/rosa-trusted-actions/internal/rta.BuildDate=$(RTA_DATE)
-
-.PHONY: build-rta
-build-rta: ## Build the rta client binary
-	@echo "Building $(RTA_NAME)..."
-	@mkdir -p $(BUILD_DIR)
-	go build -ldflags '$(RTA_LDFLAGS)' -o $(BUILD_DIR)/$(RTA_NAME) $(RTA_PATH)
-
 .PHONY: build-test-client
-build-test-client: ## Build the test-client binary
+build-test-client: ## Build the test-client binary (dev tool)
 	@echo "Building $(TEST_CLIENT_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(TEST_CLIENT_NAME) $(TEST_CLIENT_PATH)
 
-.PHONY: build-linux
-build-linux: generate ## Build Linux binary
-	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_NAME)-linux $(MAIN_PATH)
+# Build (goreleaser — server + rta CLI)
+GORELEASER_VERSION ?= v2.20.0
+GORELEASER = $(shell go env GOPATH)/bin/goreleaser
+
+.PHONY: download-goreleaser
+download-goreleaser: ## Download goreleaser for local builds
+	@installed=$$($(GORELEASER) --version 2>/dev/null | grep -oP 'GitVersion:\s+\K\S+' || echo ""); \
+	if [ "$$installed" = "$(GORELEASER_VERSION)" ]; then \
+		echo "goreleaser $(GORELEASER_VERSION) already installed"; \
+	else \
+		echo "Installing goreleaser $(GORELEASER_VERSION)..."; \
+		go install github.com/goreleaser/goreleaser/v2@$(GORELEASER_VERSION); \
+	fi
+
+.PHONY: build
+build: generate download-goreleaser ## Build server and rta binaries (snapshot, current OS/arch)
+	$(GORELEASER) build --snapshot --clean --single-target
+
+.PHONY: build-all
+build-all: generate download-goreleaser ## Build server and rta for all release targets (snapshot)
+	$(GORELEASER) build --snapshot --clean
+
+.PHONY: build-rta
+build-rta: download-goreleaser ## Build only the rta client binary (snapshot, current OS/arch)
+	$(GORELEASER) build --snapshot --clean --single-target --id rta
+
+.PHONY: build-server
+build-server: generate download-goreleaser ## Build only the server binary (snapshot, current OS/arch)
+	$(GORELEASER) build --snapshot --clean --single-target --id server
 
 # Run
 .PHONY: run
