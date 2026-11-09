@@ -118,6 +118,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// hands the same connection to backplane-cli's credential flow. It stays
 	// nil when auth is disabled, which is also when that provider is not used.
 	var ocmClient *ocm.Client
+	var defaultOcmConfig *ocmconfig.Config // Only set when cfg.AuthPolicy == config.OcmConfigAuthPolicy, otherwise nil
 
 	switch cfg.AuthPolicy {
 	case config.EnabledAuthPolicy:
@@ -151,17 +152,15 @@ func runServer(cmd *cobra.Command, args []string) error {
 				Tokens:       appendIfNotEmpty([]string{}, cfg.OCMToken),
 			})
 		} else {
-			var ocmConfig *ocmconfig.Config
-
-			ocmConfig, err = ocmconfig.Load()
+			defaultOcmConfig, err = ocmconfig.Load()
 			if err == nil {
 				ocmClient, err = ocm.NewClient(ocm.Config{
-					BaseURL:      ocmConfig.URL,
-					ClientID:     ocmConfig.ClientID,
-					ClientSecret: ocmConfig.ClientSecret,
-					Tokens: appendIfNotEmpty(
-						appendIfNotEmpty([]string{}, ocmConfig.AccessToken),
-						ocmConfig.RefreshToken,
+					BaseURL:      defaultOcmConfig.URL,
+					ClientID:     defaultOcmConfig.ClientID,
+					ClientSecret: defaultOcmConfig.ClientSecret,
+					Tokens: appendIfNotEmpty(appendIfNotEmpty([]string{},
+						defaultOcmConfig.AccessToken),
+						defaultOcmConfig.RefreshToken,
 					),
 				})
 			}
@@ -227,10 +226,25 @@ func runServer(cmd *cobra.Command, args []string) error {
 		if u, err := url.Parse(cfg.BackplaneURL); err != nil || u.Scheme != "https" {
 			logger.Fatalf("ROSA_TA_BACKPLANE_URL must use HTTPS: %s", cfg.BackplaneURL)
 		}
-		bpConn, err := sdk.NewConnectionBuilder().
-			URL(cfg.OCMBaseURL).
-			Client(cfg.BackplaneClientID, cfg.BackplaneClientSecret).
-			BuildContext(cmd.Context())
+		bpConnBuilder := sdk.NewConnectionBuilder().
+			URL(cfg.OCMBaseURL)
+
+		switch cfg.AuthPolicy {
+		case config.EnabledAuthPolicy:
+			bpConnBuilder = bpConnBuilder.Client(cfg.BackplaneClientID, cfg.BackplaneClientSecret)
+		case config.OcmConfigAuthPolicy:
+			bpConnBuilder = bpConnBuilder.Client(defaultOcmConfig.ClientID, defaultOcmConfig.ClientSecret)
+			if defaultOcmConfig.AccessToken != "" {
+				bpConnBuilder = bpConnBuilder.Tokens(defaultOcmConfig.AccessToken)
+			}
+			if defaultOcmConfig.RefreshToken != "" {
+				bpConnBuilder = bpConnBuilder.Tokens(defaultOcmConfig.RefreshToken)
+			}
+		case config.DisabledAuthPolicy:
+			// Not reachable because ROSA_TA_AUTH=disabled requires ROSA_TA_KUBECONFIG to be set.
+		}
+
+		bpConn, err := bpConnBuilder.BuildContext(cmd.Context())
 		if err != nil {
 			logger.WithError(err).Fatal("Failed to create backplane OCM connection")
 		}
