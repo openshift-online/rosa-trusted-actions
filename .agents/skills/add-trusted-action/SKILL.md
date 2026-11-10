@@ -168,7 +168,7 @@ Prometheus/Alertmanager fixtures it sets up for `list-alerts`.
   and that any new namespace/secret allowlist entries are present in each
   target environment.
 
-## Guardrails (from this repo's CLAUDE.md, apply throughout)
+## Guardrails (from this repo's AGENTS.md, apply throughout)
 - Minimal diffs — don't reformat or refactor unrelated code.
 - Never edit `internal/openapi/api.go` (generated).
 - Follow existing patterns in `internal/actions/` and `internal/catalog/` rather

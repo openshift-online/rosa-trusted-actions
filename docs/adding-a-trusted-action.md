@@ -8,8 +8,8 @@ If you only need a refresher on the runtime, see
 [DEVELOPMENT.md](../DEVELOPMENT.md), and for testing conventions see
 [TESTING.md](../TESTING.md).
 
-If you're using Claude Code, the
-[`add-trusted-action`](../.claude/skills/add-trusted-action/SKILL.md) skill
+If you're using a coding agent, the
+[`add-trusted-action`](../.agents/skills/add-trusted-action/SKILL.md) skill
 packages this guide into an actionable workflow, including a local
 `kind`-cluster end-to-end testing recipe.
 
@@ -281,7 +281,7 @@ For a bespoke action, run it through the server locally with auth disabled
 (`ROSA_TA_AUTH=disabled`), bound to loopback only (`--listen-addr 127.0.0.1:8080`)
 and backed by a disposable or least-privilege test kubeconfig via
 `ROSA_TA_KUBECONFIG` — see the
-[`add-trusted-action` skill's local e2e recipe](../.claude/skills/add-trusted-action/references/local-e2e-testing.md).
+[`add-trusted-action` skill's local e2e recipe](../.agents/skills/add-trusted-action/references/local-e2e-testing.md).
 Then `POST /{action}/run` and poll `GET /runs/{id}`.
 
 ## Step 4 — Review requirements
