@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:78203a82f1d2aa89e053634d669a2f50d1b0fd4b72d3cc203e85cc02c1543cb9",
+  "pageVersion": "sha256:74cc1ff5f72898e93c8c65f567a54a12191a287e2045673fa051613744637692",
   "claims": [
     {
       "id": "claim_08bad333f2cb455e96d5f369fdcf4920",
       "statement": "The server bypasses live OCM/JWKS authentication and authorization by setting ROSA_TA_AUTH=disabled, which injects a hardcoded 'dev-user' identity with the SREP role for every request.",
       "evidence": [
         {
-          "resource": "repo://README.md#L22-L32",
+          "resource": "repo://README.md#L48-L58",
           "version": "repo-lines-v1:sha256:39905ff264ab13e5342170dc277c9da7f092b3b11e78596ca21627214bf7712c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzNDA1NWI0NjlkZjJjNzFlNGQ0OTk4M2Q1ZmRhNDc5NWQ5ODNiNTg2MmQzMjU0N2NjYTI1MWQ5NzBiNzA5YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0YWE2NmIxNjVjMzQwY2M2ZTY2NjdhYzNmNDQxOGY2YzMzMGRlYjZhMzNmMjA4ZGViOWJhMjg3MDg0MWM4MmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMjIwNzIxMzE4ZTlmMjk1NjViNDFmNTQ2NzRkNjExNjIwNTU3MjE5OTBlMGI1ODQyM2E1MWU0ZGUwYmY1NmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZjlkMDVmNzdiZjY3OGIyN2Y4ZjQzMzQ3ZjhhMDVmZDM5ZTU1N2UyNTcwZWZkZDNhNGM4OGM4NzI0M2JjNDkifQ"
         },
         {
@@ -32,15 +32,15 @@
     },
     {
       "id": "claim_6250eb5d6f9349d395ddb485dc9887fb",
-      "statement": "The ROSA Trusted Actions Server's HTTP API surface (routes, types, server interfaces) is generated from OpenAPI specs via oapi-codegen, with hand-written business logic in internal/handlers implementing the generated ServerInterface.",
+      "statement": "The ROSA Trusted Actions Server's HTTP API surface (routes, types, server interfaces) is generated from OpenAPI specs via oapi-codegen into internal/openapi, with hand-written business logic in internal/handlers implementing the generated ServerInterface.",
       "evidence": [
         {
-          "resource": "repo://ARCHITECTURE.md#L24-L36",
-          "version": "repo-lines-v1:sha256:e263ed6be80fe8c95d75c172aa1e004b11fbe087648dc2274d92dd855966f9ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMGY2ZGEwY2MzOWUyY2NiMWI0MTM2ZDM0Y2M5MGNkYzkzZjIyMmFmYmYxOTE2OWY4NGE1Yjc5YjVjYTY0ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxZGI4ZTE3ZWIwMTkzMmQ1Njk4MzIxOTMzYmFmOWVlYWUxOGFiNjNmYWMzYzBkZGFiM2UyM2RjOGM2N2Q0OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzNjQwNTk5MDM4YzY1Mjg5Y2VhY2NmZjU1ODQ2YzYwMmE5OTIwNjQwZjc5OTlhODQ3MjA0Zjc3NDU4ZTYyZjUifQ"
+          "resource": "repo://ARCHITECTURE.md#L79-L90",
+          "version": "repo-lines-v1:sha256:379a1880edcfcb7764b5019b2cd37fa4962a047eb404dd0fc97e9bdc4a601d7f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMGY2ZGEwY2MzOWUyY2NiMWI0MTM2ZDM0Y2M5MGNkYzkzZjIyMmFmYmYxOTE2OWY4NGE1Yjc5YjVjYTY0ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxODhhNDFiOWQwNDQyODVmMmEzY2RkMzJjMTEzZDc3MDhmOTk0YzlkMDY0ZDdhOTZkNDUzNzNiN2NkMzFjOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxZGI4ZTE3ZWIwMTkzMmQ1Njk4MzIxOTMzYmFmOWVlYWUxOGFiNjNmYWMzYzBkZGFiM2UyM2RjOGM2N2Q0OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYzc1MTdkZTAxOTdmMTYwZTRjM2E4MzU4NTgwNjk4Mjk4ZDU4ZmFlNmRiZTg4ZDA4YmI4ZDgzOWVmOTlkZWIifQ"
         },
         {
-          "resource": "repo://README.md#L1-L3",
-          "version": "repo-lines-v1:sha256:ded7b78b0e93adaef4dfff6a59a372704eca6e731582eacde5d9c086126ffd51:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2E0OGU1N2I5MDM1YjgxNTE1NWVmYzA4ZTcxNjBmY2U0Mjk5YmE5NjAwNTk3OTJkODNkZTJhNDU4NGI2OTE4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDdlOWE1Njc0N2IxOTRlZWE1ZmQ0ZGQwMTkyZTIyNmQ3YjcxMzA2N2IxNGM0ZGM0NmJlYmEzZjhjMWFhMWQ5NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODY4OTRhZWI2MmRmZTdiZDJkMGJlYzJmZGQzNzJmZGQ4ZTM1ZDM0NjdkYTBmNmZhMjFjZTA1YzFiZTE5Y2E4NiJ9"
+          "resource": "repo://internal/openapi/api.go#L1-L4",
+          "version": "repo-lines-v1:sha256:b3a28a96e46b59d4393bb0b9c6bf8584644028d211d21f645725d8eb0d7bd316:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzlmNjdkNWZlMWY0MDJmODI3NjMzYzNkNjUyZDIwYjgwNTA3ODdmOWMxNzQ5ODdhYzEyM2QwM2EzNDlmZWM3NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmM1MmVlZmNiMDFmYzM4ZGRhZTAzMzU1NjY3MWY4N2RlMWFkYzRhYWIyNDllYjA2YWNjYzE0ZmM5YjBjMTRkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDI3YmRmNzA1ODQyNWUxYjFiNGZkMDk5MDkxODIwNzdjMTJlZDIzZTBhNTc5MTJjOTc4Y2JkOWM0YmMzMDg3MCJ9"
         }
       ]
     },
@@ -49,7 +49,7 @@
       "statement": "Submitting a Trusted Action via POST /api/v0/trusted-actions/{action}/run returns 202 with status pending and executes asynchronously on a background worker pool; results are retrieved by polling GET /api/v0/trusted-actions/runs/{id}.",
       "evidence": [
         {
-          "resource": "repo://README.md#L119-L131",
+          "resource": "repo://README.md#L145-L157",
           "version": "repo-lines-v1:sha256:184dd8e3a3227574040e2a9953925180fa5e11a5984203a88afd0347cc4b3469:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExZmVhMGM3MTc3NTlhOGE4OTQ4ZjkwZDMyMWNkMzJkZDVlZjZhZTllZmM3OTlmZTE0NDFjMWRmYjRmNzk2NTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1MDEyMjU0YjgwNDFmYzZhNTRkYWUwMzFiN2QyYmE0YzUzMjNjMDcxYmU2MjA2NWVkODQ3MjJiNTIwZjU2NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5ZWY5MDc3OTVmMGU3MWJkMmM5OGQ2MzBmOGFjNzA1YmY1NWJjMDdhODAxN2NhZDdlOWU1Yzg0NmQyZDlmMTIifQ"
         }
       ]
@@ -57,6 +57,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.1",
-    "at": "2026-11-05T16:04:34.033Z"
+    "at": "2026-11-10T16:03:16.899Z"
   }
 }

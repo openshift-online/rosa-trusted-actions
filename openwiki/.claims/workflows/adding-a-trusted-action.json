@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:834e74bc55bf27eb117c9c65cdb65ff55f87786b2f333c505f3a07f0d772e917",
+  "pageVersion": "sha256:679bfe69b1488b03e8d0ac87dc4ba2a1521f963df6defe33a2e938a2975a0d85",
   "claims": [
     {
       "id": "claim_23fd713c147c4f908176b81ec06dd607",
@@ -151,7 +151,7 @@
       "statement": "A local kubeconfig-backed KubeconfigProvider used for local/e2e testing ignores RequiredRBAC entirely, so neither cmd/action-cli nor a local kind-cluster run verifies RBAC correctness; that relies on unit tests and code review instead.",
       "evidence": [
         {
-          "resource": "repo://.claude/skills/add-trusted-action/SKILL.md#L117-L125",
+          "resource": "repo://.agents/skills/add-trusted-action/SKILL.md#L117-L125",
           "version": "repo-lines-v1:sha256:ac56801f814d8eb6cf87fd2403ae1fab543194be31be000f0ba824dea422cad9:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTUyMWY2MDM3OTRlZThmOGNkZDdiNDk3ODJkNTFjNWY5ZTE1MDI1MzFjZjFhMmJhOGFmZGNkMTY5NzUwNDljYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODJiYmRkY2ZhNzk3ZmNmN2Q0NzgxNDRmZGEyM2VhZWU0NzNhMWVlNzEzNjQ4YzE3MDQ0NGRiZTM5NGM0ZWIzZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTIwYmViNzk0NTUzZjEzYTNmYzRkN2I3MjlmZTdkMzIyZjFkZmVhNjAzMTk3MTM1NDkwMDVmZWExMzJjNThkMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGRkMTM3MTg5MzAyZjZmMDU2YWZlOTI1MTg3MTE4MjY2MTdlYmNhYTgyNGMwN2MzZDc4Mzg5MGU4YmI0NTkwNSJ9"
         }
       ]
@@ -161,7 +161,7 @@
       "statement": "The recommended one-time verification that both registrations are wired correctly is to temporarily remove the action's init() registration (expect an async 'unknown action' failure) and then temporarily remove the catalog entry (expect 404), restoring both afterward.",
       "evidence": [
         {
-          "resource": "repo://.claude/skills/add-trusted-action/SKILL.md#L139-L144",
+          "resource": "repo://.agents/skills/add-trusted-action/SKILL.md#L139-L144",
           "version": "repo-lines-v1:sha256:3aae2e9373a6929a542a2ff2c57fd1094c580df44c39aaebe9f542c699223ea6:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2QxMmMyM2Q1NDUzNzQwZmNiYjI4YjczMmUyOTZlNDFmMjFhNDM4YWQ5N2QwMDhiZjBjN2NjZDkzNzU5MzEyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGE5YzgzNjQyMDNhZjg1YTMxYmFhZTY3ZjQxMzA1MjUyM2E3YjgwOWYxM2Y4YWYzODAwMDA5ZGZiZmNkOTVkMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmZhMGU1MjM5MzlmZjVlZDI1YjA4MmE0MDJkNDgyM2U1NGUwNjFlMDg1Zjg1NWVlMTdlZjRiMmJiNWEwY2UzOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzI1N2MxYzUxNDVhNjcwMGE3YmU0NGYyZmQ0YzM0ZWU2MDNmNjZlNzZhYTcyOTcwMDU4MzM4NmZmYzhhODFjYiJ9"
         }
       ]
@@ -171,18 +171,18 @@
       "statement": "The Claude Code add-trusted-action skill packages this same implement/register/test/review/ship workflow, including a local kind-cluster end-to-end testing recipe, as an automatable sequence for AI-assisted contributions.",
       "evidence": [
         {
-          "resource": "repo://.claude/skills/add-trusted-action/SKILL.md#L1-L19",
+          "resource": "repo://.agents/skills/add-trusted-action/SKILL.md#L1-L19",
           "version": "repo-lines-v1:sha256:94078db81ef72f5b023ff769aaa4d9afb4662ce88f69cd4d3b274ab06d78a170:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4MjhjNDM3MzAwMmRmYWE5NWZmNTBkNDJkZjFkNzAyMjVjMTc0NzQyMjkwMzU5ZmI5OWRhNTBhZDE0NWY1ZmIifQ"
         },
         {
           "resource": "repo://docs/adding-a-trusted-action.md#L11-L14",
-          "version": "repo-lines-v1:sha256:18dee1f025c126fada14611e613f5727a948898b309918cc02844204208217c6:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTE3MDBhNWI2MjYzNGQ1Y2RlNjdlMjA3ZWEyZGYzMzBmNTM3ZDBkNmJiOTI2N2QyZTdjMjk0MWFiMDlmNzYxMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IzZTI3NTBjYWI4YzNiZTYwODM5ZWFmY2M3NDJhYTc4N2MyYTM0NTFlMzMzODZkYzgwNzRlMWIyOGExNTBjMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE1ZWM1NmJmZWJlZmEwZTdjMjc1MGIyMTkyZjg1NTc1OThiNWQ0MTMzN2M5MTBkNjIyOGZlODUyYzgyNjQ3OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTMyNGQ0M2U0M2I2ZDU4MGNlOTljNDI2MmYzZWU2ZTUxYWQ0NmM2NWEyMjE3YzY1ZTYyNzRkNmYzODNkNjE4MiJ9"
+          "version": "repo-lines-v1:sha256:79cec4702930de7358c155d274420a8b8094fb71326971965ee0ea981cbca8ba:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTNlNDUwYzcyMjBiOTYyOTQ2ODg2M2E2NDUyMWFiMjdhMjBkNGU5ZWU3NWM4MTg5Zjk2YWJmN2E3MzU2Y2I4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IzZTI3NTBjYWI4YzNiZTYwODM5ZWFmY2M3NDJhYTc4N2MyYTM0NTFlMzMzODZkYzgwNzRlMWIyOGExNTBjMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE1ZWM1NmJmZWJlZmEwZTdjMjc1MGIyMTkyZjg1NTc1OThiNWQ0MTMzN2M5MTBkNjIyOGZlODUyYzgyNjQ3OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTMyNGQ0M2U0M2I2ZDU4MGNlOTljNDI2MmYzZWU2ZTUxYWQ0NmM2NWEyMjE3YzY1ZTYyNzRkNmYzODNkNjE4MiJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.1",
-    "at": "2026-11-05T16:04:34.033Z"
+    "at": "2026-11-10T16:03:16.899Z"
   }
 }

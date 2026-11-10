@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3cbc76c7c50b6292acf0ed6ab36a23128e4b4faf93fb573a7dd8fc018401d624",
+  "pageVersion": "sha256:5fbf9b4e4aafdcfc8384a2a83b6e04690a4bd001e90dab147fcc1e50d5bf5df9",
   "claims": [
     {
       "id": "claim_ffeceba7151d4c19a60a345892b68167",
@@ -18,11 +18,15 @@
     },
     {
       "id": "claim_a42628e12f5b4335be74680225d41075",
-      "statement": "make build/build-linux/run/run-postgres/run-sqlite/dev form the local build-and-run loop: build and build-linux both depend on generate; run-postgres additionally depends on postgres-up and points DATABASE_URL at the composed Postgres instance; run-sqlite points DATABASE_URL at a local SQLite file; dev auto-installs and runs 'air' for live reload.",
+      "statement": "make build/build-all/build-rta/build-server/run/run-postgres/run-sqlite/dev form the local build-and-run loop: build, build-all, build-rta, and build-server all invoke goreleaser (installed on demand via download-goreleaser) with --snapshot --clean per .goreleaser.yaml instead of a plain go build/GOOS=linux cross-compile, producing ldflags-stamped rta and server binaries under dist/; build and build-server also depend on generate; run-postgres additionally depends on postgres-up and points DATABASE_URL at the composed Postgres instance; run-sqlite points DATABASE_URL at a local SQLite file; dev auto-installs and runs 'air' for live reload.",
       "evidence": [
         {
-          "resource": "repo://Makefile#L66-L123",
-          "version": "repo-lines-v1:sha256:260adbd65c1ba1875d3ba5fcdf8e51f877db4188ec69929c4acfbf3f2e74614f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiYzI5MGM5Zjg0ZTUzMmJkNDc3Mzc0ODAzODFmMGRiM2FmYWU2MzdkNjk2ODA2ODU2ZDk1ZDBhMTg2YmI2MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNTIzOGRlNjg4OTEyNTU3MzVhYmYwNGJiYzRjNDVmMzQ5ODA4Y2YzYzVhMTA1YzIwYzJhMTZlOGRkODkzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzNTYzZThkZDEwMTQ3ZWRmMWE2ZTdlYmQ2YWU2MjIzN2NmZmYwMDQwMzI0NGJiYTA0YjFkNjU1NDk2OGY4MTYifQ"
+          "resource": "repo://.goreleaser.yaml",
+          "version": "repo-file-v1:sha256:1e384cc5bcaedc9b2586c7b7979e2c97d9c375e549f52254cfe0f6f482a123d8"
+        },
+        {
+          "resource": "repo://Makefile#L66-L127",
+          "version": "repo-lines-v1:sha256:000ef6b2021de8700d2d22068cabe490b845b2e924f85260bbbf8bc0e9247487:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2NTVhN2U0ZGUzNzc5Y2M3YWQzYTE4M2MxMmQyNzdiNjcxOWZkODMwMmFmZGUxZjllODNiMmUzMGNjMjIyNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxMjI5Mjk2ZTFjZjZkYTE2ZmE1YmI3Y2ZlZmJmNjcxMWUyZjFhNDAxZTdmZmE2Y2JhOGZlZWVmYTk1MjdlZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNTIzOGRlNjg4OTEyNTU3MzVhYmYwNGJiYzRjNDVmMzQ5ODA4Y2YzYzVhMTA1YzIwYzJhMTZlOGRkODkzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhZmExN2MxNzFlOGJmNTZmNzU2MDY0NjU1NjliMjcxNTI0MmViZDNiMDA4NzA1YTMxOTdkYTIzMjgyMjY1NTgifQ"
         }
       ]
     },
@@ -39,8 +43,8 @@
           "version": "repo-lines-v1:sha256:267f1d74f3a9160df6b7738aad3136ffe6e4ee6214d93eb42da88bb01390f415:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjU1MWRhOTEyNjc2Y2ZlZTliODQwMWFiNDdlOGJmMTk5OTQxMmJiMzA1ZWFkZmU5NGUwNDA1ZTQ1ZDRmZjQ0NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjQwODM1M2I4MmMwMWI3ZGRiNmExNGY5MjY2YTZlYjE1OTZkNzNlNGM1NjIxMWI5Njk3MTE4OTVjNGQ5Nzg3MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWZjN2I3ZmQ1OTgwNDExMTgwMzcwNTkwNTYwNTY4MDRiMzY4MmE2NDM5NjNkNWU4ZTA0ZTIyNDM4YzQ4ZGI3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTI4YTNhY2E3NGZhN2M0ZWM5OWUwZjliOTk4ZmI4N2EzMTJjMDY5MjVjYWMwMDBlMWNhYjRhZmQ1ODNjYWQ5ZiJ9"
         },
         {
-          "resource": "repo://Makefile#L231-L240",
-          "version": "repo-lines-v1:sha256:128ccb8cb25fda30bccc99528a50281fbbd242a819feb767e10c0636f3fd880d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTBlNDk1YWVkZjdmZjBmMzViMGUwZDIwMDNhZmM0ODkzODhkZTA0M2RhYzM4MDhjZDBlZWI1ZDBhMjY5YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMDFkYzZlODdmZTFjM2ZkYmMwZjM3Y2VmN2UwNzM4MDkwMzZiMDE0NzNhZjEzMGMxNDc2ZDc0YmU1YjM3YmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyMDQ4OGIxZTY2OTU1YTk0MTA2ZGNiMTdmZDk1NWEyNGUxNDg5MWE5ODQ4ZDMyNDZhYTk4YTIzOGY1MTlkNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhZmZlNjI0YmY3ODI3NmE0ZjQyMGE2NTcxNDMwMjI3MjRlYzYxMzQ3MzEyOGY5OTliOWU5MzIyM2RlNjkzN2YifQ"
+          "resource": "repo://Makefile#L236-L244",
+          "version": "repo-lines-v1:sha256:03e1fd3dfbc77fe46cd7cbdb27b4c8af4a04794554489768925aae92c93fee54:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlMGU0OTVhZWRmN2ZmMGYzNWIwZTBkMjAwM2FmYzQ4OTM4OGRlMDQzZGFjMzgwOGNkMGVlYjVkMGEyNjlhMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTQ1MjNkOWI1ZWY0Y2Q5MGI2YTJkMGUwOWZlNDJiNzc3N2I1MDU5OWY2MDk4MTVjYzcwMmIzMjA4ZTM3NzMxYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzIwNDg4YjFlNjY5NTVhOTQxMDZkY2IxN2ZkOTU1YTI0ZTE0ODkxYTk4NDhkMzI0NmFhOThhMjM4ZjUxOWQ1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTJkYzI5Y2UxYjNkYzA4NGE1MGJlODczYjAyNjFhMDBlMzMzZTZjZmIzYmEzMGYzZWZjMDlhNzZkNTllNTMzNyJ9"
         }
       ]
     },
@@ -49,8 +53,8 @@
       "statement": "The make test family covers unit tests (test, SQLite-only unless TEST_POSTGRES_URL is set; also compiles but does not run the integration-tagged tests/actions suite), test-race, test-coverage, Postgres-backed store tests via test-postgres-up/test-postgres-down/test-postgres against docker-compose.test.yml, API smoke tests via test-api and test-integration (which starts and stops the server around scripts/test-api.sh), mock/proxy-backplane-backed action tests via test-actions/test-actions-proxy, and kind-cluster integration via itest-up/itest-run/itest-down.",
       "evidence": [
         {
-          "resource": "repo://Makefile#L124-L230",
-          "version": "repo-lines-v1:sha256:5b296bb6cba19bc5c16f904c8940a169b75a1252a6addf30e119a05baa9335c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmYzRkMzdhOTEzMzRiY2UyMDE4NTg3MGVlYWZkZmQwOWUyZTM0MTU3M2I4MDMxZmEwOWRlMjU2ODhjZjVmZGM3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0ZWNjN2Q3ZjM2ODk0NDA0NmNlZjQ4MDVhODA2Y2RhM2U0YjdmZTg0MzI2MTEzODhhMTAyMTgzMzFmMzJlMzY5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmZDBiOWI0NmE0NTVlNGViZjUxNGZlMjQ0MzJmY2VjZDc3ZGU2MjEyODg4YTk1NjE5NzFhZDQ1NDhiMzY2ZDEyIn0"
+          "resource": "repo://Makefile#L129-L219",
+          "version": "repo-lines-v1:sha256:b67abc4df96acd9666001fa6006ab59e214fd0493b94eec502897c34c0df6bbb:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjNGQzN2E5MTMzNGJjZTIwMTg1ODcwZWVhZmRmZDA5ZTJlMzQxNTczYjgwMzFmYTA5ZGUyNTY4OGNmNWZkYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxOGFhOGJhNmY1Y2JkOTI3NmYxNTg4YmYwNTc3NzYxMzg3ZjBkMTA3MDY2Y2E4ZmIzMmY1MjFlNzgzMDFmZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlY2M3ZDdmMzY4OTQ0MDQ2Y2VmNDgwNWE4MDZjZGEzZTRiN2ZlODQzMjYxMTM4OGExMDIxODMzMWYzMmUzNjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5MzNjN2E4YzRmMDMyZWIzNDYyYmNjY2E5MTViZmRhNTdjNDI1NjVjNDNjZmY2ZDZjMDVkNTNjMWEwNjc4NTMifQ"
         }
       ]
     },
@@ -63,7 +67,7 @@
           "version": "repo-lines-v1:sha256:46ec8a5c5d7e3352d07ecc1f454ce5af7c1d50712e6300cc4d9620d96a9e9e56:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IyODYxZGIzN2I3N2U2NDRkZGQ4MGQ2Njk2ZTU3YzFhYzdiZGE2NmJiMDE1NzgzMDMyY2Y1OTM3OGYzNjU1ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NjNjU2Njg5MGYzM2I3MzljMzI4MzNjMTlmZTY3OTEyOTNiMmYyODg4ODVhYWM0MTk3ZGQ4MjNhZTIzNjQwMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGIxNzFhMzMxMTA5MjBmZWU2NjYwZmY4Nzk4ZDc2ZjdiYzM3Y2JhY2ExMTcyNTVkNjc4ZmQ1NjFiMTEzODFhOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODk1NjZmNzEzNTU1YWQwZTNhOTlkZWM2MmU4NDljMDZiMDdmYWYxODMwM2ZhNTI5MDA4NjgzZjk0ZDEzZmVhOCJ9"
         },
         {
-          "resource": "repo://Makefile#L216-L229",
+          "resource": "repo://Makefile#L221-L234",
           "version": "repo-lines-v1:sha256:70067d8c6f67604f5790850b3cec7f598cf364c45f6b8345150c57a6df2142ac:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Njk4MzdhYmVkODZlMGExYjI4NmE3Y2Q5NjcyMGUxZjQ2MjAwNGZjZjg0NzI1ZTUzZjY2MDQyZGRjOTE1ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhMDNkYmY3NTFiMTU2Y2UyNTUxOWM4YWMyMWZiYzZhNzdlOGRiMzVhM2IzOWFlYTU4OTdlYzU5NTRlNGViODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwMjY1OWQ4MmQzZjNkOWFmYmQzMDdjYzAxMmVjNDcwODNkZDY2ZWU1ZTQ4ZWJmNGEyNmZlMWFiNmY0MGFiNGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyYmZhY2Q5YWRlMDY3ZTNiNjk1MzRjM2EzZjNjYjY2OTI0NTFmZTc1ZjI4YjAzMTgyNTRiY2YwZmUzOGQwOWUifQ"
         }
       ]
@@ -73,7 +77,7 @@
       "statement": "Two separate local Postgres compose stacks exist on different ports so they can run simultaneously: compose.postgres.yml is a persistent dev instance (postgres:16, port 5432, database trusted_actions, named volume rosa_ta_pgdata, managed by make postgres-up/postgres-down/postgres-logs) and docker-compose.test.yml is an ephemeral store-test instance (port 5433, database trusted_actions_test, no persistent volume, managed by make test-postgres-up/test-postgres-down/test-postgres under a distinct compose project name).",
       "evidence": [
         {
-          "resource": "repo://Makefile#L152-L177",
+          "resource": "repo://Makefile#L157-L182",
           "version": "repo-lines-v1:sha256:4394ec625cf0e23defc71d6c4ec3434f7539e5b92fc620252f647c76c2c084e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliMmY1MDcyZGU0NjRjM2U2N2EwMGIxOGQzZDU1YzExZTUzMTIzYzYzYmQyNWJhNjNhZGFlYTRjNDg3YTFmZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkOWY2ZjcwM2NiNTQ3NWViZTI5ZTFmYTM2NDk5OWM0NTY1ZWVjNjQ0OTU3MDBmNWI1ZDk1YTAyODdlMjNmZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNWM4YmZkZDU5NTJmOTMxNjk5NjZmM2E2ZDNmZjUwNmY5ZTRhMzk1MmEzYTdmNWJhOTJmZTA5MDNiYmJhYmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlOGVlYmZiMTBjODBlYTE1MWFhOTJkNjg4YmJjMjQ1NzFmNTZhYTgwYmYwYjMyZGRjNjUyMzkxODg4OWQ1ZDUifQ"
         },
         {
@@ -91,7 +95,7 @@
       "statement": "The Makefile resolves a COMPOSE command by preferring 'podman compose' when podman-compose or docker-compose and podman are all present on PATH, falling back to 'docker compose' otherwise, so the Postgres compose targets work with either Podman or Docker.",
       "evidence": [
         {
-          "resource": "repo://Makefile#L140-L150",
+          "resource": "repo://Makefile#L145-L155",
           "version": "repo-lines-v1:sha256:56f625048d2c2565349dc956a644286cdaea2b94c7a9beec65c7a47fcb6c187c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwNDM1YzAxYzU2NTQ2ZWUzZmVmMjg3YjhmMjc4OTZjNDhmMTI5NjZiOTJiMzQxZWYyZDUwMzI4ZWU2NzQwYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkODQyYzQ4NzNmMGYzZjBhMzJiOTJhMjhmZDFjMTM5ZGNjN2M1MzA4MzdmYTVhNDgzOTMxMTU3MjIyZDdjOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhYzE2MWQ2NmFiMjFlZGZiNjc3MDJjZjMxYTc1YzEzMGE3NDBhYTkyODM1OGFjYTAxNWU0YTIwNjg0MzAyNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5NTQzYTcxNzVlY2I0ODM5YTdlNTg4NjhjYzIzOTY0ZjZhYjJhYjM1YzFiY2JkMjJiOWFhNmM3ZjZkZmMwYTkifQ"
         }
       ]
@@ -115,7 +119,7 @@
       "statement": "Setting ROSA_TA_AUTH=disabled swaps in auth.NewMockAuthMiddleware()/auth.NewMockAuthzMiddleware(), injecting a hardcoded dev-user identity with the SREP role for every request with no OCM/AMS network calls, and cmd/server/main.go logs a WARN on startup to make the bypass visible; this policy must never be used outside local or CI environments.",
       "evidence": [
         {
-          "resource": "repo://README.md#L22-L32",
+          "resource": "repo://README.md#L48-L58",
           "version": "repo-lines-v1:sha256:39905ff264ab13e5342170dc277c9da7f092b3b11e78596ca21627214bf7712c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzNDA1NWI0NjlkZjJjNzFlNGQ0OTk4M2Q1ZmRhNDc5NWQ5ODNiNTg2MmQzMjU0N2NjYTI1MWQ5NzBiNzA5YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0YWE2NmIxNjVjMzQwY2M2ZTY2NjdhYzNmNDQxOGY2YzMzMGRlYjZhMzNmMjA4ZGViOWJhMjg3MDg0MWM4MmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMjIwNzIxMzE4ZTlmMjk1NjViNDFmNTQ2NzRkNjExNjIwNTU3MjE5OTBlMGI1ODQyM2E1MWU0ZGUwYmY1NmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZjlkMDVmNzdiZjY3OGIyN2Y4ZjQzMzQ3ZjhhMDVmZDM5ZTU1N2UyNTcwZWZkZDNhNGM4OGM4NzI0M2JjNDkifQ"
         },
         {
@@ -153,7 +157,7 @@
       "statement": "scripts/test-api.sh (invoked by make test-api and make test-integration) smoke-tests a running server against SERVER_URL by checking /health then exercising list-actions, describe-action, a dry-run execute, list-runs, get-run (with a random UUID), and the audit log endpoints, pretty-printing JSON responses via jq when available and failing loudly on non-2xx status codes.",
       "evidence": [
         {
-          "resource": "repo://Makefile#L191-L204",
+          "resource": "repo://Makefile#L196-L209",
           "version": "repo-lines-v1:sha256:dbbbf27de57426b8f9a999b95ed5bf60b912648786c0d4bc60af24699afceac1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiMWNlM2ZkNmY3Y2JlNzIzOTdiNmRkMzBlMDZjZjEwNjczMDVjMGQzMzUzMTNhNDViYjE3YzU0OGMyNWY2NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3Y2UxZjQ0ZTRjMWMzZmU3OTc1OWIyYjIwNWI2MzYxODA1OGNiYzA0OTc0NWMxNGFlOWM0ODI0MDI5NTliZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZDYwMTViMDZmMWRkODI2OTIxMGQzNmNkMGJkNmZjMjcxNzI3YzkxZDBkMjMxNTc4MmE3ZGZjZWNhODg3YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhYTllM2NiNDZjOWIxN2FkMjdhOTk4YTY2Zjk5NzBiZGE4MTNkNzVkMWI2N2NkOGJiY2ZhZGM1N2M5NTZmZGEifQ"
         },
         {
@@ -165,6 +169,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.1",
-    "at": "2026-11-05T16:04:34.033Z"
+    "at": "2026-11-10T16:03:16.899Z"
   }
 }

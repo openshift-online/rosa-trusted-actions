@@ -5,7 +5,7 @@ description: How the service is built and deployed to AWS across regions — the
 tags: [deployment, terraform, hcp-terraform, aws, networking, tls, ci-cd, operations]
 verified:
   - by: openwiki/0.7.1
-    at: 2026-11-05T16:04:34.033Z
+    at: 2026-11-10T16:03:16.899Z
 sources:
   - id: openwiki-source-eebdf2baefd63a03b1cb3b5e
     resource: repo://.tekton/rosa-trusted-actions-pull-request.yaml
@@ -33,7 +33,7 @@ sources:
     resource: repo://terraform/regional/route53-private.tf
   - id: openwiki-source-5b054b964a1b08a025a6cc6b
     resource: repo://terraform/regional/variables.tf
-generated: { by: "openwiki/0.7.1", at: "2026-11-05T16:04:34.033Z" }
+generated: { by: "openwiki/0.7.1", at: "2026-11-10T16:03:16.899Z" }
 ---
 
 ## Overview
@@ -190,8 +190,12 @@ makes `terraform/regional/remote_state.tf`'s `terraform_remote_state` data
 source resolvable. No manual "copy this ARN into that workspace" step is
 needed.
 
-Each workspace also has `auto_apply = false` (plans require manual
-confirmation) and attaches to the
+Both workspaces set `auto_apply = true` **and** `auto_apply_run_trigger =
+true`: a plan is applied automatically whether it was queued directly
+(e.g. by a VCS-triggered run) or by the run trigger fired from the other
+workspace. There is no manual "confirm apply" gate in this configuration —
+operators who need a hold point must pause the run or temporarily flip
+`auto_apply` before applying. Both workspaces also attach to the
 `rosa-trusted-actions-rosa-boundary-stage-rosa-trusted-actions-aws-dynamic-creds`
 variable set for AWS credentials.
 
@@ -207,6 +211,16 @@ networking identifiers (`vpc_id`, `public_subnet_ids`,
 Backplane/OCM application configuration. IAM ARNs and the Secrets Manager
 ARN are deliberately **not** regional workspace variables — they only ever
 come from `terraform_remote_state`.
+
+The current `rosa-trusted-actions-global` workspace definition does **not**
+set `public_zone_id` — that variable block is present only as a commented
+template ("add when the public apex zone is available"). Since
+`terraform/global/dns.tf`'s validation CNAME and validation-anchor
+certificate, and `terraform/regional/acm.tf`'s regional certificate and
+HTTPS listener, are all gated on `internal_fqdn != "" && public_zone_id !=
+""`, this means the ACM/TLS path described below is currently inert for
+this deployment and the ALB serves HTTP only, until an operator adds a real
+`public_zone_id` value to the global workspace.
 
 ### Adding a new region
 
@@ -249,9 +263,12 @@ The image is a two-stage build (`Containerfile`):
 1. **Builder stage** — `registry.access.redhat.com/hi/go:latest`, runs `go
    mod download` then `go build -o bin/rosa-trusted-actions-server
    ./cmd/server`.
-2. **Runtime stage** — `registry.access.redhat.com/hi/core-runtime:latest`,
-   copies only the built binary, exposes port `8080`, runs as non-root user
-   `1001`, and sets `ENTRYPOINT ["rosa-trusted-actions-server"]`.
+2. **Runtime stage** —
+   `registry.access.redhat.com/hi/core-runtime:latest@sha256:81280d7fd6afa7a3d2a6da2e90e545cf8e5d187c80a69b2a1c875fdcd731aaed`
+   (pinned by digest, not just the `latest` tag, so the runtime base image
+   cannot silently change between builds), copies only the built binary,
+   exposes port `8080`, runs as non-root user `1001`, and sets
+   `ENTRYPOINT ["rosa-trusted-actions-server"]`.
 
 Port `8080` and the `/health` path are the same values `terraform/regional`
 wires into the ECS target group's health check (see
@@ -274,10 +291,13 @@ trusted artifacts:
   with `dockerfile: Containerfile` and `path-context: .`.
 
 Both pipelines share the same task sequence: `init` → `clone-repository` →
-`prefetch-dependencies` → `build-image-index` (multi-platform buildah build,
-`linux/x86_64` by default) → `build-source-image` →
-`deprecated-base-image-check` → container/SAST/RPM-signature checks
-(`sast-snyk-check`, `sast-shell-check`, `sast-unicode-check`,
+`prefetch-dependencies` → `build-images` (matrix task, one `buildah`
+invocation per entry in `build-platforms`, `linux/x86_64` by default) →
+`build-image-index` (assembles the per-platform images into one OCI image
+index) → `build-source-image` → `deprecated-base-image-check` → a battery of
+image checks that all run against the freshly built index
+(`roxctl-scan`, `ecosystem-cert-preflight-checks`, `sast-snyk-check`,
+`clamav-scan`, `sast-shell-check`, `sast-unicode-check`,
 `rpms-signature-scan`) → `apply-tags` → `push-dockerfile`. The resulting
 `IMAGE_URL`/`IMAGE_DIGEST` results are what operators paste into a regional
 HCP Terraform workspace's `container_image` variable (as a full
