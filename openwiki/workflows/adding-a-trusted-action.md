@@ -3,12 +3,9 @@ type: workflow
 title: "Workflow: Adding a New Trusted Action"
 description: Canonical contributor workflow for authoring, registering, testing, reviewing, and shipping a new Trusted Action, covering both the Kube-action and AWS-action paths.
 tags: [trusted-actions, contributor-workflow, rbac, aws, catalog, testing]
-verified:
-  - by: openwiki/0.7.1
-    at: 2026-11-05T16:04:34.033Z
 sources:
-  - id: openwiki-source-80038ed0523fffd380beabcc
-    resource: repo://.claude/skills/add-trusted-action/SKILL.md
+  - id: openwiki-source-0756609d81a8240ed5508d4a
+    resource: repo://.agents/skills/add-trusted-action/SKILL.md
   - id: openwiki-source-2bd1941dc3b0982040174920
     resource: repo://cmd/action-cli/main.go
   - id: openwiki-source-1a7c8c052eab226fd799d270
@@ -18,6 +15,9 @@ sources:
   - id: openwiki-source-66750043d991c1abb5dd1bfd
     resource: repo://internal/actions/get_pull_secret_email.go
 generated: { by: "openwiki/0.7.1", at: "2026-11-05T16:04:34.033Z" }
+verified:
+  - by: openwiki/0.7.1
+    at: 2026-11-10T16:03:16.899Z
 ---
 
 # Workflow: Adding a New Trusted Action

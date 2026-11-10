@@ -3,14 +3,13 @@ type: operations-guide
 title: "Operations: Local Development Environment"
 description: How to build, run, lint, and test the ROSA Trusted Actions server locally, including the mock-auth path, local Postgres via compose, and the helper scripts that scaffold staging credentials and smoke-test the API.
 tags: [operations, local-development, makefile, mock-auth, postgres, pre-commit, developer-workflow]
-verified:
-  - by: openwiki/0.7.1
-    at: 2026-11-05T16:04:34.033Z
 sources:
   - id: openwiki-source-727b56653fd0103b1858eee2
     resource: repo://.gitleaks.toml
   - id: openwiki-source-3bea3530072bb2f5acdc3c30
     resource: repo://.golangci.yml
+  - id: openwiki-source-712642f5bc1b982bbec2b6da
+    resource: repo://.goreleaser.yaml
   - id: openwiki-source-4d1645cb6317345817452838
     resource: repo://.pre-commit-config.yaml
   - id: openwiki-source-0f6ed11169bd8e6b34b44280
@@ -31,7 +30,10 @@ sources:
     resource: repo://scripts/setup-local-staging.sh
   - id: openwiki-source-fa1a0bbc32b5e8ec42ac2415
     resource: repo://scripts/test-api.sh
-generated: { by: "openwiki/0.7.1", at: "2026-11-05T16:04:34.033Z" }
+generated: { by: "openwiki/0.7.1", at: "2026-11-10T16:03:16.899Z" }
+verified:
+  - by: openwiki/0.7.1
+    at: 2026-11-10T16:03:16.899Z
 ---
 
 # Operations: Local Development Environment
@@ -91,20 +93,29 @@ generate`, commit the regenerated file alongside any OpenAPI spec changes.
 
 **Build and run**
 
+Binary builds go through [goreleaser](https://goreleaser.com/) (`.goreleaser.yaml`), not a
+plain `go build`/`GOOS=linux` cross-compile: `download-goreleaser` installs the pinned
+`GORELEASER_VERSION` (`v2.20.0`) to `$(go env GOPATH)/bin` if it isn't already there, and the
+`build*` targets invoke it with `--snapshot --clean` so untagged local builds still produce
+versioned artifacts (binaries are ldflags-stamped with `{{.Version}}`/`{{.Commit}}`/`{{.Date}}` —
+into `internal/rta` for the `rta` CLI, into `main` for the server) under `dist/`, replacing the
+older `./bin/rosa-trusted-actions-server(-linux)` layout for these two binaries.
+
 | Target | Effect |
 |---|---|
-| `build` | `generate`, then `go build` the server binary into `./bin/rosa-trusted-actions-server` |
-| `build-linux` | `generate`, then cross-compiles `GOOS=linux GOARCH=amd64` to `./bin/rosa-trusted-actions-server-linux` |
-| `build-cli`, `build-rta`, `build-test-client` | Build the `action-cli`, `rta`, and `test-client` companion binaries (`rta` is version-stamped via `-ldflags` with git describe/commit/date) |
+| `build` | `generate` + `download-goreleaser`, then `goreleaser build --snapshot --clean --single-target` — builds the server and `rta` binaries for the current host OS/arch |
+| `build-all` | `generate` + `download-goreleaser`, then `goreleaser build --snapshot --clean` for every target in `.goreleaser.yaml` (`rta` for `linux_amd64`/`darwin_amd64`/`darwin_arm64`; the server for `linux_amd64` only) |
+| `build-rta` / `build-server` | `download-goreleaser`, then a goreleaser build limited to one binary (`--single-target --id rta` / `--id server`); `build-server` also depends on `generate` |
+| `build-cli`, `build-test-client` | Dev-tool binaries (`action-cli`, `test-client`) built directly with plain `go build` into `./bin/`, not released via goreleaser |
 | `run` | `generate`, then `go run ./cmd/server`, picking up `DATABASE_URL` and other config from the environment |
 | `run-postgres` | `generate` + `postgres-up`, then runs the server against the local composed Postgres at `postgres://postgres:postgres@localhost:5432/trusted_actions?sslmode=disable` |
 | `run-sqlite` | `generate`, then runs the server with `DATABASE_URL=trusted_actions.db` (a local SQLite file) |
 | `dev` | Installs `air` if missing, then runs it for auto-reload on file changes |
 
-(`repo://Makefile#L66-L123`)
+(`repo://Makefile#L66-L127`, `repo://.goreleaser.yaml`)
 
 The server listens on `:8080` by default; override with CLI flags, e.g.
-`./bin/rosa-trusted-actions-server --listen-addr=":3000" --log-level="debug" --log-json`.
+`go run ./cmd/server --listen-addr=":3000" --log-level="debug" --log-json`.
 (`repo://DEVELOPMENT.md#L43-L55`)
 
 **Quality gates**
@@ -114,7 +125,7 @@ The server listens on `:8080` by default; override with CLI flags, e.g.
 | `lint` | Installs `golangci-lint` if missing, then `golangci-lint run` using `.golangci.yml` |
 | `fmt` | `go fmt ./...` then `goimports -w .` |
 
-(`repo://Makefile#L231-L240`)
+(`repo://Makefile#L236-L244`)
 
 **Test family**
 
@@ -131,7 +142,7 @@ The server listens on `:8080` by default; override with CLI flags, e.g.
 | `test-actions-proxy` | Runs the `Proxy`-tagged subset of the same tests against the proxy backplane (requires `make proxy-backplane` and a `KUBECONFIG`) |
 | `itest-up` / `itest-run` / `itest-down` | Create/use a `kind` cluster plus ministack, run the server against it and smoke-test the `get` action, then tear everything down |
 
-(`repo://Makefile#L124-L230`)
+(`repo://Makefile#L129-L219`)
 
 **Backplane doubles**
 
@@ -140,7 +151,7 @@ The server listens on `:8080` by default; override with CLI flags, e.g.
 | `mock-backplane` | Starts the Imposter-based backplane mock server (native engine) defined under `tests/mock-backplane/`, on `MOCK_BACKPLANE_PORT` (default `8087`, same default as `make run` — override it to run the mock alongside the real server) |
 | `proxy-backplane` | `go run ./tests/proxy-backplane`, a reverse proxy to a real cluster, listening on `PROXY_BACKPLANE_PORT` (default `8088`) |
 
-(`repo://Makefile#L13-L19`, `repo://Makefile#L216-L229`)
+(`repo://Makefile#L13-L19`, `repo://Makefile#L221-L234`)
 
 See [Testing: Integration and Mocks](../testing/integration-and-mocks.md) for how the mock and
 proxy backplanes, `itest-*`, and `tests/actions/...` fit into the broader test strategy.
@@ -157,7 +168,7 @@ at once without colliding:
   - `make postgres-up` — start detached, wait for the healthcheck (`pg_isready`)
   - `make postgres-down` — stop and remove the container *and* its volume
   - `make postgres-logs` — tail container logs
-  (`repo://compose.postgres.yml`, `repo://Makefile#L152-L163`)
+  (`repo://compose.postgres.yml`, `repo://Makefile#L157-L167`)
 
 - **`docker-compose.test.yml`** — an ephemeral instance for the store test suite, database
   `trusted_actions_test`, exposed on `127.0.0.1:5433` (no named volume, no persistence). Started
@@ -165,15 +176,15 @@ at once without colliding:
   development stack. Managed via `make test-postgres-up` / `test-postgres-down`, or end-to-end
   via `make test-postgres`, which starts it, runs `./internal/store/...` against
   `TEST_POSTGRES_URL`, and always tears the container down (even on test failure).
-  (`repo://docker-compose.test.yml`, `repo://Makefile#L164-L177`)
+  (`repo://docker-compose.test.yml`, `repo://Makefile#L169-L182`)
 
 Both targets resolve a `COMPOSE` command at Makefile-parse time: if `podman-compose` or
 `docker-compose` is on the `PATH` *and* `podman` itself is available, `podman compose` is used;
-otherwise the Makefile falls back to `docker compose`. (`repo://Makefile#L140-L150`)
+otherwise the Makefile falls back to `docker compose`. (`repo://Makefile#L145-L155`)
 
 If you don't need Postgres-specific behavior, `make run-sqlite` runs the server against a local
 SQLite file (`trusted_actions.db`) instead, with no compose stack required.
-(`repo://Makefile#L114-L117`)
+(`repo://Makefile#L119-L122`)
 
 ## Quality gates: pre-commit, golangci-lint, gitleaks
 
@@ -336,7 +347,7 @@ body. The script sets `AWS_REGION` and `ROSA_TA_S3_BUCKET` defaults itself so it
 a server started with minimal configuration. Note that step 6 targeting a random, nonexistent
 execution ID is expected to exercise the "not found" path rather than assert success — read
 the script's exit-status handling before wiring it into stricter automation.
-(`repo://scripts/test-api.sh`, `repo://Makefile#L191-L204`)
+(`repo://scripts/test-api.sh`, `repo://Makefile#L196-L209`)
 
 ## Related pages
 

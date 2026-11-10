@@ -3,17 +3,19 @@ type: orientation
 title: Quickstart
 description: What the ROSA Trusted Actions Server is, the minimal local run path with mock auth, and a task-routing map into the rest of the wiki.
 tags: [quickstart, onboarding, getting-started, local-development, overview]
-verified:
-  - by: openwiki/0.7.1
-    at: 2026-11-05T16:04:34.033Z
 sources:
   - id: openwiki-source-362e06c30ccfdafd87339cb0
     resource: repo://ARCHITECTURE.md
   - id: openwiki-source-0f6ed11169bd8e6b34b44280
     resource: repo://cmd/server/main.go
+  - id: openwiki-source-296fa323b7900233255b1f1c
+    resource: repo://internal/openapi/api.go
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "openwiki/0.7.1", at: "2026-11-05T16:04:34.033Z" }
+generated: { by: "openwiki/0.7.1", at: "2026-11-10T16:03:16.899Z" }
+verified:
+  - by: openwiki/0.7.1
+    at: 2026-11-10T16:03:16.899Z
 ---
 
 ## What this is
@@ -23,10 +25,10 @@ server that executes **Trusted Actions** — Kubernetes operations against ROSA/
 clusters (via Backplane or a local kubeconfig) and AWS operations against a caller's AWS
 account — on behalf of an authenticated, authorized caller. Its API surface (routes, types,
 server interfaces) is generated from OpenAPI specs via `oapi-codegen`; hand-written handlers in
-`internal/handlers` implement the generated interface. Submitted actions run asynchronously on a
+`internal/handlers` implement the generated `ServerInterface`. Submitted actions run asynchronously on a
 background worker pool, with every API call audited and every execution's metadata, output, and
 logs retrievable afterward.
-(`repo://README.md#L1-L3`, `repo://ARCHITECTURE.md#L1-L5`, `repo://ARCHITECTURE.md#L24-L31`)
+(`repo://README.md#L5-L7`, `repo://ARCHITECTURE.md#L1-L5`, `repo://ARCHITECTURE.md#L79-L90`)
 
 ## Run it locally in under a minute
 
@@ -48,7 +50,7 @@ request, so no `Authorization` header is needed. The server refuses to start und
 `ROSA_TA_AUTH=disabled` unless both `ROSA_TA_KUBECONFIG` and `ROSA_TA_AWS_ENDPOINT_URL` are also
 set — without them, a mock-authenticated (effectively unauthenticated) caller could reach
 production cluster or AWS infrastructure. The server listens on `:8080` by default.
-(`repo://README.md#L22-L32`, `repo://cmd/server/main.go#L198`, `repo://cmd/server/main.go#L302`)
+(`repo://README.md#L22-L32`, `repo://cmd/server/main.go#L186-L200`, `repo://cmd/server/main.go#L63`)
 
 Verify it's up and list the action catalog:
 
