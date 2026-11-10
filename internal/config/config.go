@@ -146,8 +146,15 @@ type configFile struct {
 		ProxyURL    string `yaml:"proxy_url"`
 	} `yaml:"aws"`
 
+	OCM struct {
+		BaseURL  string `yaml:"base_url"`
+		ClientID string `yaml:"client_id"`
+	} `yaml:"ocm"`
+
 	Backplane struct {
 		AssumeInitialARN string `yaml:"assume_initial_arn"`
+		BaseURL          string `yaml:"base_url"`
+		ClientID         string `yaml:"client_id"`
 		ProxyURL         string `yaml:"proxy_url"`
 	} `yaml:"backplane"`
 
@@ -239,8 +246,10 @@ func Load(configFilePath string) (*Config, error) {
 		JWKCertURL:      getEnv("ROSA_TA_JWK_CERT_URL", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"),
 
 		// OCM Client Configuration
-		OCMBaseURL:      getEnv("ROSA_TA_OCM_BASE_URL", "https://api.openshift.com"),
-		OCMClientID:     getEnv("ROSA_TA_OCM_CLIENT_ID", ""),
+		// OCMBaseURL: env > config file > built-in default — the default must
+		// survive an empty file key, so the chain is written out.
+		OCMBaseURL:      getEnv("ROSA_TA_OCM_BASE_URL", defaultString(configFile.OCM.BaseURL, "https://api.openshift.com")),
+		OCMClientID:     getEnv("ROSA_TA_OCM_CLIENT_ID", configFile.OCM.ClientID),
 		OCMClientSecret: getEnv("ROSA_TA_OCM_CLIENT_SECRET", ""),
 		OCMToken:        getEnv("ROSA_TA_OCM_TOKEN", ""),
 
@@ -256,8 +265,8 @@ func Load(configFilePath string) (*Config, error) {
 		WorkerExecutionTimeout: getPositiveDurationEnv("ROSA_TA_WORKER_EXECUTION_TIMEOUT", configFile.Workers.ExecutionTimeout),
 
 		// Backplane Configuration
-		BackplaneURL:          getEnv("ROSA_TA_BACKPLANE_URL", ""),
-		BackplaneClientID:     getEnv("ROSA_TA_BACKPLANE_CLIENT_ID", ""),
+		BackplaneURL:          getEnv("ROSA_TA_BACKPLANE_URL", configFile.Backplane.BaseURL),
+		BackplaneClientID:     getEnv("ROSA_TA_BACKPLANE_CLIENT_ID", configFile.Backplane.ClientID),
 		BackplaneClientSecret: getEnv("ROSA_TA_BACKPLANE_CLIENT_SECRET", ""),
 
 		BackplaneAssumeInitialARN: getEnv("ROSA_TA_BACKPLANE_ASSUME_INITIAL_ARN", configFile.Backplane.AssumeInitialARN),
@@ -282,6 +291,15 @@ func Load(configFilePath string) (*Config, error) {
 // getEnv gets an environment variable with a default value
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// defaultString returns the first non-empty value, for chaining a config
+// file key in front of a built-in default.
+func defaultString(value, defaultValue string) string {
+	if value != "" {
 		return value
 	}
 	return defaultValue

@@ -425,6 +425,129 @@ func TestLoad_AWSAllowedRegionsFromFile(t *testing.T) {
 	}
 }
 
+// The OCM and backplane connection settings are file keys with env
+// overrides. For each key the three behaviours that matter: the YAML value
+// loads, a non-empty env var beats the file, and an empty env var (the
+// loader treats empty as unset) leaves the file value in place — a key that
+// failed that last case would make the file silently unusable whenever the
+// env var exists-but-is-empty.
+func TestLoad_OCMBackplaneFromFile(t *testing.T) {
+	clearLoadEnv(t)
+	path := filepath.Join(t.TempDir(), "c.yaml")
+	content := "ocm:\n" +
+		"  base_url: https://ocm.example.com\n" +
+		"  client_id: ocm-client\n" +
+		"backplane:\n" +
+		"  base_url: https://backplane.example.com\n" +
+		"  client_id: backplane-client\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.OCMBaseURL != "https://ocm.example.com" {
+		t.Errorf("OCMBaseURL = %q, want file value", cfg.OCMBaseURL)
+	}
+	if cfg.OCMClientID != "ocm-client" {
+		t.Errorf("OCMClientID = %q, want file value", cfg.OCMClientID)
+	}
+	if cfg.BackplaneURL != "https://backplane.example.com" {
+		t.Errorf("BackplaneURL = %q, want file value", cfg.BackplaneURL)
+	}
+	if cfg.BackplaneClientID != "backplane-client" {
+		t.Errorf("BackplaneClientID = %q, want file value", cfg.BackplaneClientID)
+	}
+}
+
+func TestLoad_OCMBackplaneEnvOverridesFile(t *testing.T) {
+	clearLoadEnv(t)
+	path := filepath.Join(t.TempDir(), "c.yaml")
+	content := "ocm:\n" +
+		"  base_url: https://ocm.example.com\n" +
+		"  client_id: ocm-client\n" +
+		"backplane:\n" +
+		"  base_url: https://backplane.example.com\n" +
+		"  client_id: backplane-client\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	t.Setenv("ROSA_TA_OCM_BASE_URL", "https://ocm-env.example.com")
+	t.Setenv("ROSA_TA_OCM_CLIENT_ID", "ocm-env-client")
+	t.Setenv("ROSA_TA_BACKPLANE_URL", "https://backplane-env.example.com")
+	t.Setenv("ROSA_TA_BACKPLANE_CLIENT_ID", "backplane-env-client")
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.OCMBaseURL != "https://ocm-env.example.com" {
+		t.Errorf("OCMBaseURL = %q, want env value", cfg.OCMBaseURL)
+	}
+	if cfg.OCMClientID != "ocm-env-client" {
+		t.Errorf("OCMClientID = %q, want env value", cfg.OCMClientID)
+	}
+	if cfg.BackplaneURL != "https://backplane-env.example.com" {
+		t.Errorf("BackplaneURL = %q, want env value", cfg.BackplaneURL)
+	}
+	if cfg.BackplaneClientID != "backplane-env-client" {
+		t.Errorf("BackplaneClientID = %q, want env value", cfg.BackplaneClientID)
+	}
+}
+
+// clearLoadEnv sets the vars to "" rather than unsetting them, which is also
+// how an empty-but-present env var reaches getEnv — so this doubles as the
+// empty-env-var case: the file value must survive.
+func TestLoad_OCMBackplaneEmptyEnvFallsBackToFile(t *testing.T) {
+	clearLoadEnv(t)
+	path := filepath.Join(t.TempDir(), "c.yaml")
+	content := "ocm:\n" +
+		"  base_url: https://ocm.example.com\n" +
+		"  client_id: ocm-client\n" +
+		"backplane:\n" +
+		"  base_url: https://backplane.example.com\n" +
+		"  client_id: backplane-client\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.OCMBaseURL != "https://ocm.example.com" {
+		t.Errorf("OCMBaseURL = %q, want file value with empty env", cfg.OCMBaseURL)
+	}
+	if cfg.OCMClientID != "ocm-client" {
+		t.Errorf("OCMClientID = %q, want file value with empty env", cfg.OCMClientID)
+	}
+	if cfg.BackplaneURL != "https://backplane.example.com" {
+		t.Errorf("BackplaneURL = %q, want file value with empty env", cfg.BackplaneURL)
+	}
+	if cfg.BackplaneClientID != "backplane-client" {
+		t.Errorf("BackplaneClientID = %q, want file value with empty env", cfg.BackplaneClientID)
+	}
+}
+
+// OCMBaseURL has a third tier — the built-in default — because a deployment
+// without OCM must still get a working URL. An absent file key must fall
+// through to it, and BackplaneURL has no such default (empty is valid: the
+// backplane is only needed when AWS actions run).
+func TestLoad_OCMBaseURLDefaultWhenFileAbsent(t *testing.T) {
+	clearLoadEnv(t)
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.OCMBaseURL != "https://api.openshift.com" {
+		t.Errorf("OCMBaseURL = %q, want built-in default", cfg.OCMBaseURL)
+	}
+}
+
 func TestLoad_AuthPolicy(t *testing.T) {
 	tests := []struct {
 		name       string
