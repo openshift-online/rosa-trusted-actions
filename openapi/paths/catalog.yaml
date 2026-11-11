@@ -7,7 +7,6 @@ get:
     name, scope, type, and description. Parameters are not included;
     use the Describe endpoint for full details.
   operationId: catalog
-  security: []
   responses:
     '200':
       description: Catalog of available Trusted Actions
