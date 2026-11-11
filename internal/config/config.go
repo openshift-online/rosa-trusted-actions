@@ -62,6 +62,11 @@ type Config struct {
 	OCMClientID     string
 	OCMClientSecret string
 	OCMToken        string
+	// OCMScopes are the OpenID scopes requested when obtaining a token, for
+	// the OCM connection and the backplane one alike. Empty leaves the SDK's
+	// own default of "openid" in place; a value here replaces that default
+	// rather than adding to it, so "openid" has to be listed to be kept.
+	OCMScopes []string
 
 	// Database Configuration (environment variables)
 	DatabaseURL       string
@@ -243,6 +248,7 @@ func Load(configFilePath string) (*Config, error) {
 		OCMClientID:     getEnv("ROSA_TA_OCM_CLIENT_ID", ""),
 		OCMClientSecret: getEnv("ROSA_TA_OCM_CLIENT_SECRET", ""),
 		OCMToken:        getEnv("ROSA_TA_OCM_TOKEN", ""),
+		OCMScopes:       getStringSliceEnv("ROSA_TA_OCM_SCOPES", nil),
 
 		// Database Configuration
 		DatabaseURL:       getEnv("DATABASE_URL", ""),

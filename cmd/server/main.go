@@ -149,6 +149,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 				ClientID:     cfg.OCMClientID,
 				ClientSecret: cfg.OCMClientSecret,
 				Tokens:       appendIfNotEmpty([]string{}, cfg.OCMToken),
+				Scopes:       cfg.OCMScopes,
 			})
 		} else {
 			var ocmConfig *ocmconfig.Config
@@ -227,10 +228,16 @@ func runServer(cmd *cobra.Command, args []string) error {
 		if u, err := url.Parse(cfg.BackplaneURL); err != nil || u.Scheme != "https" {
 			logger.Fatalf("ROSA_TA_BACKPLANE_URL must use HTTPS: %s", cfg.BackplaneURL)
 		}
-		bpConn, err := sdk.NewConnectionBuilder().
+		// Scoped the same way as the OCM connection above: both tokens come
+		// from the same service account and the same issuer, so a scope one
+		// needs is a scope the other needs too.
+		bpConnBuilder := sdk.NewConnectionBuilder().
 			URL(cfg.OCMBaseURL).
-			Client(cfg.BackplaneClientID, cfg.BackplaneClientSecret).
-			BuildContext(cmd.Context())
+			Client(cfg.BackplaneClientID, cfg.BackplaneClientSecret)
+		if len(cfg.OCMScopes) > 0 {
+			bpConnBuilder = bpConnBuilder.Scopes(cfg.OCMScopes...)
+		}
+		bpConn, err := bpConnBuilder.BuildContext(cmd.Context())
 		if err != nil {
 			logger.WithError(err).Fatal("Failed to create backplane OCM connection")
 		}

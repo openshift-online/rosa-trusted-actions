@@ -35,7 +35,11 @@ type Config struct {
 	ClientID     string
 	ClientSecret string
 	Tokens       []string
-	Debug        bool
+	// Scopes requested when obtaining a token. Empty keeps the SDK's default
+	// of "openid"; a non-empty value replaces that default outright rather
+	// than adding to it.
+	Scopes []string
+	Debug  bool
 }
 
 func NewClient(config Config) (*Client, error) {
@@ -133,6 +137,9 @@ func (c *Client) buildDefaultConnection() (*sdkClient.Connection, error) {
 
 	if c.config.ClientID != "" || c.config.ClientSecret != "" {
 		builder = builder.Client(c.config.ClientID, c.config.ClientSecret)
+	}
+	if len(c.config.Scopes) > 0 {
+		builder = builder.Scopes(c.config.Scopes...)
 	}
 	if len(c.config.Tokens) > 0 {
 		builder = builder.Tokens(c.config.Tokens...)
