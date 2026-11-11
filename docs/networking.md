@@ -14,8 +14,7 @@ that private name.
 3. [DNS Resolution Inside a VPC](#dns-resolution-inside-a-vpc)
 4. [Cross-Region Isolation](#cross-region-isolation)
 5. [TLS Certificates — The Shadow Zone Pattern](#tls-certificates--the-shadow-zone-pattern)
-6. [Multi-Region Deployment Order](#multi-region-deployment-order)
-7. [Terraform Variable Reference](#terraform-variable-reference)
+6. [Certificate Validation and Deployment Order](#certificate-validation-and-deployment-order)
 
 ---
 
@@ -216,108 +215,102 @@ no service disruption.
 
 ---
 
-## Multi-Region Deployment Order
+## Certificate Validation and Deployment Order
 
 Every regional deployment issues its own ACM certificate (ACM is a regional
 service; an ALB in `eu-west-1` cannot use a certificate from `us-east-1`).
 Because all certs cover the same FQDN, ACM computes an **identical** DNS-01
-validation CNAME for each of them. That CNAME is a single record in the shared
-public Route 53 zone — it is global infrastructure, not per-region.
+validation CNAME for each of them — the CNAME is derived from the domain name,
+not from the region or the certificate ARN. A single record in the public
+Route 53 zone therefore validates all regional certificates simultaneously.
 
-This creates a hard constraint: the validation CNAME must be owned by exactly
-one Terraform workspace. If every workspace tried to create and destroy the
-same record independently, parallel applies would race on shared state and
-parallel destroys would delete a record that surviving regions still need for
-certificate auto-renewal.
+That record is global infrastructure, and it is owned by exactly one
+workspace: **the global workspace** (`terraform/global/dns.tf`).
 
-### The `manage_validation_record` variable
+### The validation anchor
 
-The variable `manage_validation_record` (type `bool`, default `false`) controls
-which workspace owns the CNAME record.
+The global workspace creates a minimal ACM certificate
+(`aws_acm_certificate.validation_anchor`) that is **never attached to an
+ALB**. Its only purpose is to make ACM emit the domain validation options —
+the `_acme-challenge` CNAME name and token — which Terraform then writes as
+the single `aws_route53_record.cert_validation` in the public zone. This gives
+the shared record a stable owner without giving any single region that role.
 
-- **Exactly one region** sets `manage_validation_record = true`. This workspace
-  creates the `aws_route53_record.cert_validation` resource and owns it in
-  Terraform state. By convention this is the **primary region** (the one that
-  must be applied first).
-- **All other regions** leave `manage_validation_record = false`. They create
-  their own ACM certificate and then wait for ACM to report it as `ISSUED`,
-  which happens automatically once the CNAME placed by the primary region is
-  in place. They never touch the shared Route 53 record and hold no Terraform
-  dependency on it, so they can apply and destroy fully in parallel.
+### Regional certificates
+
+Each regional workspace creates its own `aws_acm_certificate` for the same FQDN
+and validates it with `aws_acm_certificate_validation`. That resource does not
+need to own the Route 53 record — it derives the expected validation FQDN from
+the certificate itself and then polls the ACM API until the certificate
+reports `ISSUED`, which happens automatically because the CNAME placed by the
+global workspace already exists. A Terraform precondition additionally asserts
+that the regional `internal_fqdn` matches the global workspace's value, so a
+typo can never produce a certificate that cannot validate.
+
+Because no regional workspace touches the shared record, regional applies and
+destroys run fully in parallel with no ordering constraints between regions.
 
 ```mermaid
 flowchart TD
-    subgraph step1 ["Step 1 — apply primary region first"]
-        A1["us-east-1\nmanage_validation_record = true"]
-        A1 --> CNAME["Route 53 public zone\n_acme-challenge CNAME written\n(owned by us-east-1 workspace)"]
-        A1 --> CERT1["ACM cert us-east-1\nstatus: ISSUED"]
+    subgraph step1 ["Step 1 — apply the global workspace first"]
+        G["global workspace<br/>terraform/global/dns.tf"]
+        G --> CNAME["Route 53 public zone<br/>_acme-challenge CNAME written<br/>(owned by the global workspace)"]
     end
 
-    subgraph step2 ["Step 2 — apply remaining regions in parallel"]
-        A2["eu-west-1\nmanage_validation_record = false"]
-        A3["ap-southeast-1\nmanage_validation_record = false"]
-        A2 --> CERT2["ACM cert eu-west-1\nwaits → ISSUED"]
-        A3 --> CERT3["ACM cert ap-southeast-1\nwaits → ISSUED"]
+    subgraph step2 ["Step 2 — apply regional workspaces in parallel, any order"]
+        A1["us-east-1"]
+        A2["eu-west-1"]
+        A3["ap-southeast-1"]
+        A1 --> CERT1["ACM cert us-east-1<br/>waits → ISSUED"]
+        A2 --> CERT2["ACM cert eu-west-1<br/>waits → ISSUED"]
+        A3 --> CERT3["ACM cert ap-southeast-1<br/>waits → ISSUED"]
     end
 
-    CNAME -->|"ACM resolves CNAME\n(validates all regions)"| CERT2
-    CNAME -->|"ACM resolves CNAME\n(validates all regions)"| CERT3
+    CNAME -->|"ACM resolves CNAME<br/>(validates all regions)"| CERT1
+    CNAME -->|"ACM resolves CNAME<br/>(validates all regions)"| CERT2
+    CNAME -->|"ACM resolves CNAME<br/>(validates all regions)"| CERT3
 ```
 
-### Workspace variable summary
+### Deployment order
 
-```
-# us-east-1 — primary, apply first
-internal_fqdn             = "rosa-trusted-actions.internal.company.com"
-public_zone_id            = "Z0123456789ABC"
-manage_validation_record  = true
-
-# eu-west-1 — secondary, apply after us-east-1
-internal_fqdn             = "rosa-trusted-actions.internal.company.com"
-public_zone_id            = "Z0123456789ABC"
-manage_validation_record  = false   # ← default; CNAME already exists
-
-# ap-southeast-1 — secondary, apply after us-east-1
-internal_fqdn             = "rosa-trusted-actions.internal.company.com"
-public_zone_id            = "Z0123456789ABC"
-manage_validation_record  = false   # ← default; CNAME already exists
-```
+1. **Apply the global workspace first.** It creates the public hosted zone
+   (when `public_zone` is set) and the `_acme-challenge` validation CNAME.
+2. **Apply regional workspaces in any order, in parallel.** Each waits for its
+   own certificate to reach `ISSUED` against the already-existing CNAME.
 
 ### Destruction order
 
-Destruction is the mirror image of deployment:
+Destruction is the mirror image:
 
-1. **Destroy secondary regions first** (in parallel, `manage_validation_record
-   = false`). Their workspaces do not own the CNAME, so destroying them leaves
-   the record intact.
-2. **Destroy the primary region last** (`manage_validation_record = true`).
-   This workspace deletes the CNAME as the final step, at which point no other
-   regional deployment remains that could need it for certificate renewal.
+1. **Destroy regional workspaces first** — in parallel, in any order. None of
+   them own the validation CNAME, so destroying them leaves the record intact.
+2. **Destroy the global workspace last.** This deletes the validation CNAME
+   only after no regional deployment remains that could need it for
+   certificate renewal.
 
-If the primary region is destroyed while secondary regions are still running,
-the validation CNAME disappears and ACM will be unable to auto-renew the
-surviving certificates when they approach expiry.
-
-### Transferring ownership
-
-If the primary region must be decommissioned while other regions remain live,
-transfer ownership before destroying it:
-
-1. Set `manage_validation_record = true` in a different region and apply that
-   workspace — the record already exists so Terraform will adopt it into the
-   new workspace's state.
-2. Set `manage_validation_record = false` in the old primary and apply — the
-   record is removed from that workspace's state but **not deleted from Route
-   53** (because another workspace now owns it).
-3. Destroy the old primary region normally.
+If the global workspace is destroyed while regional deployments are still
+running, the validation CNAME disappears and ACM will be unable to auto-renew
+the surviving certificates. The failure is silent until the certificates
+approach expiry (~60 days), so alert on the ACM
+`CertificateRenewalSucceeded` / renewal-failure EventBridge events if the
+regional deployments are long-lived.
 
 ---
 
 ## Terraform Variable Reference
 
+### Global workspace (`terraform/global/`)
+
 | Variable | Default | Purpose |
 |---|---|---|
-| `internal_fqdn` | `""` | Full private FQDN, e.g. `rosa-trusted-actions.internal.company.com`. Creates the PHZ and (with `public_zone_id`) the ACM certificate. |
-| `public_zone_id` | `""` | Route 53 hosted zone ID for the **public** apex zone. Only the ACM DNS-01 CNAME is written here — no A record. |
-| `manage_validation_record` | `false` | Set `true` in exactly one regional deployment (the primary). That workspace owns and manages the shared ACM validation CNAME. All other regions must be `false`. |
-| `alb_certificate_arn` | `""` | Bypass for manual certificate management. Set instead of `public_zone_id` when the apex zone is not in Route 53. |
+| `internal_fqdn` | `""` | Private FQDN, e.g. `rosa-trusted-actions.internal.company.com`. Used here only to create the validation-anchor certificate and the `_acme-challenge` CNAME in the public zone. |
+| `public_zone_id` | `""` | Route 53 ID of an **existing** public hosted zone for the apex of `internal_fqdn`. The ACM validation CNAME is the only record written here. |
+| `public_zone` | `""` | Create a new public hosted zone with this name instead of passing `public_zone_id`. Mutually exclusive with `public_zone_id`. |
+
+### Regional workspace (`terraform/regional/`)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `internal_fqdn` | `""` | Same FQDN as the global workspace. Creates the Private Hosted Zone, alias A record, and (with `public_zone_id`) the regional ACM certificate. Must match the global workspace value (enforced by precondition). |
+| `public_zone_id` | `""` | Route 53 ID of the public apex zone. Required for regional certificate issuance — the validation CNAME itself is managed by the global workspace. Leave empty to skip the ACM certificate (HTTP only). |
+| `alb_certificate_arn` | `""` | Bypass for manual certificate management. Set instead of `public_zone_id` when managing the certificate outside Terraform. |
