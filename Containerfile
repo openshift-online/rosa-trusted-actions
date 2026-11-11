@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/hi/go:latest AS builder
+FROM registry.access.redhat.com/hi/go:latest@sha256:b7dc87204701e49c42f43387cda22e691f5d04ed456f3dce2e2ca835736147c7 AS builder
 
 WORKDIR /opt/app-root/src
 
